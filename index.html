@@ -338,6 +338,9 @@
   /* ---- admin warehouse list ---- */
   .wh-row{ display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
   .wh-row:last-child{ border-bottom:none; }
+  .wh-row.draggable-row{ cursor:grab; }
+  .wh-row.draggable-row.dragging{ opacity:.55; }
+  .wh-row.draggable-row.drag-over{ outline:2px dashed var(--blue-600); outline-offset:-2px; }
   .wh-row .wh-name-input{ flex:1; }
   .wh-order-btns{ display:flex; flex-direction:column; gap:2px; }
   .wh-order-btns button{ width:20px; height:16px; border:1px solid var(--border-strong); background:#fff; font-size:9px; padding:0; line-height:1; border-radius:3px; }
@@ -2447,29 +2450,30 @@
   function screenAdmin(){
     var whRows = APP.whs.map(function(w,i){
       var cnt = APP.mats.filter(function(m){ return m.wh===w; }).length;
-      return '<div class="wh-row"><div class="wh-order-btns"><button onclick="whMove('+i+',-1)">▲</button><button onclick="whMove('+i+',1)">▼</button></div>'+
-        '<input class="input wh-name-input" type="text" value="'+esc(w)+'" onchange="whRename('+i+', this.value)">'+
-        '<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'+
-        '<button class="btn btn-outline icon-only" onclick="whDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
+      return '<div class="wh-row draggable-row" draggable="true" ondragstart="dragStart(event,\'wh\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'wh\','+i+')">'
+        +'<div class="wh-order-btns"><button onclick="whMove('+i+',-1)">▲</button><button onclick="whMove('+i+',1)">▼</button></div>'
+        +'<input class="input wh-name-input" type="text" value="'+esc(w)+'" onchange="whRename('+i+', this.value)">'
+        +'<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'
+        +'<button class="btn btn-outline icon-only" onclick="whDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
     }).join("");
 
     var catRows = APP.cats.map(function(c,i){
       var cnt = APP.mats.filter(function(m){ return m.cat===c; }).length;
-      return '<div class="wh-row"><div class="wh-order-btns"><button onclick="catMove('+i+',-1)">▲</button><button onclick="catMove('+i+',1)">▼</button></div>'+
-        '<input class="input wh-name-input" type="text" value="'+esc(c)+'" onchange="catRename('+i+', this.value)">'+
-        '<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'+
-        '<button class="btn btn-outline icon-only" onclick="catDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
+      return '<div class="wh-row draggable-row" draggable="true" ondragstart="dragStart(event,\'cat\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'cat\','+i+')">'
+        +'<div class="wh-order-btns"><button onclick="catMove('+i+',-1)">▲</button><button onclick="catMove('+i+',1)">▼</button></div>'
+        +'<input class="input wh-name-input" type="text" value="'+esc(c)+'" onchange="catRename('+i+', this.value)">'
+        +'<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'
+        +'<button class="btn btn-outline icon-only" onclick="catDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
     }).join("");
 
     var typeRows = APP.matTypes.map(function(t,i){
       var cnt = APP.mats.filter(function(m){ return m.matType===t.name; }).length;
-      return '<div class="wh-row" style="flex-wrap:wrap"><div class="wh-order-btns"><button onclick="typeMove('+i+',-1)">▲</button><button onclick="typeMove('+i+',1)">▼</button></div>'+
-        '<input class="input wh-name-input" type="text" value="'+esc(t.name)+'" onchange="typeRename('+i+', this.value)">'+
-        '<label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" '+(t.purchasable?"checked":"")+' onchange="typeTogglePurchasable('+i+', this.checked)">구매마스터 표시</label>'+
-        '<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'+
-        '<button class="btn btn-outline icon-only" onclick="typeDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
-    }).join("");
-
+      return '<div class="wh-row draggable-row" style="flex-wrap:wrap" draggable="true" ondragstart="dragStart(event,\'type\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'type\','+i+')">'
+        +'<div class="wh-order-btns"><button onclick="typeMove('+i+',-1)">▲</button><button onclick="typeMove('+i+',1)">▼</button></div>'
+        +'<input class="input wh-name-input" type="text" value="'+esc(t.name)+'" onchange="typeRename('+i+', this.value)">'
+        +'<label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" '+(t.purchasable?"checked":"")+' onchange="typeTogglePurchasable('+i+', this.checked)">구매마스터 표시</label>'
+        +'<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'
+        +'<button class="btn btn-outline icon-only" onclick="typeDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
     var months = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
     var seasonGrid = months.map(function(mLabel, idx){
       var mo = idx+1;
@@ -2531,6 +2535,43 @@
       APP.whs.splice(i,1); persist(); renderContent();
     });
   };
+  window.dragStart = function(ev, kind, index){
+    ev.dataTransfer.effectAllowed = "move";
+    ev.dataTransfer.setData("text/plain", kind+"|"+index);
+    ev.currentTarget.classList.add("dragging");
+  };
+  window.dragEnd = function(ev){
+    ev.currentTarget.classList.remove("dragging");
+  };
+  window.dragOver = function(ev){
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+    ev.currentTarget.classList.add("drag-over");
+  };
+  window.dragLeave = function(ev){
+    ev.currentTarget.classList.remove("drag-over");
+  };
+  window.dropRow = function(ev, kind, targetIndex){
+    ev.preventDefault();
+    ev.currentTarget.classList.remove("drag-over");
+    var data = (ev.dataTransfer.getData("text/plain")||"").split("|");
+    if(data.length!==2) return;
+    var sourceKind = data[0], sourceIndex = parseInt(data[1],10);
+    if(sourceKind!==kind || sourceIndex===targetIndex) return;
+    var arr;
+    if(kind==="wh") arr = APP.whs;
+    else if(kind==="cat") arr = APP.cats;
+    else if(kind==="type") arr = APP.matTypes;
+    else return;
+    moveArrayItem(arr, sourceIndex, targetIndex);
+    persist(); renderContent();
+  };
+  function moveArrayItem(arr, fromIndex, toIndex){
+    if(fromIndex<0||fromIndex>=arr.length||toIndex<0||toIndex>=arr.length) return;
+    var item = arr.splice(fromIndex,1)[0];
+    if(fromIndex < toIndex) toIndex--;
+    arr.splice(toIndex,0,item);
+  }
   window.catAdd = function(){
     var el = document.getElementById("new-cat-name"); var v = el.value.trim();
     if(!v) return; if(APP.cats.indexOf(v)>-1){ showToast("이미 존재하는 카테고리명입니다."); return; }
