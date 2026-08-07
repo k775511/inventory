@@ -2247,7 +2247,7 @@
     var outCnt = groups.filter(function(g){ return g.type==="out"; }).reduce(function(s,g){ return s+g.items.length; },0);
     var inCnt = groups.filter(function(g){ return g.type==="in"; }).reduce(function(s,g){ return s+g.items.length; },0);
     return '<div class="sub-view">'+
-      '<div class="pos-hint">이전에 사용하던 프로그램의 입출고 내역을 CSV로 업로드하면 이 화면에 이력으로 추가됩니다. 업로드한 내역은 조회용 기록으로만 반영되며 현재 재고 수량에는 영향을 주지 않습니다. CSV 형식: 일자(YYYY-MM-DD),구분(입고/출고),자재명,수량,변동전,변동후,창고,담당자,비고<br>변동전/변동후는 선택 항목이며, 입력하면 해당 내역의 재고 변동 기록을 보다 정확하게 기록합니다. 한 번에 여러 품목을 처리한 내역은 대표 품목명 외 N건으로 묶여 표시되며, 행을 클릭하면 세부 내역별로 수량 수정·삭제가 가능하고 그 차이는 해당 자재의 현재고에도 자동 반영됩니다.<br>CSV의 자재명이 자재관리에 등록된 이름과 일치하면 그 자재로 연결되고, 일치하는 자재가 없으면(예: 지금은 단종·사용중지된 품목) 자재관리에 "사용중지" 자재로 자동 등록되어 월별 사용량비교 등에서 과거 사용량을 계속 조회할 수 있습니다.</div>'+
+      '<div class="pos-hint">이전에 사용하던 프로그램의 입출고 내역을 CSV로 업로드하면 이 화면에 이력으로 추가됩니다. 업로드한 내역은 조회용 기록으로만 반영되며 현재 재고 수량에는 영향을 주지 않습니다. CSV 형식: 일자(YYYY-MM-DD 또는 YYYY-MM-DD HH:MM:SS),구분(입고/출고),자재명,수량,변동전,변동후,창고,담당자,비고<br>변동전(그 당시 재고, 기준 수량)/변동후는 선택 항목이며, 둘 다 입력하면 그 차이를 실제 입출고 수량으로 계산해 사용합니다(수량 칸에 이전 프로그램이 내보낸 음수·부호 값이 들어 있어도 자동으로 절대값 처리되어 오류 없이 업로드됩니다). 변동전/변동후가 없을 때만 수량 칸 값을 그대로 사용합니다. 한 번에 여러 품목을 처리한 내역은 대표 품목명 외 N건으로 묶여 표시되며, 행을 클릭하면 세부 내역별로 수량 수정·삭제가 가능하고 그 차이는 해당 자재의 현재고에도 자동 반영됩니다.<br>CSV의 자재명이 자재관리에 등록된 이름과 일치하면 그 자재로 연결되고, 일치하는 자재가 없으면(예: 지금은 단종·사용중지된 품목) 자재관리에 "사용중지" 자재로 자동 등록되어 월별 사용량비교 등에서 과거 사용량을 계속 조회할 수 있습니다.</div>'+
       rangeBar+
       '<div class="toolbar-actions"><div style="font-size:13px;font-weight:700;color:var(--text-600)">'+start+' ~ '+end+' · 총 '+groups.length+'건 (품목 '+itemCount+'개) · 출고 '+outCnt+' · 입고 '+inCnt+'</div>'+
       '<div class="btn-row">'+
@@ -2434,40 +2434,55 @@
         var lineNo = i+1;
         if(cols.length<7){ rows.push({ lineNo:lineNo, raw:lines[i], ok:false, reason:"열 개수 부족(7개 필요, "+cols.length+"개 입력됨)" }); continue; }
         var getCell = function(index, fallback){ return (index >= 0 && index < cols.length) ? cols[index].trim() : (fallback || ""); };
-        var date = useHeader ? getCell(headerMap.date,"") : getCell(0,"");
+        var dateRaw = useHeader ? getCell(headerMap.date,"") : getCell(0,"");
         var type = useHeader ? getCell(headerMap.type,"") : getCell(1,"");
         var name = useHeader ? getCell(headerMap.name,"") : getCell(2,"");
         var qtyRaw = useHeader ? getCell(headerMap.qty,"") : getCell(3,"");
-        var qty = parseInt(qtyRaw,10);
         var beforeQty = null;
         var afterQty = null;
         var wh = "-";
         var worker = "-";
         var memo = "-";
+        var parseQtyRef = function(raw){
+          if(raw === "" || raw == null) return null;
+          var n = parseInt(raw, 10);
+          return isNaN(n) ? null : n;
+        };
         if(useHeader){
-          var beforeRaw = getCell(headerMap.before,"");
-          var afterRaw = getCell(headerMap.after,"");
-          beforeQty = beforeRaw !== "" ? parseInt(beforeRaw,10) : null;
-          afterQty = afterRaw !== "" ? parseInt(afterRaw,10) : null;
+          beforeQty = parseQtyRef(getCell(headerMap.before,""));
+          afterQty = parseQtyRef(getCell(headerMap.after,""));
           wh = headerMap.wh >= 0 ? getCell(headerMap.wh,"") || "-" : "-";
           worker = headerMap.worker >= 0 ? getCell(headerMap.worker,"") || "-" : "-";
           memo = headerMap.memo >= 0 ? getCell(headerMap.memo,"") || "-" : "-";
         } else {
-          beforeQty = cols.length > 4 && cols[4].trim() !== "" ? parseInt(cols[4].trim(),10) : null;
-          afterQty = cols.length > 5 && cols[5].trim() !== "" ? parseInt(cols[5].trim(),10) : null;
+          beforeQty = cols.length > 4 ? parseQtyRef(cols[4].trim()) : null;
+          afterQty = cols.length > 5 ? parseQtyRef(cols[5].trim()) : null;
           wh = cols.length > 6 ? cols[6].trim() || "-" : "-";
           worker = cols.length > 7 ? cols[7].trim() || "-" : "-";
           memo = cols.length > 8 ? cols[8].trim() || "-" : "-";
         }
+        // 일자 칸에 "YYYY-MM-DD HH:MM:SS"처럼 시간이 붙어 오는 이전 프로그램 내보내기 형식도 지원
+        var dateMatch = dateRaw.match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}(?::\d{2})?))?/);
+        var date = dateMatch ? dateMatch[1] : dateRaw;
+        var time = dateMatch && dateMatch[2] ? dateMatch[2] : "-";
+        // 수량: 변동전/변동후(재고 기준) 값이 있으면 그 차이를 기준(baseline)으로 삼아 실제 입출고 수량을 계산한다.
+        // 이전 프로그램은 출고를 음수로 내보내는 경우가 많으므로, 수량 칸만 있을 때도 부호는 무시하고 절대값을 사용한다.
+        var qty;
+        if(beforeQty!=null && afterQty!=null){
+          qty = Math.abs(beforeQty - afterQty);
+        } else {
+          var qtyParsed = parseInt(qtyRaw,10);
+          qty = isNaN(qtyParsed) ? NaN : Math.abs(qtyParsed);
+        }
         var reasons = [];
         if(!date) reasons.push("일자 누락");
         if(!name) reasons.push("자재명 누락");
-        if(!qtyRaw || isNaN(qty) || qty<=0) reasons.push("수량 형식 오류(\""+qtyRaw+"\")");
+        if(isNaN(qty) || qty<=0) reasons.push("수량 형식 오류(\""+qtyRaw+"\")");
         if(type!=="입고" && type!=="출고") reasons.push("구분 값 오류(\""+type+"\", 입고/출고만 가능)");
         if(reasons.length){ rows.push({ lineNo:lineNo, raw:lines[i], ok:false, reason:reasons.join(", ") }); continue; }
+        // 자재관리에 없는 이름이어도 오류로 쳐내지 않는다 — 업로드 확정 시 "사용중지" 자재로 자동 등록된다.
         var mat = APP.mats.filter(function(m){ return m.name===name; })[0];
-        if(!mat){ reasons.push("등록되지 않은 자재명(\""+name+"\")"); }
-        rows.push({ lineNo:lineNo, ok:reasons.length===0, date:date, type:type, name:name, qty:qty, wh:wh, worker:worker, memo:memo, beforeQty: beforeQty, afterQty: afterQty, isNewMat:!mat });
+        rows.push({ lineNo:lineNo, ok:true, date:date, time:time, type:type, name:name, qty:qty, wh:wh, worker:worker, memo:memo, beforeQty: beforeQty, afterQty: afterQty, isNewMat:!mat });
       }
       pendingHistoryImport = { rows:rows, fileName:file.name };
       openHistoryImportPreview();
@@ -2531,32 +2546,39 @@
     if(!data) return;
     var valid = data.rows.filter(function(r){ return r.ok; });
     if(!valid.length) return;
-    var okIn=0, okOut=0;
+    var okIn=0, okOut=0, newMatCount=0;
     var batchIds = {};
     valid.forEach(function(r){
       var mat = APP.mats.filter(function(m){ return m.name===r.name; })[0];
       if(!mat){
-        return;
+        // 자재관리에 없는 이름은 "사용중지" 자재로 자동 등록해 과거 이력을 이어서 조회할 수 있게 한다.
+        var newCode = "M-"+(3000+APP.mats.length);
+        mat = { code:newCode, name:r.name, cat:"기타", matType:"부자재",
+          wh:(r.wh && r.wh!=="-") ? r.wh : (APP.whs[0]||"공통자재창고"), unit:"EA", loc:"",
+          stock:0, safeOff:0, safePeak:0, factor:0, op:"*", photo:"", usage:{cm:0,lm:0,ly:0},
+          discontinued:true, imported:true };
+        APP.mats.push(mat);
+        newMatCount++;
       }
       var code = mat.code;
       var unit = mat.unit;
-      var key = [r.type, r.date, r.wh, r.worker, r.memo].join("|");
+      var key = [r.type, r.date, r.time, r.wh, r.worker, r.memo].join("|");
       if(!batchIds[key]){
         batchIds[key] = (r.type === "입고") ? newId("IBATCH") : newId("BATCH");
       }
       var batchId = batchIds[key];
       if(r.type==="입고"){
-        APP.inLogs.push({ id:newId("INLOG"), batchId:batchId, date:r.date, time:"-", wh:r.wh, code:code, name:r.name, qty:r.qty, unit:unit, vendor:"-", receiver:r.worker, memo:r.memo, beforeQty:r.beforeQty, afterQty:r.afterQty });
+        APP.inLogs.push({ id:newId("INLOG"), batchId:batchId, date:r.date, time:r.time||"-", wh:r.wh, code:code, name:r.name, qty:r.qty, unit:unit, vendor:"-", receiver:r.worker, memo:r.memo, beforeQty:r.beforeQty, afterQty:r.afterQty });
         okIn++;
       } else {
-        APP.logs.push({ id:newId("LOG"), batchId:batchId, date:r.date, time:"-", wh:r.wh, code:code, name:r.name, qty:r.qty, unit:unit, order:"-", worker:r.worker, memo:r.memo, beforeQty:r.beforeQty, afterQty:r.afterQty });
+        APP.logs.push({ id:newId("LOG"), batchId:batchId, date:r.date, time:r.time||"-", wh:r.wh, code:code, name:r.name, qty:r.qty, unit:unit, order:"-", worker:r.worker, memo:r.memo, beforeQty:r.beforeQty, afterQty:r.afterQty });
         okOut++;
       }
     });
     var invalidCount = data.rows.length - valid.length;
     pendingHistoryImport = null;
     persist(); closeModal(); renderContent();
-    showToast("이전 내역 업로드 완료: 입고 "+okIn+"건, 출고 "+okOut+"건"+(invalidCount?", 형식 오류로 제외 "+invalidCount+"건":""));
+    showToast("이전 내역 업로드 완료: 입고 "+okIn+"건, 출고 "+okOut+"건"+(newMatCount?", 신규 자재 "+newMatCount+"종 자동 등록":"")+(invalidCount?", 형식 오류로 제외 "+invalidCount+"건":""));
   };
 
   /* ---------------- 설정(관리자) ---------------- */
