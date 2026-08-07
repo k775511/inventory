@@ -425,7 +425,11 @@
   var PM_CATS = ["소모품","포장재","안전용품","공구","기타"];
   var PM_CAT_PREFIX = { "소모품":"SM", "포장재":"PK", "안전용품":"SF", "공구":"TL", "기타":"ET" };
   var ISSUERS = ["강준상","김서인","박성진","이문규"];
-  var TODAY = "2026-07-11";
+  function formatToday(){
+    var d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  var TODAY = formatToday();
   var STORE_KEY = "pd_plusdoor_inventory_v1";
 
   function seedMats(){
@@ -482,7 +486,7 @@
       alerts: seedAlerts(),
       safety: { mode:"auto", peakMonths:[3,4,5,9,10] },
       cur:"dashboard", materialTab:"register", stockTab:"status", stockWh:"all", posWh:"all", posQ:"", receiveWh:"all", receiveQ:"", stocktakeWh:"all", stocktakeMode:"wh", stocktakeQ:"",
-      stockAsOf: TODAY, stockFrom: "2026-07-01", stockTo: TODAY,
+      stockAsOf: TODAY, stockFrom: addDays(TODAY,-29), stockTo: TODAY,
       historyFrom: addDays(TODAY,-29), historyTo: TODAY,
       usageFrom: addDays(TODAY,-29), usageTo: TODAY, usageWhs: null, usageType: "all", usageQuery: "", usageSortKey: "code", usageSortDir: "asc",
       monthlyYear: parseInt(TODAY.slice(0,4),10), monthlyWh: "all", monthlyType: "all", monthlyQ: "",
@@ -508,7 +512,7 @@
         return t;
       });
       s.stockAsOf = s.stockAsOf || TODAY;
-      s.stockFrom = s.stockFrom || "2026-07-01";
+      s.stockFrom = s.stockFrom || addDays(TODAY,-29);
       s.stockTo = s.stockTo || TODAY;
       s.historyFrom = s.historyFrom || addDays(TODAY,-29);
       s.historyTo = s.historyTo || TODAY;
@@ -560,7 +564,7 @@
     s.matTypes = (typeof s.matTypes !== 'undefined') ? s.matTypes : cloneMatTypes();
     s.matTypes = s.matTypes.map(function(t){ if(typeof t === "string") return { name:t, purchasable:(t==="소모품"||t==="기타") }; return t; });
     s.stockAsOf = s.stockAsOf || TODAY;
-    s.stockFrom = s.stockFrom || "2026-07-01";
+    s.stockFrom = s.stockFrom || addDays(TODAY,-29);
     s.stockTo = s.stockTo || TODAY;
     s.historyFrom = s.historyFrom || addDays(TODAY,-29);
     s.historyTo = s.historyTo || TODAY;
@@ -1105,9 +1109,9 @@
   window.setStockTab = function(t){ APP.stockTab=t; renderContent(); };
   window.setStockWh = function(v){ APP.stockWh = v || "all"; persist(); renderContent(); };
   window.setStockAsOf = function(v){ APP.stockAsOf = v || TODAY; persist(); renderContent(); };
-  window.setStockFrom = function(v){ APP.stockFrom = v || "2026-07-01"; persist(); renderContent(); };
+  window.setStockFrom = function(v){ APP.stockFrom = v || addDays(TODAY,-29); persist(); renderContent(); };
   window.setStockTo = function(v){ APP.stockTo = v || TODAY; persist(); renderContent(); };
-  window.resetStockRange = function(){ APP.stockFrom = "2026-07-01"; APP.stockTo = TODAY; persist(); renderContent(); };
+  window.resetStockRange = function(){ APP.stockFrom = addDays(TODAY,-29); APP.stockTo = TODAY; persist(); renderContent(); };
 
   /* ---------------- 자재관리 ---------------- */
   function screenMaterial(){
