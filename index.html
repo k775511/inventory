@@ -1,4 +1,30 @@
 <title>PLUSDOOR 재고관리 프로토타입</title>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAjvH4UGtn032zQoZTrN3f2p6gF912GeCo",
+    authDomain: "inventory-e89bf.firebaseapp.com",
+    projectId: "inventory-e89bf",
+    storageBucket: "inventory-e89bf.firebasestorage.app",
+    messagingSenderId: "879509458967",
+    appId: "1:879509458967:web:f96a07e3c2d5b90091cc52",
+    measurementId: "G-S7542SNWGL"
+  };
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const stateDocRef = doc(db, "shared", "inventoryState");
+  window.stateDocRef = stateDocRef;
+  window.firebaseGetDoc = getDoc;
+  window.firebaseSetDoc = setDoc;
+</script>
 <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 4a5 5 0 0 0-5 5v3.2c0 .5-.2 1-.5 1.4L5 16h14l-1.5-2.4c-.3-.4-.5-.9-.5-1.4V9a5 5 0 0 0-5-5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="3" x2="12" y2="5.5"/><line x1="12" y1="18.5" x2="12" y2="21"/><line x1="3" y1="12" x2="5.5" y2="12"/><line x1="18.5" y1="12" x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7.3" y2="7.3"/><line x1="16.7" y1="16.7" x2="18.4" y2="18.4"/><line x1="18.4" y1="5.6" x2="16.7" y2="7.3"/><line x1="7.3" y1="16.7" x2="5.6" y2="18.4"/></g></symbol>
@@ -516,7 +542,73 @@
       return s;
     }catch(e){ return seedState(); }
   }
-  function persist(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(APP)); }catch(e){} }
+  function persist(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(APP)); }catch(e){}
+    if(window.firebaseSetDoc && window.stateDocRef){
+      window.firebaseSetDoc(window.stateDocRef, { app: APP }).catch(function(err){
+        console.warn("Firestore save failed:", err);
+      });
+    }
+  }
+
+  function normalizeState(s){
+    s = s || {};
+    s.cart = s.cart || [];
+    s.inCart = s.inCart || [];
+    s.whs = s.whs || WHS_DEFAULT.slice();
+    s.cats = (typeof s.cats !== 'undefined') ? s.cats : CATS.slice();
+    s.matTypes = (typeof s.matTypes !== 'undefined') ? s.matTypes : cloneMatTypes();
+    s.matTypes = s.matTypes.map(function(t){ if(typeof t === "string") return { name:t, purchasable:(t==="소모품"||t==="기타") }; return t; });
+    s.stockAsOf = s.stockAsOf || TODAY;
+    s.stockFrom = s.stockFrom || "2026-07-01";
+    s.stockTo = s.stockTo || TODAY;
+    s.historyFrom = s.historyFrom || addDays(TODAY,-29);
+    s.historyTo = s.historyTo || TODAY;
+    s.stockWh = s.stockWh || "all";
+    s.stocktakeWh = s.stocktakeWh || "all";
+    s.stocktakeMode = s.stocktakeMode || "wh";
+    s.stocktakeQ = s.stocktakeQ || "";
+    s.stocktakeLogs = s.stocktakeLogs || [];
+    s.usageType = s.usageType || "all";
+    s.usageFrom = s.usageFrom || addDays(TODAY,-29);
+    s.usageTo = s.usageTo || TODAY;
+    s.usageWhs = s.usageWhs || null;
+    s.usageQuery = s.usageQuery || "";
+    s.usageSortKey = s.usageSortKey || "code";
+    s.usageSortDir = s.usageSortDir || "asc";
+    s.purchaseTab = s.purchaseTab || "request";
+    s.pmReqQuery = s.pmReqQuery || "";
+    s.pmGuideQuery = s.pmGuideQuery || "";
+    s.pmGuideSelKind = s.pmGuideSelKind || "type";
+    s.pmGuideSelValue = s.pmGuideSelValue || "all";
+    s.monthlyYear = s.monthlyYear || parseInt(TODAY.slice(0,4),10);
+    s.monthlyWh = s.monthlyWh || "all";
+    s.monthlyType = s.monthlyType || "all";
+    s.monthlyQ = s.monthlyQ || "";
+    s.yoyMonth = s.yoyMonth || parseInt(TODAY.slice(5,7),10);
+    s.yoyWh = s.yoyWh || "all";
+    s.yoyType = s.yoyType || "all";
+    s.yoyQ = s.yoyQ || "";
+    return s;
+  }
+
+  function initFirebaseState(){
+    if(!window.firebaseGetDoc || !window.stateDocRef) return;
+    window.firebaseGetDoc(window.stateDocRef).then(function(snapshot){
+      if(snapshot.exists()){
+        var serverState = snapshot.data().app || snapshot.data();
+        if(serverState && typeof serverState === "object"){
+          APP = normalizeState(serverState);
+          renderContent();
+        }
+      } else {
+        persist();
+      }
+    }).catch(function(err){
+      console.warn("Firestore load failed:", err);
+    });
+  }
+
   // 구매마스터는 더 이상 별도로 품목을 등록하지 않습니다. 자재관리에서 "자재 구분"을
   // 소모품으로 설정한 품목이 구매마스터의 자재요청/발주진행도 대상이 됩니다.
   // 기존에 구매마스터에 등록돼 있던 품목(APP.pm)은 최초 실행 시 자재관리로 1회 이관합니다.
@@ -552,6 +644,7 @@
   persist();
   migratePmToMats();
   sweepExpiredOrderCompletions();
+  initFirebaseState();
   // 검색창은 키 입력마다 renderContent()로 화면 전체를 다시 그리는데, 이때 입력 요소가
   // 통째로 재생성되면서 한글 조합(IME) 중이던 글자가 자소로 풀려버립니다(예: "가스텍" -> "ㄱㅏㅅㅡㅌㅔㄱ").
   // compositionstart/compositionend로 조합 여부를 감지하는 방식은 환경에 따라 신뢰할 수 없어서,
