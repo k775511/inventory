@@ -2370,10 +2370,9 @@
     }
     var selLabel = selValue==="all" ? (selKind==="wh" ? "전체 창고" : "전체 자재") : selValue;
     var selHtml = selItems.length ? '<div class="guide-grid" style="margin-top:8px">'+selItems.map(function(m){
-        return '<div class="guide-card">'+
-          '<div'+(m.photo?' onclick="openLightbox(\''+m.code+'\')" style="cursor:pointer"':'')+'>'+(m.photo?'<div class="photo-box-md"><img src="'+m.photo+'" alt=""></div>':'<div class="photo-box-md">📦</div>')+'</div>'+
-          '<div><div class="guide-card-name">'+esc(m.name)+'</div><div class="guide-card-alias">창고: '+esc(m.wh||"-")+'</div></div>'+
-          (m.note ? '<div class="guide-card-note">'+esc(m.note).replace(/\n/g,"<br>")+'</div>' : '')+
+        return '<div class="guide-card" style="cursor:pointer" onclick="openGuideDetailModal(\''+m.code+'\')">'+
+          '<div>'+(m.photo?'<div class="photo-box-md"><img src="'+m.photo+'" alt=""></div>':'<div class="photo-box-md">📦</div>')+'</div>'+
+          '<div><div class="guide-card-name">'+esc(m.name)+'</div><div class="guide-card-alias">구매처: '+esc(m.vendor||"-")+'</div><div class="guide-card-alias">안전재고(비/성): '+(m.safeOff||0)+'/'+(m.safePeak||0)+'</div><div class="guide-card-alias">리드타임: '+(m.leadtime||0)+'일</div></div>'+
         '</div>';
       }).join("")+'</div>' : '<div class="result-empty">조건에 맞는 품목이 없습니다.</div>';
 
@@ -2389,10 +2388,42 @@
         '</div>'+
       '</div>';
   }
+  window.openGuideDetailModal = function(code){
+    var m = byCode(code); if(!m) return;
+    var html = '<div class="modal-header"><h3>'+esc(m.name)+'</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body">'+
+      '<div style="display:flex;justify-content:center">'+(m.photo?'<div class="photo-box-lg" onclick="openLightbox(\''+m.code+'\')" style="cursor:pointer"><img src="'+m.photo+'" alt=""></div>':'<div class="photo-box-lg">📦</div>')+'</div>'+
+      '<div class="stat-cards cols-3" style="margin-top:14px">'+
+        '<div class="stat-card"><div class="stat-label">구매처</div><div class="stat-value" style="font-size:16px">'+esc(m.vendor||"-")+'</div></div>'+
+        '<div class="stat-card"><div class="stat-label">안전재고</div><div class="stat-value" style="font-size:16px"><span style="color:var(--blue-600)">'+(m.safeOff||0)+'</span> / <span style="color:var(--low-text)">'+(m.safePeak||0)+'</span></div></div>'+
+        '<div class="stat-card"><div class="stat-label">리드타임</div><div class="stat-value" style="font-size:16px">'+(m.leadtime||0)+'일</div></div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><span class="pos-section-label">설명</span><button type="button" class="btn btn-outline btn-sm" onclick="openGuideNoteEditModal(\''+m.code+'\')">수정</button></div>'+
+      (m.note ? '<div class="guide-card-note" style="margin-top:6px">'+esc(m.note).replace(/\n/g,"<br>")+'</div>' : '<div class="pos-hint" style="margin-top:6px">등록된 설명이 없습니다.</div>')+
+      '</div>'+
+      '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">닫기</button></div>';
+    openModal(html);
+  };
+  window.openGuideNoteEditModal = function(code){
+    var m = byCode(code); if(!m) return;
+    var html = '<div class="modal-header"><h3>설명 수정 · '+esc(m.name)+'</h3><button onclick="openGuideDetailModal(\''+code+'\')"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body">'+
+      '<div class="form-field full"><label>설명 메모 (안내서에 표시)</label><textarea id="guide-note-edit" rows="5" placeholder="예: 도어락 조립 시 사용하는 부자재입니다. 습기에 약하니 서늘한 곳에 보관하세요." style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+esc(m.note||"")+'</textarea></div>'+
+      '</div>'+
+      '<div class="modal-footer"><button class="btn btn-outline" onclick="openGuideDetailModal(\''+code+'\')">취소</button><button class="btn btn-primary" onclick="saveGuideNote(\''+code+'\')">저장</button></div>';
+    openModal(html);
+  };
+  window.saveGuideNote = function(code){
+    var m = byCode(code); if(!m) return;
+    m.note = document.getElementById("guide-note-edit").value.trim();
+    persist();
+    showToast("설명이 저장되었습니다.");
+    openGuideDetailModal(code);
+  };
   window.setPmGuideQuery = function(v){ APP.pmGuideQuery=v; persist(); renderContent(); var el=document.querySelector('input[placeholder="품명, 코드, 거래처로 검색"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.selectPmGuide = function(kind, value){ APP.pmGuideSelKind=kind; APP.pmGuideSelValue=value; persist(); renderContent(); };
   function buildPmReqText(m, qty, urgent){
-    return "품목코드: "+m.code+"\n품명: "+m.name+"\n수량: "+qty+"\n긴급여부: "+urgent+"\n거래처: "+(m.vendor||"-")+"\n구매방식: 전화\n최소발주수량: "+(m.moq||0)+"\n단가: "+fmt(m.price||0)+"원";
+    return "품목코드: "+m.code+"\n품명: "+m.name+"\n수량: "+qty+"\n긴급여부: "+urgent+"\n거래처: "+(m.vendor||"-")+"\n최소발주수량: "+(m.moq||0)+"\n단가: "+fmt(m.price||0)+"원";
   }
   window.openPmReqModal = function(code){
     var m = byCode(code); if(!m) return;
