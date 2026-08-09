@@ -423,6 +423,20 @@
     { name:"기타", purchasable:true }
   ];
   function cloneMatTypes(){ return MAT_TYPES.map(function(t){ return { name:t.name, purchasable:t.purchasable }; }); }
+  // 사용량분석 표의 "기간중 평균 재고량/예상재고소진일수" 2개 열은 기본 계산식이 정해져 있지만,
+  // 설정(수식 추가 및 설정)에서 나중에 값을 바꿀 수 있도록 수식 문자열로 관리한다.
+  // (생산가능수량은 품목마다 계산식이 다를 수 있어 자재 개별 설정(m.prodFormula)으로 분리했다 — prodQty() 참고.)
+  var USAGE_BUILTIN_FORMULA_DEFAULTS = {
+    avg: "(opening+closing)/2",
+    daysLeft: "outQty>0 ? Math.round(current/(outQty/days)) : NaN"
+  };
+  var USAGE_BUILTIN_FORMULA_LABELS = { avg:"기간중 평균 재고량", daysLeft:"예상재고소진일수" };
+  function cloneUsageBuiltinFormulas(){
+    return { avg:USAGE_BUILTIN_FORMULA_DEFAULTS.avg, daysLeft:USAGE_BUILTIN_FORMULA_DEFAULTS.daysLeft };
+  }
+  // 자재별 "생산가능수량" 수식에서 쓸 수 있는 변수: 그 자재 자신의 현재고/안전재고만 사용한다.
+  var MAT_FORMULA_VARS = ["current","safe"];
+  var MAT_FORMULA_ALLOWED_IDENT = MAT_FORMULA_VARS.concat(["Math","round","floor","ceil","abs","min","max","pow","sqrt","log","exp","PI","NaN"]);
   // 구매마스터는 정식 자재관리(품목관리)와 별개입니다: 현장에서 그때그때 요청하는 자잘한 소모품/부자재를 다룹니다.
   var PM_CATS = ["소모품","포장재","안전용품","공구","기타"];
   var PM_CAT_PREFIX = { "소모품":"SM", "포장재":"PK", "안전용품":"SF", "공구":"TL", "기타":"ET" };
@@ -490,7 +504,8 @@
       cur:"dashboard", materialTab:"register", materialQ:"", stockTab:"status", stockWh:"all", posWh:"all", posQ:"", receiveWh:"all", receiveQ:"", stocktakeWh:"all", stocktakeMode:"wh", stocktakeQ:"",
       stockAsOf: TODAY, stockFrom: addDays(TODAY,-29), stockTo: TODAY,
       historyFrom: addDays(TODAY,-29), historyTo: TODAY,
-      usageFrom: addDays(TODAY,-29), usageTo: TODAY, usageWhs: null, usageType: "all", usageQuery: "", usageSortKey: "code", usageSortDir: "asc",
+      usageFrom: addDays(TODAY,-29), usageTo: TODAY, usageWhs: null, usageType: "all", usageQuery: "", usageSortKey: "code", usageSortDir: "asc", usageFormulas: [],
+      usageBuiltinFormulas: cloneUsageBuiltinFormulas(),
       monthlyYear: parseInt(TODAY.slice(0,4),10), monthlyWh: "all", monthlyType: "all", monthlyQ: "",
       yoyMonth: parseInt(TODAY.slice(5,7),10), yoyWh: "all", yoyType: "all", yoyQ: "",
       purchaseTab: "request", pmReqQuery: "", pmGuideQuery: "", pmGuideSelKind: "type", pmGuideSelValue: "all",
@@ -531,6 +546,8 @@
       s.materialQ = s.materialQ || "";
       s.usageSortKey = s.usageSortKey || "code";
       s.usageSortDir = s.usageSortDir || "asc";
+      s.usageFormulas = s.usageFormulas || [];
+      s.usageBuiltinFormulas = Object.assign(cloneUsageBuiltinFormulas(), s.usageBuiltinFormulas||{});
       s.purchaseTab = s.purchaseTab || "request";
       s.pmReqQuery = s.pmReqQuery || "";
       s.pmGuideQuery = s.pmGuideQuery || "";
@@ -583,6 +600,8 @@
     s.usageQuery = s.usageQuery || "";
     s.usageSortKey = s.usageSortKey || "code";
     s.usageSortDir = s.usageSortDir || "asc";
+    s.usageFormulas = s.usageFormulas || [];
+    s.usageBuiltinFormulas = Object.assign(cloneUsageBuiltinFormulas(), s.usageBuiltinFormulas||{});
     s.purchaseTab = s.purchaseTab || "request";
     s.pmReqQuery = s.pmReqQuery || "";
     s.pmGuideQuery = s.pmGuideQuery || "";
@@ -639,7 +658,7 @@
       APP.mats.push({
         code:newCode, name:p.name, cat:cat,
         matType:"소모품", wh:(APP.whs[0]||"공통자재창고"), unit:"EA", loc:"",
-        stock:0, safeOff:0, safePeak:0, factor:0, op:"*", photo:p.photo||"", usage:{cm:0,lm:0,ly:0},
+        stock:0, safeOff:0, safePeak:0, prodFormula:"", photo:p.photo||"", usage:{cm:0,lm:0,ly:0},
         vendor:p.vendor||"", moq:p.moq||0, price:p.price||0, leadtime:p.leadtime||0,
         orderStatus:p.status||"", completedAt:p.completedAt||"", note:p.memo||""
       });
@@ -724,8 +743,8 @@
   function periodIn(m, start, end){ return APP.inLogs.filter(function(l){ return l.code===m.code && l.date>=start && l.date<=end; }).reduce(function(s,l){ return s+l.qty; },0); }
   function periodOut(m, start, end){ return APP.logs.filter(function(l){ return l.code===m.code && l.date>=start && l.date<=end; }).reduce(function(s,l){ return s+l.qty; },0); }
   function prodQty(m){
-    if(!m.factor) return null;
-    return m.op==="*" ? m.stock*m.factor : Math.floor(m.stock/m.factor);
+    if(!m.prodFormula) return null;
+    return evalUsageFormula(m.prodFormula, { current:m.stock, safe:activeSafe(m) }, MAT_FORMULA_VARS);
   }
   function photoCell(m, big){
     var cls = big ? "photo-box-lg" : "photo-box";
@@ -846,7 +865,7 @@
         '<div class="panel"><div class="panel-header"><h3>재고부족 알림</h3><span class="count">'+low.length+'건</span><span class="btn btn-ghost btn-sm" onclick="goMaterialAlert()">전체보기</span></div><div class="panel-body"><ul class="alert-list">'+
           (low.length ? low.map(function(m){ return '<li class="alert-item"><svg class="ic"><use href="#i-alert"/></svg><span class="ai-name">'+esc(m.name)+'</span><span class="ai-cat">'+esc(m.cat)+'</span><span class="ai-qty">'+m.stock+' / '+activeSafe(m)+' '+m.unit+'</span></li>'; }).join("") : '<li class="alert-item" style="color:var(--text-400)">부족 품목이 없습니다.</li>')+
         '</ul></div></div>'+
-        '<div class="panel"><div class="panel-header"><h3>최근 출고 내역</h3><span class="btn btn-ghost btn-sm" onclick="go(\'history\')">전체보기</span></div><div class="panel-body" style="padding:0"><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>일자</th><th>구분</th><th>자재명</th><th class="num">수량</th><th>창고</th></tr></thead><tbody>'+recentRows+'</tbody></table></div></div></div>'+
+        '<div class="panel"><div class="panel-header"><h3>최근 출고 내역</h3><span class="btn btn-ghost btn-sm" onclick="go(\'history\')">전체보기</span></div><div class="panel-body" style="padding:0"><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>일자</th><th>구분</th><th>자재명/규격</th><th class="num">수량</th><th>창고</th></tr></thead><tbody>'+recentRows+'</tbody></table></div></div></div>'+
       '</div>'+
 
       '<div class="panel"><div class="panel-header"><h3>최근 사용량 TOP 10</h3><span class="btn btn-ghost btn-sm" onclick="goMaterialUsage()">사용량분석 전체보기</span></div><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th class="ctr">순위</th><th>품목명</th><th class="num">이번달</th><th class="num">전월</th><th class="num">전년동월</th><th class="num">전월대비</th><th class="num">전년대비</th><th class="num">현재고</th></tr></thead><tbody>'+top10Rows+'</tbody></table></div></div>'+
@@ -870,7 +889,7 @@
     var resultHtml = rows.length===0 ? '<div class="result-empty">검색 결과가 없습니다.</div>' : rows.map(function(m){
       var low = m.stock < activeSafe(m);
       return '<div class="result-row">'+photoCell(m,false)+
-        '<div class="result-main"><div class="result-name">'+esc(m.name)+'</div><div class="result-meta">'+esc(m.code)+' · '+esc(m.wh)+' · '+esc(m.loc)+'</div></div>'+
+        '<div class="result-main"><div class="result-name">'+esc(m.name)+' <span style="color:var(--low-text)">['+esc(m.wh)+(m.loc?'/'+esc(m.loc):'')+']</span>'+'</div><div class="result-meta">'+esc(m.code)+'</div></div>'+
         '<div class="result-stock'+(low?' low':'')+'">재고 '+m.stock+'</div>'+
         '<button class="btn-add" onclick="posAdd(\''+m.code+'\')" aria-label="담기"><svg class="ic" style="width:15px;height:15px"><use href="#i-plus"/></svg></button>'+
         '</div>';
@@ -960,7 +979,7 @@
     var rows = catalogForWh(APP.receiveWh, APP.receiveQ);
     var resultHtml = rows.length===0 ? '<div class="result-empty">검색 결과가 없습니다.</div>' : rows.map(function(m){
       return '<div class="result-row">'+photoCell(m,false)+
-        '<div class="result-main"><div class="result-name">'+esc(m.name)+'</div><div class="result-meta">'+esc(m.code)+' · '+esc(m.wh)+' · '+esc(m.loc)+'</div></div>'+
+        '<div class="result-main"><div class="result-name">'+esc(m.name)+' <span style="color:var(--low-text)">['+esc(m.wh)+(m.loc?'/'+esc(m.loc):'')+']</span>'+'</div><div class="result-meta">'+esc(m.code)+'</div></div>'+
         '<div class="result-stock">재고 '+m.stock+'</div>'+
         '<button class="btn-add" onclick="rcvAdd(\''+m.code+'\')" aria-label="담기"><svg class="ic" style="width:15px;height:15px"><use href="#i-plus"/></svg></button>'+
         '</div>';
@@ -1192,10 +1211,17 @@
       var outQty = periodOut(m,start,end);
       var opening = stockAsOfQty(m, prevDay(start));
       var closing = stockAsOfQty(m, end);
-      var avgStock = Math.round(((opening+closing)/2)*100)/100;
-      var dailyUsage = outQty/days;
-      var daysLeft = dailyUsage>0 ? Math.round(m.stock/dailyUsage) : null;
-      return { m:m, current:m.stock, prod:prodQty(m), avg:avgStock, daysLeft:daysLeft, inQty:inQty, outQty:outQty, safe:activeSafe(m) };
+      // 기간중 평균재고량/예상소진일수는 설정에서 수식을 바꿀 수 있으므로(usageBuiltinFormulas), 하드코딩된
+      // 계산 대신 해당 수식을 그대로 평가한다. 생산가능수량은 자재마다 계산식이 다를 수 있어 자재
+      // 개별 설정(prodQty)을 그대로 쓰고, 뒤 수식이 참조할 수 있도록 vars에 먼저 채워 넣는다.
+      var bf = APP.usageBuiltinFormulas || USAGE_BUILTIN_FORMULA_DEFAULTS;
+      var prod = prodQty(m);
+      var vars = { current:m.stock, safe:activeSafe(m), inQty:inQty, outQty:outQty, days:days, opening:opening, closing:closing, prod:(prod||0), avg:0, daysLeft:0 };
+      var avgRaw = evalUsageFormula(bf.avg, vars); vars.avg = avgRaw||0;
+      var avgStock = avgRaw==null ? null : Math.round(avgRaw*100)/100;
+      var daysLeftRaw = evalUsageFormula(bf.daysLeft, vars); vars.daysLeft = daysLeftRaw||0;
+      var daysLeft = daysLeftRaw==null ? null : Math.round(daysLeftRaw);
+      return { m:m, current:m.stock, prod:prod, avg:avgStock, daysLeft:daysLeft, inQty:inQty, outQty:outQty, safe:activeSafe(m), formulaVars:vars };
     });
     var key = APP.usageSortKey||"code", dir = (APP.usageSortDir==="desc") ? -1 : 1;
     items.sort(function(a,b){
@@ -1203,7 +1229,7 @@
       if(key==="code"){ av=a.m.code; bv=b.m.code; if(av<bv) return -1*dir; if(av>bv) return 1*dir; return 0; }
       else if(key==="current"){ av=a.current; bv=b.current; }
       else if(key==="prod"){ av=a.prod==null?-Infinity:a.prod; bv=b.prod==null?-Infinity:b.prod; }
-      else if(key==="avg"){ av=a.avg; bv=b.avg; }
+      else if(key==="avg"){ av=a.avg==null?-Infinity:a.avg; bv=b.avg==null?-Infinity:b.avg; }
       else if(key==="daysLeft"){ av=a.daysLeft==null?Infinity:a.daysLeft; bv=b.daysLeft==null?Infinity:b.daysLeft; }
       else if(key==="in"){ av=a.inQty; bv=b.inQty; }
       else if(key==="out"){ av=a.outQty; bv=b.outQty; }
@@ -1213,7 +1239,7 @@
     });
     var agg = { sumCurrent:0, sumProd:0, sumAvg:0, sumIn:0, sumOut:0, avgDaysLeft:null };
     var dSum=0, dCnt=0;
-    items.forEach(function(x){ agg.sumCurrent+=x.current; agg.sumProd+=(x.prod||0); agg.sumAvg+=x.avg; agg.sumIn+=x.inQty; agg.sumOut+=x.outQty; if(x.daysLeft!=null){ dSum+=x.daysLeft; dCnt++; } });
+    items.forEach(function(x){ agg.sumCurrent+=x.current; agg.sumProd+=(x.prod||0); agg.sumAvg+=(x.avg||0); agg.sumIn+=x.inQty; agg.sumOut+=x.outQty; if(x.daysLeft!=null){ dSum+=x.daysLeft; dCnt++; } });
     agg.avgDaysLeft = dCnt ? Math.round((dSum/dCnt)*100)/100 : null;
     return { start:start, end:end, days:days, items:items, agg:agg };
   }
@@ -1228,6 +1254,91 @@
     var arrow = active ? (APP.usageSortDir==="desc" ? " ▼" : " ▲") : "";
     return '<th'+(cls?' class="'+cls+'"':'')+' style="cursor:pointer;user-select:none;white-space:nowrap" onclick="setUsageSort(\''+key+'\')">'+esc(label)+arrow+'</th>';
   }
+  // 사용량분석 표에 직접 계산식을 추가하는 기능. Function 생성자는 전역 스코프에서 실행되므로
+  // (window/document/fetch 등에 계속 접근 가능) 파라미터 스코핑만으로는 안전하지 않다 —
+  // 허용 문자 화이트리스트 + 식별자 화이트리스트(정해진 변수명·Math 메서드만)로 실제 제한을 건다.
+  var USAGE_FORMULA_VARS = ["current","safe","inQty","outQty","days","opening","closing","prod","avg","daysLeft"];
+  var USAGE_FORMULA_ALLOWED_IDENT = USAGE_FORMULA_VARS.concat(["Math","round","floor","ceil","abs","min","max","pow","sqrt","log","exp","PI","NaN"]);
+  function isSafeFormulaExpr(expr, allowedIdent){
+    allowedIdent = allowedIdent || USAGE_FORMULA_ALLOWED_IDENT;
+    if(!expr || expr.length>200) return false;
+    if(!/^[A-Za-z0-9_ \t.+\-*/(),?:<>=!]*$/.test(expr)) return false;
+    var idents = expr.match(/[A-Za-z_][A-Za-z0-9_]*/g) || [];
+    return idents.every(function(id){ return allowedIdent.indexOf(id)>-1; });
+  }
+  function evalUsageFormula(expr, vars, varNames){
+    varNames = varNames || USAGE_FORMULA_VARS;
+    try{
+      var fn = new Function(varNames.join(","), '"use strict"; return ('+expr+');');
+      var v = fn.apply(null, varNames.map(function(k){ return vars[k]==null ? 0 : vars[k]; }));
+      return (typeof v === "number" && isFinite(v)) ? v : null;
+    }catch(e){ return null; }
+  }
+  window.openUsageFormulaModal = function(){
+    var bf = APP.usageBuiltinFormulas;
+    var builtinHtml = ["avg","daysLeft"].map(function(key){
+      return '<div class="form-field" style="margin-top:8px"><label>'+esc(USAGE_BUILTIN_FORMULA_LABELS[key])+' <span style="font-weight:400;color:var(--text-400)">(기본 제공 열 — 이름은 고정, 수식만 수정 가능)</span></label>'+
+        '<div style="display:flex;gap:6px"><input type="text" id="ubf-'+key+'" value="'+esc(bf[key])+'" style="font-family:ui-monospace,Consolas,monospace;flex:1">'+
+        '<button class="btn btn-outline" onclick="saveBuiltinUsageFormula(\''+key+'\')">저장</button>'+
+        '<button class="btn btn-outline" title="기본값으로 되돌리기" onclick="resetBuiltinUsageFormula(\''+key+'\')">기본값</button></div></div>';
+    }).join("");
+    var listHtml = APP.usageFormulas.length ? APP.usageFormulas.map(function(f,i){
+      return '<div class="stock-row"><div class="stock-row-main"><div class="stock-row-name">'+esc(f.label)+'</div><div class="stock-row-meta" style="font-family:ui-monospace,Consolas,monospace">'+esc(f.expr)+'</div></div>'+
+        '<button class="btn btn-outline icon-only" title="삭제" onclick="deleteUsageFormula('+i+')"><svg class="ic"><use href="#i-trash"/></svg></button></div>';
+    }).join("") : '<div class="pos-hint">아직 추가한 사용자 정의 열이 없습니다.</div>';
+    var html = '<div class="modal-header"><h3>수식 추가 및 설정</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body">'+
+      '<div class="pos-hint">사용 가능한 변수: <b>current</b>(현재재고량) · <b>prod</b>(생산가능수량, 자재별 설정값) · <b>avg</b>(기간중평균재고량) · <b>daysLeft</b>(예상재고소진일수) · <b>inQty</b>(총입고량) · <b>outQty</b>(총출고량) · <b>safe</b>(안전재고) · <b>days</b>(조회기간 일수) · <b>opening</b>(기간 시작 시점 재고) · <b>closing</b>(기간 종료 시점 재고). Math.round(반올림), Math.floor(소수점 버림), Math.min(더 작은 값), Math.max(더 큰 값) 등도 쓸 수 있습니다.<br>예: (current-safe)/safe*100<br>생산가능수량은 품목마다 계산식이 달라 여기서는 못 바꾸고, 자재관리의 신규등록/수정 화면에서 자재별로 설정합니다.</div>'+
+      '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:var(--text-600)">기본 제공 열 수식</div>'+
+      builtinHtml+
+      '<div style="margin-top:20px;font-size:12.5px;font-weight:800;color:var(--text-600)">새 사용자 정의 열 추가</div>'+
+      '<div class="form-field" style="margin-top:8px"><label>열 이름</label><input type="text" id="uf-label" placeholder="예: 안전재고 대비 비율(%)"></div>'+
+      '<div class="form-field" style="margin-top:8px"><label>수식</label><input type="text" id="uf-expr" placeholder="예: (current-safe)/safe*100" style="font-family:ui-monospace,Consolas,monospace"></div>'+
+      '<button class="btn btn-primary" style="margin-top:10px" onclick="addUsageFormula()">열 추가</button>'+
+      '<div style="margin-top:18px;font-size:12.5px;font-weight:800;color:var(--text-600)">추가된 사용자 정의 열 ('+APP.usageFormulas.length+'건)</div>'+
+      '<div class="stock-list" style="margin-top:6px">'+listHtml+'</div>'+
+      '</div>'+
+      '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">닫기</button></div>';
+    openModal(html, true);
+  };
+  window.saveBuiltinUsageFormula = function(key){
+    var el = document.getElementById("ubf-"+key);
+    var expr = (el.value||"").trim();
+    if(!expr){ showToast("수식을 입력하세요."); return; }
+    if(!isSafeFormulaExpr(expr)){ showToast("수식에 허용되지 않은 글자나 이름이 있습니다. 숫자·정해진 변수명·+-*/()·Math 함수만 쓸 수 있습니다."); return; }
+    APP.usageBuiltinFormulas[key] = expr;
+    persist();
+    showToast(USAGE_BUILTIN_FORMULA_LABELS[key]+" 수식이 저장되었습니다.");
+    renderContent();
+  };
+  window.resetBuiltinUsageFormula = function(key){
+    APP.usageBuiltinFormulas[key] = USAGE_BUILTIN_FORMULA_DEFAULTS[key];
+    persist();
+    showToast(USAGE_BUILTIN_FORMULA_LABELS[key]+" 수식을 기본값으로 되돌렸습니다.");
+    openUsageFormulaModal();
+    renderContent();
+  };
+  window.addUsageFormula = function(){
+    var label = (document.getElementById("uf-label").value||"").trim();
+    var expr = (document.getElementById("uf-expr").value||"").trim();
+    if(!label){ showToast("열 이름을 입력하세요."); return; }
+    if(!expr){ showToast("수식을 입력하세요."); return; }
+    if(!isSafeFormulaExpr(expr)){ showToast("수식에 허용되지 않은 글자나 이름이 있습니다. 숫자·변수명(current/prod/avg/daysLeft/inQty/outQty/safe/days/opening/closing)·+-*/()·Math 함수만 쓸 수 있습니다."); return; }
+    APP.usageFormulas.push({ id:newId("UF"), label:label, expr:expr });
+    persist();
+    showToast("수식 열이 추가되었습니다.");
+    openUsageFormulaModal();
+    renderContent();
+  };
+  window.deleteUsageFormula = function(i){
+    var f = APP.usageFormulas[i]; if(!f) return;
+    confirmAction('"'+f.label+'" 수식 열을 삭제할까요?', function(){
+      APP.usageFormulas.splice(i,1);
+      persist();
+      openUsageFormulaModal();
+      renderContent();
+    });
+  };
   function materialUsageHtml(){
     var lowTop = APP.mats.slice().filter(isLow).map(function(m){ return {name:m.name, lack:activeSafe(m)-m.stock}; }).sort(function(a,b){ return b.lack-a.lack; }).slice(0,5);
     var catAgg = APP.cats.map(function(c){
@@ -1239,17 +1350,21 @@
     var A = computeUsageAnalysis();
     var rowsHtml = A.items.length ? A.items.map(function(x){
       var m = x.m;
+      var formulaCells = APP.usageFormulas.map(function(f){
+        var v = evalUsageFormula(f.expr, x.formulaVars);
+        return '<td class="num">'+(v==null?'-':fmt(Math.round(v*100)/100))+'</td>';
+      }).join("");
       return '<tr><td class="wrap"><div style="display:flex;align-items:center;gap:10px">'+photoCell(m,false)+
         '<div><div style="font-weight:800;font-size:13px">'+esc(m.name)+'</div><div class="result-meta">'+esc(m.code)+' · '+esc(m.cat)+' · '+esc(m.wh)+' · '+esc(m.unit)+'</div></div></div></td>'+
         '<td class="num">'+fmt(x.current)+'</td>'+
         '<td class="num">'+(x.prod==null?'-':fmt(x.prod))+'</td>'+
-        '<td class="num">'+fmt(x.avg)+'</td>'+
+        '<td class="num">'+(x.avg==null?'-':fmt(x.avg))+'</td>'+
         '<td class="num">'+(x.daysLeft==null?'-':fmt(x.daysLeft))+'</td>'+
         '<td class="num">'+fmt(x.inQty)+'</td>'+
         '<td class="num">'+fmt(x.outQty)+'</td>'+
-        '<td class="num">'+fmt(x.safe)+'</td>'+
+        '<td class="num">'+fmt(x.safe)+'</td>'+formulaCells+
         '<td>'+stockBadge(m)+'</td></tr>';
-    }).join("") : '<tr><td colspan="9" style="text-align:center;color:var(--text-400)">조건에 맞는 품목이 없습니다.</td></tr>';
+    }).join("") : '<tr><td colspan="'+(9+APP.usageFormulas.length)+'" style="text-align:center;color:var(--text-400)">조건에 맞는 품목이 없습니다.</td></tr>';
 
     return ''+
       '<div class="report-grid">'+
@@ -1258,7 +1373,7 @@
             return '<div class="bar-col"><div class="bar-pair"><div class="bar in" style="height:'+m[1]+'%"></div><div class="bar out" style="height:'+m[2]+'%"></div></div><span class="bar-month">'+m[0]+'</span></div>';
           }).join("")+
         '</div><div class="legend"><span><i class="li-in"></i>입고</span><span><i class="li-out"></i>출고</span><span style="color:var(--text-400)">* 7월은 11일까지 집계</span></div></div>'+
-        '<div class="panel"><div class="panel-header"><h3>재고부족 TOP 5</h3></div><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>자재명</th><th class="num">부족수량</th></tr></thead><tbody>'+
+        '<div class="panel"><div class="panel-header"><h3>재고부족 TOP 5</h3></div><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>자재명/규격</th><th class="num">부족수량</th></tr></thead><tbody>'+
           (lowTop.length ? lowTop.map(function(x){ return '<tr><td>'+esc(x.name)+'</td><td class="num" style="color:var(--low-text);font-weight:800">'+x.lack+'</td></tr>'; }).join("") : '<tr><td colspan="2" style="text-align:center;color:var(--text-400)">부족 품목이 없습니다.</td></tr>')+
         '</tbody></table></div></div>'+
       '</div>'+
@@ -1278,11 +1393,11 @@
         '</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
         '<div class="field" style="flex:1;min-width:180px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.usageQuery||"")+'" placeholder="이름, 코드, 카테고리, 위치 검색" oninput="debounceSearch(\'usageQ\', this.value, setUsageQuery)"></div></div>'+
         '<div class="btn-row"><button class="btn btn-outline" onclick="usageCsvExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 내보내기</button>'+
-        '<button class="btn btn-primary" onclick="showToast(\'커스텀 수식 설정은 프로토타입에서 지원하지 않습니다\')">수식 추가 및 설정</button></div>'+
+        '<button class="btn btn-primary" onclick="openUsageFormulaModal()">수식 추가 및 설정</button></div>'+
       '</div>'+
       '<div class="pos-hint" style="margin-top:12px">예상재고소진일수 = 현재재고량 ÷ (기간 중 총 출고량 ÷ 기간 일수). 기간 중 출고 이력이 없는 품목은 "-"로 표시됩니다.</div>'+
       '<div class="table-wrap" style="margin-top:10px"><table><thead>'+
-        '<tr>'+usageTh("제품정보","code")+usageTh("현재 재고량","current","num")+usageTh("생산가능수량","prod","num")+usageTh("기간중 평균 재고량","avg","num")+usageTh("예상재고소진일수","daysLeft","num")+usageTh("총 입고량","in","num")+usageTh("총 출고량","out","num")+usageTh("안전재고","safe","num")+'<th>상태</th></tr>'+
+        '<tr>'+usageTh("제품정보","code")+usageTh("현재 재고량","current","num")+usageTh("생산가능수량","prod","num")+usageTh("기간중 평균 재고량","avg","num")+usageTh("예상재고소진일수","daysLeft","num")+usageTh("총 입고량","in","num")+usageTh("총 출고량","out","num")+usageTh("안전재고","safe","num")+APP.usageFormulas.map(function(f){ return '<th class="num">'+esc(f.label)+'</th>'; }).join("")+'<th>상태</th></tr>'+
         '<tr class="usage-summary-row"><td>'+A.items.length+'개 품목</td>'+
           '<td class="num">합계 '+fmt(A.agg.sumCurrent)+'</td>'+
           '<td class="num">합계 '+fmt(A.agg.sumProd)+'</td>'+
@@ -1290,7 +1405,7 @@
           '<td class="num">평균 '+(A.agg.avgDaysLeft==null?'-':fmt(A.agg.avgDaysLeft))+'</td>'+
           '<td class="num">합계 '+fmt(A.agg.sumIn)+'</td>'+
           '<td class="num">합계 '+fmt(A.agg.sumOut)+'</td>'+
-          '<td class="num">-</td><td>-</td></tr>'+
+          '<td class="num">-</td>'+APP.usageFormulas.map(function(){ return '<td class="num">-</td>'; }).join("")+'<td>-</td></tr>'+
       '</thead><tbody>'+rowsHtml+'</tbody></table></div>'+
       '</div></div>';
   }
@@ -1349,10 +1464,11 @@
   };
   window.usageCsvExport = function(){
     var A = computeUsageAnalysis();
-    var header = ["코드","품목명","카테고리","창고","현재재고량","생산가능수량","기간중평균재고량","예상재고소진일수","총입고량","총출고량","안전재고"];
+    var header = ["코드","품목명","카테고리","창고","현재재고량","생산가능수량","기간중평균재고량","예상재고소진일수","총입고량","총출고량","안전재고"].concat(APP.usageFormulas.map(function(f){ return f.label; }));
     var lines = [header.join(",")].concat(A.items.map(function(x){
       var m = x.m;
-      return [m.code,m.name,m.cat,m.wh,x.current,(x.prod==null?"":x.prod),x.avg,(x.daysLeft==null?"":x.daysLeft),x.inQty,x.outQty,x.safe].join(",");
+      var formulaVals = APP.usageFormulas.map(function(f){ var v = evalUsageFormula(f.expr, x.formulaVars); return v==null?"":Math.round(v*100)/100; });
+      return [m.code,m.name,m.cat,m.wh,x.current,(x.prod==null?"":x.prod),(x.avg==null?"":x.avg),(x.daysLeft==null?"":x.daysLeft),x.inQty,x.outQty,x.safe].concat(formulaVals).join(",");
     }));
     var csv = "﻿"+lines.join("\r\n");
     try{
@@ -1499,7 +1615,7 @@
   window.monthlyCsvExport = function(){
     var rows = computeMonthlyMatrix();
     var monthCols = []; for(var i=1;i<=12;i++){ monthCols.push(i+"월"); }
-    var header = ["코드","자재명","카테고리","창고"].concat(monthCols).concat(["합계"]);
+    var header = ["코드","자재명/규격","카테고리","창고"].concat(monthCols).concat(["합계"]);
     var lines = [header.join(",")].concat(rows.map(function(r){
       return [r.m.code, r.m.name, r.m.cat, r.m.wh].concat(r.months).concat([r.total]).join(",");
     }));
@@ -1602,7 +1718,7 @@
   window.yoyCsvExport = function(){
     var A = computeYearlySameMonthMatrix();
     var yearCols = A.years.map(function(y){ return y+"년"; });
-    var header = ["코드","자재명","카테고리","창고"].concat(yearCols).concat(["합계"]);
+    var header = ["코드","자재명/규격","카테고리","창고"].concat(yearCols).concat(["합계"]);
     var lines = [header.join(",")].concat(A.items.map(function(r){
       return [r.m.code, r.m.name, r.m.cat, r.m.wh].concat(r.values).concat([r.total]).join(",");
     }));
@@ -1635,7 +1751,7 @@
         '<button class="btn btn-outline icon-only" onclick="delMat(\''+m.code+'\')"><svg class="ic"><use href="#i-trash"/></svg></button></td></tr>';
     }).join("");
     return '<div class="toolbar">'+
-        '<div class="field" style="flex:1;min-width:220px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.materialQ||"")+'" placeholder="자재명, 코드, 카테고리, 자재구분, 창고, 위치로 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
+        '<div class="field" style="flex:1;min-width:220px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.materialQ||"")+'" placeholder="자재명/규격, 코드, 카테고리, 자재구분, 창고, 위치로 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
       '</div>'+
       '<div class="toolbar-actions">'+
         '<div style="font-size:13px;font-weight:700;color:var(--text-600)">'+(q?'검색결과 '+visible.length+'건 / 전체 '+totalActive+'건':'등록된 자재 '+visible.length+'건')+'</div>'+
@@ -1655,12 +1771,12 @@
           '<button class="btn btn-outline" style="color:var(--low-text);border-color:var(--low-text)" onclick="bulkDeleteMats()">선택 삭제</button>'+
         '</div>'+
       '</div>'+
-      '<div class="pos-hint">사진 일괄등록은 파일명(코드 또는 자재명)으로 자동 매칭됩니다. CSV 형식: 코드,자재명,카테고리,자재구분,창고,단위,위치,현재고,비수기안전재고,성수기안전재고<br>사용중지 처리된 자재는 출고POS·자재입고 검색에는 더 이상 나오지 않지만, 월별 사용량비교 등 이력 집계 화면에는 계속 표시되어 과거 사용량을 확인할 수 있습니다. 표 왼쪽 체크박스로 여러 품목을 선택하면 한 번에 삭제·사용중지 처리할 수 있습니다.</div>'+
-      '<div class="table-wrap"><table><thead><tr><th style="width:30px"><input type="checkbox" id="mat-sel-all" onchange="toggleMatSelAll(this.checked)"></th><th>사진</th><th>코드</th><th>자재명</th><th>자재구분</th><th>카테고리</th><th>창고</th><th>단위</th><th>위치</th><th class="num">현재고</th><th class="num">비수기 안전재고</th><th class="num">성수기 안전재고</th><th>상태</th><th>관리</th></tr></thead><tbody>'+(rows||'<tr><td colspan="14" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
+      '<div class="pos-hint">사진 일괄등록은 파일명(코드 또는 자재명/규격)으로 자동 매칭됩니다. CSV 형식: 코드,자재명/규격,카테고리,자재구분,창고,단위,위치,현재고,생산가능수량수식(선택, current=현재고·safe=안전재고·Math 함수만 허용),비수기안전재고,성수기안전재고,구매처,최소발주수량,단가,리드타임,설명메모(구매처·설명메모처럼 쉼표가 들어갈 수 있는 칸은 큰따옴표로 감싸주세요)<br>"#"으로 시작하는 줄은 설명(주석)으로 취급되어 업로드 시 자동으로 무시되니 지우지 않고 그대로 두셔도 됩니다.<br>사용중지 처리된 자재는 출고POS·자재입고 검색에는 더 이상 나오지 않지만, 월별 사용량비교 등 이력 집계 화면에는 계속 표시되어 과거 사용량을 확인할 수 있습니다. 표 왼쪽 체크박스로 여러 품목을 선택하면 한 번에 삭제·사용중지 처리할 수 있습니다.</div>'+
+      '<div class="table-wrap"><table><thead><tr><th style="width:30px"><input type="checkbox" id="mat-sel-all" onchange="toggleMatSelAll(this.checked)"></th><th>사진</th><th>코드</th><th>자재명/규격</th><th>자재구분</th><th>카테고리</th><th>창고</th><th>단위</th><th>위치</th><th class="num">현재고</th><th class="num">비수기 안전재고</th><th class="num">성수기 안전재고</th><th>상태</th><th>관리</th></tr></thead><tbody>'+(rows||'<tr><td colspan="14" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
   }
   window.setMaterialQ = function(v){
     APP.materialQ = v; persist(); renderContent();
-    var el = document.querySelector('#content .toolbar input[placeholder="자재명, 코드, 카테고리, 자재구분, 창고, 위치로 검색"]');
+    var el = document.querySelector('#content .toolbar input[placeholder="자재명/규격, 코드, 카테고리, 자재구분, 창고, 위치로 검색"]');
     if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
   };
   window.onMatSelChange = function(){
@@ -1901,9 +2017,15 @@
   }
 
   window.csvExport = function(){
-    var header = ["코드","자재명","카테고리","자재구분","창고","단위","위치","현재고","비수기안전재고","성수기안전재고"];
-    var lines = [header.join(",")].concat(APP.mats.map(function(m){
-      return [m.code,m.name,m.cat,(m.matType||""),m.wh,m.unit,m.loc,m.stock,m.safeOff,m.safePeak].join(",");
+    var header = ["코드","자재명/규격","자재구분","카테고리","창고","단위","위치","현재고","생산가능수량수식","비수기안전재고","성수기안전재고","구매처","최소발주수량","단가","리드타임","설명메모"];
+    // 실제 자재 데이터로 안 섞이도록, 수식 설명은 "#"으로 시작하는 주석 줄로 맨 위에 남겨둔다.
+    // csvImport()가 "#"로 시작하는 줄은 항상 건너뛰므로 지우지 않고 계속 남겨둬도 된다. 쉼표 때문에
+    // 엑셀에서 여러 칸으로 쪼개지지 않도록 줄 전체를 하나의 칸(큰따옴표)에 담는다.
+    var comment = '"#생산가능수량수식 설명: current=현재고, safe=안전재고"';
+    // 쉼표가 들어갈 수 있는 텍스트 칸(수식, 구매처, 설명메모)은 CSV 규칙대로 큰따옴표로 감싼다.
+    function q(v){ return '"'+String(v||"").replace(/"/g,'""')+'"'; }
+    var lines = [comment, header.join(",")].concat(APP.mats.map(function(m){
+      return [m.code,m.name,(m.matType||""),m.cat,m.wh,m.unit,m.loc,m.stock,q(m.prodFormula),m.safeOff,m.safePeak,q(m.vendor),(m.moq||0),(m.price||0),(m.leadtime||0),q(m.note)].join(",");
     }));
     var csv = "﻿"+lines.join("\r\n");
     try{
@@ -1920,16 +2042,46 @@
     var reader = new FileReader();
     reader.onload = function(e){
       var text = String(e.target.result).replace(/^﻿/,"");
-      var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+      // "#"로 시작하는 줄(엑셀에서 큰따옴표로 감싸져 저장됐다면 "#"도 인정)은 설명(주석)이라
+      // 데이터로 취급하지 않고 건너뛴다 — 지우지 않고 남겨둬도 된다.
+      var lines = text.split(/\r?\n/).filter(function(l){
+        var t = l.trim();
+        return t && t[0] !== "#" && t.slice(0,2) !== '"#';
+      });
       if(lines.length<2){ showToast("가져올 데이터가 없습니다."); return; }
       var upserted = 0;
       for(var i=1;i<lines.length;i++){
-        var cols = lines[i].split(",");
+        var cols = parseCsvLine(lines[i]);
         if(cols.length<10) continue;
         var code=cols[0].trim();
-        var rec = { code:code, name:cols[1].trim(), cat:cols[2].trim(), matType:cols[3].trim(), wh:cols[4].trim(), unit:cols[5].trim(), loc:cols[6].trim(), stock:parseInt(cols[7],10)||0, safeOff:parseInt(cols[8],10)||0, safePeak:parseInt(cols[9],10)||0 };
+        // 생산가능수량수식 열은 현재고 바로 다음(9번째) 위치. 이 열이 없던 예전 10열짜리 CSV
+        // (코드..현재고,비수기안전재고,성수기안전재고)도 그대로 가져올 수 있게 둘 다 지원한다.
+        var hasProdCol = cols.length >= 11;
+        var rec = {
+          code:code, name:cols[1].trim(), matType:cols[2].trim(), cat:cols[3].trim(), wh:cols[4].trim(), unit:cols[5].trim(), loc:cols[6].trim(),
+          stock:parseInt(cols[7],10)||0,
+          safeOff:parseInt(cols[hasProdCol?9:8],10)||0,
+          safePeak:parseInt(cols[hasProdCol?10:9],10)||0
+        };
+        var prodFormulaRaw = hasProdCol ? cols[8].trim() : "";
+        if(prodFormulaRaw && isSafeFormulaExpr(prodFormulaRaw, MAT_FORMULA_ALLOWED_IDENT)) rec.prodFormula = prodFormulaRaw;
+        // 구매처/최소발주수량/단가/리드타임/설명메모는 현재고~성수기안전재고 다음에 이어지는
+        // 선택 열이다. 열 자체가 없는(예전 형식) CSV는 기존 값을 그대로 두고 건너뛴다.
+        var purchaseColStart = hasProdCol ? 11 : 10;
+        if(cols.length > purchaseColStart) rec.vendor = cols[purchaseColStart].trim();
+        if(cols.length > purchaseColStart+1) rec.moq = parseInt(cols[purchaseColStart+1],10)||0;
+        if(cols.length > purchaseColStart+2) rec.price = parseInt(cols[purchaseColStart+2],10)||0;
+        if(cols.length > purchaseColStart+3) rec.leadtime = parseInt(cols[purchaseColStart+3],10)||0;
+        if(cols.length > purchaseColStart+4) rec.note = cols[purchaseColStart+4].trim();
+        // 자재구분/카테고리/창고에 아직 등록되지 않은 값이 있으면 설정에 자동으로 새로 추가한다
+        // (예: CSV에 "3동 자재창고"처럼 새 창고명을 적으면 창고 관리 목록에도 자동으로 생긴다).
+        if(rec.matType && !APP.matTypes.some(function(t){ return t.name===rec.matType; })){
+          APP.matTypes.push({ name:rec.matType, purchasable:false });
+        }
+        if(rec.cat && APP.cats.indexOf(rec.cat)===-1) APP.cats.push(rec.cat);
+        if(rec.wh && APP.whs.indexOf(rec.wh)===-1) APP.whs.push(rec.wh);
         var ex = byCode(code);
-        if(ex){ Object.assign(ex, rec); } else { APP.mats.push(Object.assign({ factor:0, op:"*", photo:"", usage:{cm:0,lm:0,ly:0} }, rec)); }
+        if(ex){ Object.assign(ex, rec); } else { APP.mats.push(Object.assign({ prodFormula:"", vendor:"", moq:0, price:0, leadtime:0, note:"", photo:"", usage:{cm:0,lm:0,ly:0} }, rec)); }
         upserted++;
       }
       persist(); renderContent();
@@ -1938,15 +2090,32 @@
     reader.readAsText(file, "utf-8");
   };
 
+  // "현재재고 ÷/×/+/− 숫자" 꼴의 단순한 수식은 계산기처럼 쉽게 입력할 수 있게 해석해준다.
+  // 이 패턴에 안 맞는(예: safe를 쓰거나 여러 자재를 조합하는) 수식은 고급 모드로 넘어간다.
+  function parseSimpleProdFormula(expr){
+    if(!expr) return { op:"", num:"", floor:false };
+    var m;
+    if((m = expr.match(/^Math\.floor\(current\/(\d+(?:\.\d+)?)\)$/))) return { op:"/", num:m[1], floor:true };
+    if((m = expr.match(/^current\/(\d+(?:\.\d+)?)$/))) return { op:"/", num:m[1], floor:false };
+    if((m = expr.match(/^current\*(\d+(?:\.\d+)?)$/))) return { op:"*", num:m[1], floor:false };
+    if((m = expr.match(/^current\+(\d+(?:\.\d+)?)$/))) return { op:"+", num:m[1], floor:false };
+    if((m = expr.match(/^current-(\d+(?:\.\d+)?)$/))) return { op:"-", num:m[1], floor:false };
+    return null;
+  }
   window.openMatModal = function(code){
     var m = code ? byCode(code) : null;
+    var simple = m ? parseSimpleProdFormula(m.prodFormula||"") : { op:"", num:"", floor:false };
+    var useAdvanced = m && m.prodFormula && !simple;
+    var opOptions = [["", "계산 안 함"],["/","÷ 나누기"],["*","× 곱하기"],["+","+ 더하기"],["-","− 빼기"]].map(function(o){
+      return '<option value="'+o[0]+'"'+((simple&&simple.op===o[0])?" selected":"")+'>'+o[1]+'</option>';
+    }).join("");
     var html = '<div class="modal-header"><h3>'+(m?"자재 수정":"자재 신규등록")+'</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body">'+
       '<div class="form-grid">'+
         '<div class="form-field"><label>자재코드</label><input type="text" id="f-code" value="'+(m?esc(m.code):"")+'" '+(m?"readonly":"")+'></div>'+
         '<div class="form-field"><label>카테고리</label><select id="f-cat">'+APP.cats.map(function(c){ return '<option'+(m&&m.cat===c?" selected":"")+'>'+c+'</option>'; }).join("")+'</select></div>'+
-        '<div class="form-field"><label>자재 구분</label><select id="f-mattype" onchange="toggleMatPurchaseFields(this.value)"><option value=""'+(m&&!m.matType?" selected":"")+'>미지정</option>'+APP.matTypes.map(function(t){ return '<option value="'+esc(t.name)+'"'+(m&&m.matType===t.name?" selected":"")+'>'+esc(t.name)+(t.purchasable?' (구매마스터 표시)':'')+'</option>'; }).join("")+'</select></div>'+
-        '<div class="form-field full"><label>자재명</label><input type="text" id="f-name" value="'+(m?esc(m.name):"")+'" required></div>'+
+        '<div class="form-field"><label>자재 구분</label><select id="f-mattype"><option value=""'+(m&&!m.matType?" selected":"")+'>미지정</option>'+APP.matTypes.map(function(t){ return '<option value="'+esc(t.name)+'"'+(m&&m.matType===t.name?" selected":"")+'>'+esc(t.name)+(t.purchasable?' (자재요청 표시)':'')+'</option>'; }).join("")+'</select></div>'+
+        '<div class="form-field full"><label>자재명/규격</label><input type="text" id="f-name" value="'+(m?esc(m.name):"")+'" required></div>'+
         '<div class="form-field"><label>창고</label><select id="f-wh">'+APP.whs.map(function(w){ return '<option'+(m&&m.wh===w?" selected":"")+'>'+esc(w)+'</option>'; }).join("")+'</select></div>'+
         '<div class="form-field"><label>단위</label><select id="f-unit">'+["EA","BOX","ROLL","L","KG","M","장"].map(function(u){ return '<option'+(m&&m.unit===u?" selected":"")+'>'+u+'</option>'; }).join("")+'</select></div>'+
         '<div class="form-field full"><label>위치</label><input type="text" id="f-loc" value="'+(m?esc(m.loc):"")+'" placeholder="예: 1공장 2층 A-03"></div>'+
@@ -1954,7 +2123,23 @@
         '<div class="form-field"><label>비수기 안전재고</label><input type="number" id="f-safeoff" value="'+(m?m.safeOff:0)+'" min="0"></div>'+
         '<div class="form-field"><label>성수기 안전재고</label><input type="number" id="f-safepeak" value="'+(m?m.safePeak:0)+'" min="0"></div>'+
       '</div>'+
-      '<div id="mat-purchase-fields" class="form-grid" style="margin-top:10px;'+((m&&isPurchasableType(m.matType))?"":"display:none")+'">'+
+      '<div class="form-field full" style="margin-top:10px"><label>생산가능수량 계산 (선택)</label>'+
+        '<div class="pill-row" style="margin:4px 0 8px">'+
+          '<button type="button" class="pill'+(useAdvanced?"":" active")+'" id="pf-mode-simple" onclick="setProdFormulaMode(\'simple\')">간단히 설정</button>'+
+          '<button type="button" class="pill'+(useAdvanced?" active":"")+'" id="pf-mode-advanced" onclick="setProdFormulaMode(\'advanced\')">직접 수식 입력(고급)</button>'+
+        '</div>'+
+        '<div id="pf-simple-box" style="display:'+(useAdvanced?"none":"flex")+';gap:8px;align-items:center;flex-wrap:wrap">'+
+          '<span style="font-size:13px;color:var(--text-600);font-weight:700">현재재고</span>'+
+          '<select id="pf-op" onchange="onProdFormulaSimpleChange()">'+opOptions+'</select>'+
+          '<input type="number" id="pf-num" value="'+(simple?esc(simple.num):"")+'" placeholder="숫자" style="width:90px" oninput="onProdFormulaSimpleChange()">'+
+          '<label style="display:flex;align-items:center;gap:4px;font-size:12.5px;color:var(--text-600);white-space:nowrap;cursor:pointer"><input type="checkbox" id="pf-floor" '+((simple&&simple.floor)?"checked":"")+' onchange="onProdFormulaSimpleChange()">나눈 값 소수점 버림(내림)</label>'+
+        '</div>'+
+        '<div id="pf-advanced-box" style="display:'+(useAdvanced?"block":"none")+'">'+
+          '<input type="text" id="f-prodformula" value="'+(m?esc(m.prodFormula||""):"")+'" placeholder="예: Math.floor(current/2)" style="font-family:ui-monospace,Consolas,monospace;width:100%">'+
+          '<div class="pos-hint" style="margin-top:6px">사용 가능한 변수: <b>current</b>(이 자재의 현재고) · <b>safe</b>(이 자재의 안전재고). Math.round(반올림), Math.floor(소수점 버림), Math.min(더 작은 값), Math.max(더 큰 값) 등도 쓸 수 있습니다.</div>'+
+        '</div>'+
+      '</div>'+
+      '<div id="mat-purchase-fields" class="form-grid" style="margin-top:10px">'+
         '<div class="form-field full"><label>구매처</label><input type="text" id="f-vendor" value="'+(m?esc(m.vendor||""):"")+'" placeholder="예: 네이버스토어"></div>'+
         '<div class="form-field"><label>최소발주수량</label><input type="number" id="f-moq" value="'+(m?(m.moq||0):0)+'" min="0"></div>'+
         '<div class="form-field"><label>단가(원)</label><input type="number" id="f-price" value="'+(m?(m.price||0):0)+'" min="0"></div>'+
@@ -1967,13 +2152,31 @@
       '<div class="btn-row"><button type="button" class="btn btn-outline" onclick="closeModal()">취소</button><button type="button" class="btn btn-primary" onclick="saveMat('+(m?("'"+m.code+"'"):"null")+')">저장</button></div></div>';
     openModal(html);
   };
-  window.toggleMatPurchaseFields = function(matType){
-    var box = document.getElementById("mat-purchase-fields");
-    if(box) box.style.display = isPurchasableType(matType) ? "" : "none";
+  window.setProdFormulaMode = function(mode){
+    document.getElementById("pf-mode-simple").classList.toggle("active", mode==="simple");
+    document.getElementById("pf-mode-advanced").classList.toggle("active", mode==="advanced");
+    document.getElementById("pf-simple-box").style.display = mode==="simple" ? "flex" : "none";
+    document.getElementById("pf-advanced-box").style.display = mode==="advanced" ? "block" : "none";
+    if(mode==="simple") onProdFormulaSimpleChange();
+  };
+  window.onProdFormulaSimpleChange = function(){
+    var op = document.getElementById("pf-op").value;
+    var num = document.getElementById("pf-num").value;
+    var floor = document.getElementById("pf-floor").checked;
+    var expr = "";
+    if(op && num!==""){
+      expr = (op==="/" && floor) ? "Math.floor(current/"+num+")" : "current"+op+num;
+    }
+    document.getElementById("f-prodformula").value = expr;
   };
   window.saveMat = function(code){
     var name = document.getElementById("f-name").value.trim();
-    if(!name){ showToast("자재명을 입력하세요."); return; }
+    if(!name){ showToast("자재명/규격을 입력하세요."); return; }
+    var prodFormula = document.getElementById("f-prodformula").value.trim();
+    if(prodFormula && !isSafeFormulaExpr(prodFormula, MAT_FORMULA_ALLOWED_IDENT)){
+      showToast("생산가능수량 수식에 허용되지 않은 글자나 이름이 있습니다. 숫자·current·safe·+-*/()·Math 함수만 쓸 수 있습니다.");
+      return;
+    }
     var rec = {
       name:name, cat:document.getElementById("f-cat").value, wh:document.getElementById("f-wh").value,
       unit:document.getElementById("f-unit").value, loc:document.getElementById("f-loc").value.trim(),
@@ -1985,7 +2188,8 @@
       note:document.getElementById("f-note").value.trim(),
       stock:parseInt(document.getElementById("f-stock").value,10)||0,
       safeOff:parseInt(document.getElementById("f-safeoff").value,10)||0,
-      safePeak:parseInt(document.getElementById("f-safepeak").value,10)||0
+      safePeak:parseInt(document.getElementById("f-safepeak").value,10)||0,
+      prodFormula:prodFormula
     };
     if(code){
       var discEl = document.getElementById("f-discontinued");
@@ -1994,7 +2198,7 @@
     }
     else {
       var newCode = document.getElementById("f-code").value.trim() || ("M-"+(2000+APP.mats.length));
-      APP.mats.push(Object.assign({ code:newCode, factor:0, op:"*", photo:"", usage:{cm:0,lm:0,ly:0} }, rec));
+      APP.mats.push(Object.assign({ code:newCode, photo:"", usage:{cm:0,lm:0,ly:0} }, rec));
       if(rec.stock > 0){
         APP.inLogs.unshift({
           id:newId("INLOG"),
@@ -2059,7 +2263,7 @@
         '</div>';
     }).join("") : '<div class="result-empty">검색 결과가 없습니다.</div>';
     return pmStatusGroupsHtml()+
-      '<div class="pos-hint">자재관리에서 "자재 구분"이 '+esc(purchasableTypeNames())+'인 품목을 검색해 바로 발주 요청문을 작성할 수 있습니다. 어떤 자재 구분을 여기에 표시할지는 설정 → 자재 구분 관리의 "구매마스터 표시" 체크박스로 정할 수 있습니다. 품목 등록·수정은 자재관리 → 품목관리에서 진행합니다.</div>'+
+      '<div class="pos-hint">자재관리에서 "자재 구분"이 '+esc(purchasableTypeNames())+'인 품목을 검색해 바로 발주 요청문을 작성할 수 있습니다. 어떤 자재 구분을 여기에 표시할지는 설정 → 자재 구분 관리의 "자재요청 표시" 체크박스로 정할 수 있습니다. 품목 등록·수정은 자재관리 → 품목관리에서 진행합니다.</div>'+
       '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품명, 코드 검색" value="'+esc(APP.pmReqQuery||"")+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
       '<div class="result-list" style="max-height:560px;margin-top:12px">'+rowsHtml+'</div>';
   }
@@ -2138,33 +2342,33 @@
     var q = (APP.pmGuideQuery||"").trim().toLowerCase();
     var selKind = APP.pmGuideSelKind || "type";
     var selValue = APP.pmGuideSelValue || "all";
-    var purchasableTypes = APP.matTypes.filter(function(t){ return t.purchasable; });
-
     function pillItem(kind, value, label, count){
       var active = selKind===kind && selValue===value;
       return '<button class="pill'+(active?" active":"")+'" onclick="selectPmGuide(\''+kind+'\',\''+value+'\')">'+esc(label)+' ('+count+')</button>';
     }
-    var typePillsHtml = pillItem("type","all","전체",consumableMats().length)+
-      purchasableTypes.map(function(t){ return pillItem("type",t.name,t.name,consumableMats().filter(function(m){ return m.matType===t.name; }).length); }).join("");
-    var whPillsHtml = pillItem("wh","all","전체",APP.mats.filter(function(m){ return !m.discontinued; }).length)+
-      APP.whs.map(function(w){ return pillItem("wh",w,w,APP.mats.filter(function(m){ return !m.discontinued && m.wh===w; }).length); }).join("");
+    // 자재요청 표시 여부와 무관하게, 설정에 등록된 모든 자재구분(원자재/부자재/소모품/기타 등,
+    // 나중에 추가되는 것도 포함)을 다 보여준다.
+    var activeMats = APP.mats.filter(function(m){ return !m.discontinued; });
+    var typePillsHtml = pillItem("type","all","전체",activeMats.length)+
+      APP.matTypes.map(function(t){ return pillItem("type",t.name,t.name,activeMats.filter(function(m){ return m.matType===t.name; }).length); }).join("");
+    var whPillsHtml = pillItem("wh","all","전체",activeMats.length)+
+      APP.whs.map(function(w){ return pillItem("wh",w,w,activeMats.filter(function(m){ return m.wh===w; }).length); }).join("");
 
     var selItems;
     if(selKind==="wh"){
-      selItems = APP.mats.filter(function(m){
-        if(m.discontinued) return false;
+      selItems = activeMats.filter(function(m){
         var okWh = selValue==="all" || m.wh===selValue;
         var okQ = !q || m.name.toLowerCase().indexOf(q)>-1 || m.code.toLowerCase().indexOf(q)>-1;
         return okWh && okQ;
       });
     } else {
-      selItems = consumableMats().filter(function(m){
+      selItems = activeMats.filter(function(m){
         var okType = selValue==="all" || m.matType===selValue;
         var okQ = !q || m.name.toLowerCase().indexOf(q)>-1 || m.code.toLowerCase().indexOf(q)>-1 || (m.vendor||"").toLowerCase().indexOf(q)>-1;
         return okType && okQ;
       });
     }
-    var selLabel = selValue==="all" ? (selKind==="wh" ? "전체 창고" : "전체 소모품") : selValue;
+    var selLabel = selValue==="all" ? (selKind==="wh" ? "전체 창고" : "전체 자재") : selValue;
     var selHtml = selItems.length ? '<div class="guide-grid" style="margin-top:8px">'+selItems.map(function(m){
         return '<div class="guide-card">'+
           '<div'+(m.photo?' onclick="openLightbox(\''+m.code+'\')" style="cursor:pointer"':'')+'>'+(m.photo?'<div class="photo-box-md"><img src="'+m.photo+'" alt=""></div>':'<div class="photo-box-md">📦</div>')+'</div>'+
@@ -2175,7 +2379,7 @@
 
     return '<div class="pos-hint">신입사원도 한눈에 볼 수 있도록 자재를 정리한 안내서입니다. 품목 등록·수정은 자재관리 → 품목관리에서 진행합니다.</div>'+
       '<div class="toolbar">'+
-        '<div class="field"><label>소모품 카테고리</label><div class="pill-row" style="margin-top:6px">'+typePillsHtml+'</div></div>'+
+        '<div class="field"><label>자재구분</label><div class="pill-row" style="margin-top:6px">'+typePillsHtml+'</div></div>'+
         '<div class="field"><label>창고</label><div class="pill-row" style="margin-top:6px">'+whPillsHtml+'</div></div>'+
       '</div>'+
       '<div class="panel"><div class="panel-header"><h3>선택된 카테고리 품목 · '+esc(selLabel)+'</h3><span class="count" style="color:var(--text-400)">'+selItems.length+'건</span></div>'+
@@ -2318,7 +2522,7 @@
     var outCnt = groups.filter(function(g){ return g.type==="out"; }).reduce(function(s,g){ return s+g.items.length; },0);
     var inCnt = groups.filter(function(g){ return g.type==="in"; }).reduce(function(s,g){ return s+g.items.length; },0);
     return '<div class="sub-view">'+
-      '<div class="pos-hint">이전에 사용하던 프로그램의 입출고 내역을 CSV로 업로드하면 이 화면에 이력으로 추가됩니다. 업로드한 내역은 조회용 기록으로만 반영되며 현재 재고 수량에는 영향을 주지 않습니다. CSV 형식: 일자(YYYY-MM-DD 또는 YYYY-MM-DD HH:MM:SS),구분(입고/출고),자재명,자재구분,수량,변동전,변동후,창고,담당자,비고<br>변동전(그 당시 재고, 기준 수량)/변동후는 선택 항목이며, 둘 다 입력하면 그 차이를 실제 입출고 수량으로 계산해 사용합니다(수량 칸에 이전 프로그램이 내보낸 음수·부호 값이 들어 있어도 자동으로 절대값 처리되어 오류 없이 업로드됩니다). 변동전/변동후가 없을 때만 수량 칸 값을 그대로 사용합니다. 한 번에 여러 품목을 처리한 내역은 대표 품목명 외 N건으로 묶여 표시되며, 행을 클릭하면 세부 내역별로 수량 수정·삭제가 가능하고 그 차이는 해당 자재의 현재고에도 자동 반영됩니다.<br>CSV의 자재명이 자재관리에 등록된 이름과 일치하면 그 자재로 연결되고, 일치하는 자재가 없으면(예: 지금은 단종·사용중지된 품목) 자재관리에 "사용중지" 자재로 자동 등록됩니다 — 이때 자재구분 칸에 원자재/부자재/소모품/기타 중 하나를 적어두면 그 값으로 등록되고(비워두면 부자재로 등록), 이미 등록된 자재명이면 자재구분 칸은 무시되고 기존 자재관리 설정을 따릅니다.</div>'+
+      '<div class="pos-hint">이전에 사용하던 프로그램의 입출고 내역을 CSV로 업로드하면 이 화면에 이력으로 추가됩니다. 업로드한 내역은 조회용 기록으로만 반영되며 현재 재고 수량에는 영향을 주지 않습니다. CSV 형식: 일자(YYYY-MM-DD 또는 YYYY-MM-DD HH:MM:SS),구분(입고/출고),자재명/규격,자재구분,수량,변동전,변동후,창고,담당자,비고<br>변동전(그 당시 재고, 기준 수량)/변동후는 선택 항목이며, 둘 다 입력하면 그 차이를 실제 입출고 수량으로 계산해 사용합니다(수량 칸에 이전 프로그램이 내보낸 음수·부호 값이 들어 있어도 자동으로 절대값 처리되어 오류 없이 업로드됩니다). 변동전/변동후가 없을 때만 수량 칸 값을 그대로 사용합니다. 한 번에 여러 품목을 처리한 내역은 대표 품목명 외 N건으로 묶여 표시되며, 행을 클릭하면 세부 내역별로 수량 수정·삭제가 가능하고 그 차이는 해당 자재의 현재고에도 자동 반영됩니다.<br>CSV의 자재명/규격이 자재관리에 등록된 이름과 일치하면 그 자재로 연결되고, 일치하는 자재가 없으면(예: 지금은 단종·사용중지된 품목) 자재관리에 "사용중지" 자재로 자동 등록됩니다 — 이때 자재구분 칸에 원자재/부자재/소모품/기타 중 하나를 적어두면 그 값으로 등록되고(비워두면 부자재로 등록), 이미 등록된 자재명/규격이면 자재구분 칸은 무시되고 기존 자재관리 설정을 따릅니다.</div>'+
       rangeBar+
       '<div class="toolbar-actions"><div style="font-size:13px;font-weight:700;color:var(--text-600)">'+start+' ~ '+end+' · 총 '+groups.length+'건 (품목 '+itemCount+'개) · 출고 '+outCnt+' · 입고 '+inCnt+'</div>'+
       '<div class="btn-row">'+
@@ -2423,7 +2627,7 @@
     });
   };
   window.downloadHistoryTemplate = function(){
-    var header = ["일자","구분","자재명","자재구분","수량","변동전","변동후","창고","담당자","비고"];
+    var header = ["일자","구분","자재명/규격","자재구분","수량","변동전","변동후","창고","담당자","비고"];
     var sample = [
       ["2026-05-14","입고","스텐 경첩 4인치","원자재","150","400","550","1공장창고","강준상","이전 프로그램 이관 데이터"],
       ["2026-05-15","출고","스텐 경첩 4인치","원자재","30","550","520","1공장창고","김서인","이전 프로그램 이관 데이터"]
@@ -2439,7 +2643,7 @@
     }catch(e){ showToast("이 환경에서는 다운로드가 제한됩니다. (프로토타입)"); }
   };
   window.historyCsvExport = function(){
-    var header = ["일자","구분","자재명","자재구분","수량","변동전","변동후","창고","담당자","비고"];
+    var header = ["일자","구분","자재명/규격","자재구분","수량","변동전","변동후","창고","담당자","비고"];
     var lines = [header.join(",")].concat(historyRows().map(function(r){
       var l = r.d;
       var m = byCode(l.code);
@@ -2491,7 +2695,7 @@
         var lower = col.toLowerCase();
         if(lower === "일자" || lower === "date") headerMap.date = idx;
         if(lower === "구분" || lower === "type") headerMap.type = idx;
-        if(lower === "자재명" || lower === "name") headerMap.name = idx;
+        if(lower === "자재명/규격" || lower === "자재명" || lower === "name") headerMap.name = idx;
         if(lower === "자재구분" || lower === "mattype" || lower === "material type") headerMap.matType = idx;
         if(lower === "수량" || lower === "qty" || lower === "quantity") headerMap.qty = idx;
         if(lower === "변동전" || lower === "before") headerMap.before = idx;
@@ -2557,7 +2761,7 @@
         }
         var reasons = [];
         if(!date) reasons.push("일자 누락");
-        if(!name) reasons.push("자재명 누락");
+        if(!name) reasons.push("자재명/규격 누락");
         if(matTypeRaw && !matType) reasons.push("자재구분 값 오류(\""+matTypeRaw+"\", "+APP.matTypes.map(function(t){ return t.name; }).join("/")+" 중 하나여야 함)");
         if(isNaN(qty) || qty<=0) reasons.push("수량 형식 오류(\""+qtyRaw+"\")");
         if(type!=="입고" && type!=="출고") reasons.push("구분 값 오류(\""+type+"\", 입고/출고만 가능)");
@@ -2613,7 +2817,7 @@
         ) : '')+
         '<div style="font-size:12.5px;font-weight:800;color:var(--ok-text)">정상 내역 ('+valid.length+'건)</div>'+
         '<div class="table-wrap" style="max-height:280px;overflow-y:auto">'+
-          '<table><thead><tr><th>일자</th><th>구분</th><th>자재명</th><th>자재구분</th><th class="num">수량</th><th class="num">변동전</th><th class="num">변동후</th><th>창고</th><th>담당자</th><th>비고</th></tr></thead>'+
+          '<table><thead><tr><th>일자</th><th>구분</th><th>자재명/규격</th><th>자재구분</th><th class="num">수량</th><th class="num">변동전</th><th class="num">변동후</th><th>창고</th><th>담당자</th><th>비고</th></tr></thead>'+
           '<tbody>'+(validRowsHtml || '<tr><td colspan="10" class="wrap" style="text-align:center;color:var(--text-400)">표시할 내역이 없습니다.</td></tr>')+'</tbody></table>'+
         '</div>'+
       '</div>'+
@@ -2639,7 +2843,7 @@
         var newCode = "M-"+(3000+APP.mats.length);
         mat = { code:newCode, name:r.name, cat:"기타", matType:(r.matType||"부자재"),
           wh:(r.wh && r.wh!=="-") ? r.wh : (APP.whs[0]||"공통자재창고"), unit:"EA", loc:"",
-          stock:0, safeOff:0, safePeak:0, factor:0, op:"*", photo:"", usage:{cm:0,lm:0,ly:0},
+          stock:0, safeOff:0, safePeak:0, prodFormula:"", photo:"", usage:{cm:0,lm:0,ly:0},
           discontinued:true, imported:true };
         APP.mats.push(mat);
         newMatCount++;
@@ -2690,7 +2894,7 @@
       return '<div class="wh-row draggable-row" style="flex-wrap:wrap" draggable="true" ondragstart="dragStart(event,\'type\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'type\','+i+')">'
         +'<div class="wh-order-btns"><button type="button">▲</button><button type="button">▼</button></div>'
         +'<input class="input wh-name-input" type="text" value="'+esc(t.name)+'" onchange="typeRename('+i+', this.value)">'
-        +'<label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" '+(t.purchasable?"checked":"")+' onchange="typeTogglePurchasable('+i+', this.checked)">구매마스터 표시</label>'
+        +'<label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" '+(t.purchasable?"checked":"")+' onchange="typeTogglePurchasable('+i+', this.checked)">자재요청 표시</label>'
         +'<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'
         +'<button class="btn btn-outline icon-only" onclick="typeDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
     }).join("");
@@ -2708,7 +2912,7 @@
           '<div style="max-height:320px;overflow-y:auto">'+whRows+'</div>'+
         '</div></div>'+
         '<div class="panel"><div class="panel-header"><h3>자재 구분 관리</h3></div><div class="panel-body pad">'+
-          '<div class="field" style="margin-bottom:10px"><label>신규 자재 구분 추가</label><div style="display:flex;gap:8px;margin-top:6px;align-items:center"><input type="text" id="new-type-name" placeholder="예: 반제품" style="flex:1"><label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" id="new-type-purchasable">구매마스터 표시</label><button class="btn btn-primary" onclick="typeAdd()">추가</button></div></div>'+
+          '<div class="field" style="margin-bottom:10px"><label>신규 자재 구분 추가</label><div style="display:flex;gap:8px;margin-top:6px;align-items:center"><input type="text" id="new-type-name" placeholder="예: 반제품" style="flex:1"><label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" id="new-type-purchasable">자재요청 표시</label><button class="btn btn-primary" onclick="typeAdd()">추가</button></div></div>'+
           '<div style="max-height:320px;overflow-y:auto">'+typeRows+'</div>'+
           '<div class="pos-hint" style="margin-top:10px">여기서 추가·수정한 항목이 자재 신규등록/수정 모달의 "자재 구분" 목록에 바로 반영됩니다.</div>'+
         '</div></div>'+
