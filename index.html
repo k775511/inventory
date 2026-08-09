@@ -641,11 +641,6 @@
   }
 
   var APP = load();
-  APP.mats = [];
-  APP.pm = [];
-  APP.cats = [];
-  APP.alerts = [];
-  persist();
   migratePmToMats();
   sweepExpiredOrderCompletions();
   initFirebaseState();
