@@ -175,7 +175,7 @@
   td.num, th.num{ text-align:right; font-variant-numeric:tabular-nums; }
   td.ctr, th.ctr{ text-align:center; }
   td.wrap{ white-space:normal; }
-  .row-actions{ display:flex; gap:6px; }
+  .row-actions{ display:flex; gap:6px; align-items:center; }
   .icon-only{ width:28px; height:28px; padding:0; justify-content:center; border-radius:6px; }
 
   .badge{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:99px; white-space:nowrap; }
@@ -1746,9 +1746,9 @@
     });
     var rows = visible.map(function(m){
       return '<tr><td><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td>'+photoCell(m,false)+'</td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num">'+fmt(m.safeOff)+'</td><td class="num">'+fmt(m.safePeak)+'</td><td>'+stockBadge(m)+'</td>'+
-        '<td class="row-actions"><label class="btn btn-outline icon-only" title="사진"><input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\')"><svg class="ic"><use href="#i-camera"/></svg></label>'+
+        '<td><div class="row-actions"><label class="btn btn-outline icon-only" title="사진"><input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\')"><svg class="ic"><use href="#i-camera"/></svg></label>'+
         '<button class="btn btn-outline icon-only" onclick="openMatModal(\''+m.code+'\')"><svg class="ic"><use href="#i-edit"/></svg></button>'+
-        '<button class="btn btn-outline icon-only" onclick="delMat(\''+m.code+'\')"><svg class="ic"><use href="#i-trash"/></svg></button></td></tr>';
+        '<button class="btn btn-outline icon-only" onclick="delMat(\''+m.code+'\')"><svg class="ic"><use href="#i-trash"/></svg></button></div></td></tr>';
     }).join("");
     return '<div class="toolbar">'+
         '<div class="field" style="flex:1;min-width:220px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.materialQ||"")+'" placeholder="자재명/규격, 코드, 카테고리, 자재구분, 창고, 위치로 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
