@@ -24,6 +24,8 @@
   window.stateDocRef = stateDocRef;
   window.firebaseGetDoc = getDoc;
   window.firebaseSetDoc = setDoc;
+  window.__firebaseReady = true;
+  window.dispatchEvent(new Event("firebase-ready"));
 </script>
 <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 4a5 5 0 0 0-5 5v3.2c0 .5-.2 1-.5 1.4L5 16h14l-1.5-2.4c-.3-.4-.5-.9-.5-1.4V9a5 5 0 0 0-5-5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 18.5a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
@@ -597,6 +599,13 @@
   }
 
   function initFirebaseState(){
+    // Firebase는 별도의 <script type="module">에서 비동기로 초기화됩니다. 브라우저/네트워크
+    // 상황에 따라 이 함수가 먼저 호출될 수 있으므로, 아직 준비 전이면 module 쪽에서 쏘는
+    // "firebase-ready" 이벤트를 기다렸다가 다시 시도합니다(순서에 의존하지 않도록).
+    if(!window.__firebaseReady){
+      window.addEventListener("firebase-ready", initFirebaseState, { once:true });
+      return;
+    }
     if(!window.firebaseGetDoc || !window.stateDocRef) return;
     window.firebaseGetDoc(window.stateDocRef).then(function(snapshot){
       if(snapshot.exists()){
