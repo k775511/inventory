@@ -504,9 +504,9 @@
       cur:"dashboard", materialTab:"register", materialQ:"", materialSortKey:"code", materialSortDir:"asc",
       stockTab:"status", stockWh:"all", stockSortKey:"wh", stockSortDir:"asc",
       posWh:"all", posQ:"", receiveWh:"all", receiveQ:"", stocktakeWh:"all", stocktakeMode:"wh", stocktakeQ:"", stocktakeSortKey:"wh", stocktakeSortDir:"asc",
-      stockAsOf: TODAY, stockFrom: addDays(TODAY,-29), stockTo: TODAY,
+      stockAsOf: TODAY, stockFrom: addDays(TODAY,-89), stockTo: TODAY,
       historyFrom: addDays(TODAY,-29), historyTo: TODAY,
-      usageFrom: addMonths(TODAY,-3), usageTo: TODAY, usageWhs: null, usageType: "all", usageQuery: "", usageSortKey: "code", usageSortDir: "asc", usageFormulas: [],
+      usageFrom: usageDefaultFrom(), usageTo: TODAY, usageWhs: null, usageType: "all", usageQuery: "", usageSortKey: "code", usageSortDir: "asc", usageFormulas: [],
       usageBuiltinFormulas: cloneUsageBuiltinFormulas(),
       monthlyYear: parseInt(TODAY.slice(0,4),10), monthlyWh: "all", monthlyType: "all", monthlyQ: "",
       yoyMonth: parseInt(TODAY.slice(5,7),10), yoyWh: "all", yoyType: "all", yoyQ: "",
@@ -531,10 +531,10 @@
         return t;
       });
       s.stockAsOf = TODAY;
-      s.stockFrom = s.stockFrom || addDays(TODAY,-29);
-      s.stockTo = s.stockTo || TODAY;
+      s.stockFrom = s.stockFrom || addDays(TODAY,-89);
+      s.stockTo = TODAY;
       s.historyFrom = s.historyFrom || addDays(TODAY,-29);
-      s.historyTo = s.historyTo || TODAY;
+      s.historyTo = TODAY;
       s.stockWh = s.stockWh || "all";
       s.stockSortKey = s.stockSortKey || "wh";
       s.stockSortDir = s.stockSortDir || "asc";
@@ -545,7 +545,7 @@
       s.stocktakeSortDir = s.stocktakeSortDir || "asc";
       s.stocktakeLogs = s.stocktakeLogs || [];
       s.usageType = s.usageType || "all";
-      s.usageFrom = s.usageFrom || addMonths(TODAY,-3);
+      s.usageFrom = s.usageFrom || usageDefaultFrom();
       s.usageTo = TODAY;
       s.usageWhs = s.usageWhs || null;
       s.usageQuery = s.usageQuery || "";
@@ -592,10 +592,10 @@
     s.matTypes = (typeof s.matTypes !== 'undefined') ? s.matTypes : cloneMatTypes();
     s.matTypes = s.matTypes.map(function(t){ if(typeof t === "string") return { name:t, purchasable:(t==="소모품"||t==="기타") }; return t; });
     s.stockAsOf = TODAY;
-    s.stockFrom = s.stockFrom || addDays(TODAY,-29);
-    s.stockTo = s.stockTo || TODAY;
+    s.stockFrom = s.stockFrom || addDays(TODAY,-89);
+    s.stockTo = TODAY;
     s.historyFrom = s.historyFrom || addDays(TODAY,-29);
-    s.historyTo = s.historyTo || TODAY;
+    s.historyTo = TODAY;
     s.stockWh = s.stockWh || "all";
     s.stockSortKey = s.stockSortKey || "wh";
     s.stockSortDir = s.stockSortDir || "asc";
@@ -609,7 +609,7 @@
     s.materialSortKey = s.materialSortKey || "code";
     s.materialSortDir = s.materialSortDir || "asc";
     s.usageType = s.usageType || "all";
-    s.usageFrom = s.usageFrom || addMonths(TODAY,-3);
+    s.usageFrom = s.usageFrom || usageDefaultFrom();
     s.usageTo = TODAY;
     s.usageWhs = s.usageWhs || null;
     s.usageQuery = s.usageQuery || "";
@@ -755,6 +755,9 @@
     var dt = new Date(Date.UTC(p[0], p[1]-1+n, p[2]));
     return dt.getUTCFullYear()+"-"+String(dt.getUTCMonth()+1).padStart(2,"0")+"-"+String(dt.getUTCDate()).padStart(2,"0");
   }
+  // "최근 3개월"은 오늘로부터 정확히 90일 전이 아니라, 이번 달을 포함해 달력상 3개월치를
+  // 그 시작월 1일부터 보여달라는 뜻이다 (8월이면 6/1부터, 5월이면 3/1부터).
+  function usageDefaultFrom(){ return addMonths(TODAY.slice(0,7)+"-01", -2); }
   function daysBetweenInclusive(start, end){
     var p1=start.split("-").map(Number), p2=end.split("-").map(Number);
     var d1=Date.UTC(p1[0],p1[1]-1,p1[2]), d2=Date.UTC(p2[0],p2[1]-1,p2[2]);
@@ -1088,7 +1091,7 @@
       '</div>';
 
     if(APP.stockTab==="shortage"){
-      var start = APP.stockFrom || "2026-07-01", end = APP.stockTo || TODAY;
+      var start = APP.stockFrom || addDays(TODAY,-89), end = APP.stockTo || TODAY;
       if(start > end){ var t0=start; start=end; end=t0; }
       var rangeBar = '<div class="toolbar">'+
           '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="setStockFrom(this.value)"></div></div>'+
@@ -1167,9 +1170,9 @@
   window.setStockWh = function(v){ APP.stockWh = v || "all"; persist(); renderContent(); };
   window.setStockSort = function(key){ toggleSort("stockSortKey","stockSortDir",key); persist(); renderContent(); };
   window.setStockAsOf = function(v){ APP.stockAsOf = v || TODAY; persist(); renderContent(); };
-  window.setStockFrom = function(v){ APP.stockFrom = v || addDays(TODAY,-29); persist(); renderContent(); };
+  window.setStockFrom = function(v){ APP.stockFrom = v || addDays(TODAY,-89); persist(); renderContent(); };
   window.setStockTo = function(v){ APP.stockTo = v || TODAY; persist(); renderContent(); };
-  window.resetStockRange = function(){ APP.stockFrom = addDays(TODAY,-29); APP.stockTo = TODAY; persist(); renderContent(); };
+  window.resetStockRange = function(){ APP.stockFrom = addDays(TODAY,-89); APP.stockTo = TODAY; persist(); renderContent(); };
 
   /* ---------------- 자재관리 ---------------- */
   function screenMaterial(){
@@ -1226,7 +1229,7 @@
   }
 
   function computeUsageAnalysis(){
-    var start = APP.usageFrom || addMonths(TODAY,-3), end = APP.usageTo || TODAY;
+    var start = APP.usageFrom || usageDefaultFrom(), end = APP.usageTo || TODAY;
     if(start > end){ var t0=start; start=end; end=t0; }
     var days = daysBetweenInclusive(start,end);
     var whSel = APP.usageWhs;
@@ -1462,7 +1465,7 @@
       '</thead><tbody>'+rowsHtml+'</tbody></table></div>'+
       '</div></div>';
   }
-  window.setUsageFrom = function(v){ APP.usageFrom = v || addMonths(TODAY,-3); persist(); renderContent(); };
+  window.setUsageFrom = function(v){ APP.usageFrom = v || usageDefaultFrom(); persist(); renderContent(); };
   window.setUsageTo = function(v){ APP.usageTo = v || TODAY; persist(); renderContent(); };
   function logDateRange(){
     var min = null, max = null;
