@@ -504,7 +504,7 @@
       cur:"dashboard", materialTab:"register", materialQ:"", materialSortKey:"code", materialSortDir:"asc",
       stockTab:"status", stockWh:"all", stockSortKey:"wh", stockSortDir:"asc",
       posWh:"all", posQ:"", receiveWh:"all", receiveQ:"", stocktakeWh:"all", stocktakeMode:"wh", stocktakeQ:"", stocktakeSortKey:"wh", stocktakeSortDir:"asc",
-      stockAsOf: TODAY, stockFrom: addDays(TODAY,-89), stockTo: TODAY,
+      stockAsOf: TODAY, stockFrom: usageDefaultFrom(), stockTo: TODAY,
       historyFrom: addDays(TODAY,-29), historyTo: TODAY,
       usageFrom: usageDefaultFrom(), usageTo: TODAY, usageWhs: null, usageType: "all", usageQuery: "", usageSortKey: "code", usageSortDir: "asc", usageFormulas: [],
       usageBuiltinFormulas: cloneUsageBuiltinFormulas(),
@@ -531,7 +531,7 @@
         return t;
       });
       s.stockAsOf = TODAY;
-      s.stockFrom = addDays(TODAY,-89);
+      s.stockFrom = usageDefaultFrom();
       s.stockTo = TODAY;
       s.historyFrom = addDays(TODAY,-29);
       s.historyTo = TODAY;
@@ -592,7 +592,7 @@
     s.matTypes = (typeof s.matTypes !== 'undefined') ? s.matTypes : cloneMatTypes();
     s.matTypes = s.matTypes.map(function(t){ if(typeof t === "string") return { name:t, purchasable:(t==="소모품"||t==="기타") }; return t; });
     s.stockAsOf = TODAY;
-    s.stockFrom = addDays(TODAY,-89);
+    s.stockFrom = usageDefaultFrom();
     s.stockTo = TODAY;
     s.historyFrom = addDays(TODAY,-29);
     s.historyTo = TODAY;
@@ -1091,7 +1091,7 @@
       '</div>';
 
     if(APP.stockTab==="shortage"){
-      var start = APP.stockFrom || addDays(TODAY,-89), end = APP.stockTo || TODAY;
+      var start = APP.stockFrom || usageDefaultFrom(), end = APP.stockTo || TODAY;
       if(start > end){ var t0=start; start=end; end=t0; }
       var rangeBar = '<div class="toolbar">'+
           '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="setStockFrom(this.value)"></div></div>'+
@@ -1170,9 +1170,9 @@
   window.setStockWh = function(v){ APP.stockWh = v || "all"; persist(); renderContent(); };
   window.setStockSort = function(key){ toggleSort("stockSortKey","stockSortDir",key); persist(); renderContent(); };
   window.setStockAsOf = function(v){ APP.stockAsOf = v || TODAY; persist(); renderContent(); };
-  window.setStockFrom = function(v){ APP.stockFrom = v || addDays(TODAY,-89); persist(); renderContent(); };
+  window.setStockFrom = function(v){ APP.stockFrom = v || usageDefaultFrom(); persist(); renderContent(); };
   window.setStockTo = function(v){ APP.stockTo = v || TODAY; persist(); renderContent(); };
-  window.resetStockRange = function(){ APP.stockFrom = addDays(TODAY,-89); APP.stockTo = TODAY; persist(); renderContent(); };
+  window.resetStockRange = function(){ APP.stockFrom = usageDefaultFrom(); APP.stockTo = TODAY; persist(); renderContent(); };
 
   /* ---------------- 자재관리 ---------------- */
   function screenMaterial(){
@@ -1600,8 +1600,7 @@
       .concat(APP.matTypes.filter(function(t){ return !t.purchasable; }).map(function(t){ return '<option'+(APP.monthlyType===t.name?" selected":"")+'>'+esc(t.name)+'</option>'; })).join("");
     var monthHeads = "";
     for(var i=1;i<=12;i++){
-      var isFuture = (year>curYear) || (year===curYear && i>curMonth);
-      monthHeads += '<th class="num">'+i+'월'+(isFuture?"*":"")+'</th>';
+      monthHeads += '<th class="num">'+i+'월</th>';
     }
     function buildRows(list){
       return list.length ? list.map(function(r){
@@ -1635,8 +1634,8 @@
       '<div class="pos-hint" style="margin-top:12px">'+(year<curYear
         ? (year+'년은 지난 연도라 12개월 모두 실제 입출고내역을 집계한 값입니다(해당 기간에 내역이 없는 자재는 0으로 표시).')
         : year===curYear
-          ? (curMonth+'월까지는 '+TODAY+'까지의 실제 출고 합계이며, 이후 월(*)은 아직 발생 전이라 형식 확인용 예시 수치입니다.')
-          : (year+'년은 아직 오지 않은 연도라 전 기간(*)이 형식 확인용 예시 수치입니다.'))+' 자재별로 가장 많이 사용된 달은 진하게 강조 표시됩니다.</div>'+
+          ? (curMonth+'월까지는 '+TODAY+'까지의 실제 출고 합계이며, 이후 월은 아직 발생 전이라 -로 표시됩니다.')
+          : (year+'년은 아직 오지 않은 연도라 전 기간이 -로 표시됩니다.'))+' 자재별로 가장 많이 사용된 달은 진하게 강조 표시됩니다.</div>'+
       '<div class="stock-group-head" style="margin-top:16px">활성 자재 <span class="stock-group-count">('+activeList.length+'건)</span></div>'+
       '<div class="table-wrap" style="margin-top:8px"><table>'+theadHtml+'<tbody>'+buildRows(activeList)+'</tbody></table></div>'+
       '<div class="stock-group-head" style="margin-top:20px">사용중지 자재 <span class="stock-group-count">('+discList.length+'건)</span></div>'+
