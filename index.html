@@ -2703,7 +2703,7 @@
   window.guideAbcExport = function(){
     try{
       var items = APP.mats.filter(function(m){ return !m.discontinued; });
-      var headerLabels = ["연번","품목코드","자재명/규격","단위","현재고","안전재고(비수기)","안전재고(성수기)","공정영향도(상/중/하)","조달난이도(상/중/하)","리드타임(일)","공정영향도점수","조달난이도점수","리드타임점수","종합점수(3~9)","등급","관리책임자(사무실/현장)","담당현장명","발주권한자","최종실사일","비고"];
+      var headerLabels = ["연번","창고","품목코드","자재명/규격","단위","현재고","안전재고(비수기)","안전재고(성수기)","공정영향도(상/중/하)","조달난이도(상/중/하)","리드타임(일)","공정영향도점수","조달난이도점수","리드타임점수","종합점수(3~9)","등급","관리책임자(사무실/현장)","담당현장명","발주권한자","최종실사일","비고"];
       var colCount = headerLabels.length;
       var dataStart = 4;
       var lastRow = dataStart + Math.max(items.length,1) - 1;
@@ -2725,26 +2725,27 @@
         var mScore = leadtime>=30 ? 3 : (leadtime>=7 ? 2 : 1);
         var cells = "";
         cells += xlsxCellNum("A"+r, 5, idx+1);
-        cells += xlsxCellStr("B"+r, 5, m.code);
-        cells += xlsxCellStr("C"+r, 5, m.name);
-        cells += xlsxCellStr("D"+r, 5, m.unit||"");
-        cells += xlsxCellNum("E"+r, 5, m.stock||0);
-        cells += xlsxCellNum("F"+r, 5, m.safeOff||0);
-        cells += xlsxCellNum("G"+r, 5, m.safePeak||0);
-        cells += xlsxCellBlank("H"+r, 3);
+        cells += xlsxCellStr("B"+r, 5, m.wh||"");
+        cells += xlsxCellStr("C"+r, 5, m.code);
+        cells += xlsxCellStr("D"+r, 5, m.name);
+        cells += xlsxCellStr("E"+r, 5, m.unit||"");
+        cells += xlsxCellNum("F"+r, 5, m.stock||0);
+        cells += xlsxCellNum("G"+r, 5, m.safeOff||0);
+        cells += xlsxCellNum("H"+r, 5, m.safePeak||0);
         cells += xlsxCellBlank("I"+r, 3);
-        cells += xlsxCellNum("J"+r, 5, leadtime);
-        cells += xlsxCellFormula("K"+r, 4, 'IF(H'+r+'="상",3,IF(H'+r+'="중",2,IF(H'+r+'="하",1,"")))');
+        cells += xlsxCellBlank("J"+r, 3);
+        cells += xlsxCellNum("K"+r, 5, leadtime);
         cells += xlsxCellFormula("L"+r, 4, 'IF(I'+r+'="상",3,IF(I'+r+'="중",2,IF(I'+r+'="하",1,"")))');
-        cells += xlsxCellFormula("M"+r, 4, 'IF(J'+r+'="","",IF(J'+r+'>=30,3,IF(J'+r+'>=7,2,1)))', mScore);
-        cells += xlsxCellFormula("N"+r, 4, 'IF(OR(K'+r+'="",L'+r+'="",M'+r+'=""),"",K'+r+'+L'+r+'+M'+r+')');
-        cells += xlsxCellFormula("O"+r, 4, 'IF(N'+r+'="","",IF(N'+r+'>=7,"A",IF(N'+r+'>=5,"B","C")))');
-        cells += xlsxCellBlank("P"+r, 3);
+        cells += xlsxCellFormula("M"+r, 4, 'IF(J'+r+'="상",3,IF(J'+r+'="중",2,IF(J'+r+'="하",1,"")))');
+        cells += xlsxCellFormula("N"+r, 4, 'IF(K'+r+'="","",IF(K'+r+'>=30,3,IF(K'+r+'>=7,2,1)))', mScore);
+        cells += xlsxCellFormula("O"+r, 4, 'IF(OR(L'+r+'="",M'+r+'="",N'+r+'=""),"",L'+r+'+M'+r+'+N'+r+')');
+        cells += xlsxCellFormula("P"+r, 4, 'IF(O'+r+'="","",IF(O'+r+'>=7,"A",IF(O'+r+'>=5,"B","C")))');
         cells += xlsxCellBlank("Q"+r, 3);
         cells += xlsxCellBlank("R"+r, 3);
+        cells += xlsxCellBlank("S"+r, 3);
         var lastCheck = lastStocktake[m.code];
-        cells += lastCheck ? xlsxCellStr("S"+r, 5, lastCheck) : xlsxCellBlank("S"+r, 3);
-        cells += xlsxCellBlank("T"+r, 3);
+        cells += lastCheck ? xlsxCellStr("T"+r, 5, lastCheck) : xlsxCellBlank("T"+r, 3);
+        cells += xlsxCellBlank("U"+r, 3);
         rowsXml += '<row r="'+r+'">'+cells+'</row>';
       });
 
@@ -2752,12 +2753,12 @@
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
         '<dimension ref="A1:'+XLSX_COLS[colCount-1]+lastRow+'"/>'+
         '<sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A4" sqref="A4"/></sheetView></sheetViews>'+
-        '<cols><col min="1" max="1" width="6" customWidth="1"/><col min="2" max="2" width="12" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/>'+
-        '<col min="4" max="4" width="8" customWidth="1"/><col min="5" max="7" width="12" customWidth="1"/><col min="8" max="9" width="16" customWidth="1"/>'+
-        '<col min="10" max="10" width="10" customWidth="1"/><col min="11" max="14" width="10" customWidth="1"/><col min="15" max="15" width="8" customWidth="1"/>'+
-        '<col min="16" max="16" width="16" customWidth="1"/><col min="17" max="20" width="13" customWidth="1"/></cols>'+
+        '<cols><col min="1" max="1" width="6" customWidth="1"/><col min="2" max="2" width="12" customWidth="1"/><col min="3" max="3" width="12" customWidth="1"/><col min="4" max="4" width="26" customWidth="1"/>'+
+        '<col min="5" max="5" width="8" customWidth="1"/><col min="6" max="8" width="12" customWidth="1"/><col min="9" max="10" width="16" customWidth="1"/>'+
+        '<col min="11" max="11" width="10" customWidth="1"/><col min="12" max="15" width="10" customWidth="1"/><col min="16" max="16" width="8" customWidth="1"/>'+
+        '<col min="17" max="17" width="16" customWidth="1"/><col min="18" max="21" width="13" customWidth="1"/></cols>'+
         '<sheetData>'+rowsXml+'</sheetData>'+
-        '<mergeCells count="2"><mergeCell ref="A1:T1"/><mergeCell ref="A2:T2"/></mergeCells>'+
+        '<mergeCells count="2"><mergeCell ref="A1:U1"/><mergeCell ref="A2:U2"/></mergeCells>'+
         '</worksheet>';
 
       var s2 = "";
