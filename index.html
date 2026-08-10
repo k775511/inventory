@@ -2428,6 +2428,8 @@
       APP.matTypes.map(function(t){ return pillItem("type",t.name,t.name,activeMats.filter(function(m){ return m.matType===t.name; }).length); }).join("");
     var whPillsHtml = pillItem("wh","all","전체",activeMats.length)+
       APP.whs.map(function(w){ return pillItem("wh",w,w,activeMats.filter(function(m){ return m.wh===w; }).length); }).join("");
+    var catPillsHtml = pillItem("cat","all","전체",activeMats.length)+
+      APP.cats.map(function(c){ return pillItem("cat",c,c,activeMats.filter(function(m){ return m.cat===c; }).length); }).join("");
 
     var selItems;
     if(selKind==="wh"){
@@ -2436,6 +2438,12 @@
         var okQ = !q || m.name.toLowerCase().indexOf(q)>-1 || m.code.toLowerCase().indexOf(q)>-1;
         return okWh && okQ;
       });
+    } else if(selKind==="cat"){
+      selItems = activeMats.filter(function(m){
+        var okCat = selValue==="all" || m.cat===selValue;
+        var okQ = !q || m.name.toLowerCase().indexOf(q)>-1 || m.code.toLowerCase().indexOf(q)>-1 || (m.vendor||"").toLowerCase().indexOf(q)>-1;
+        return okCat && okQ;
+      });
     } else {
       selItems = activeMats.filter(function(m){
         var okType = selValue==="all" || m.matType===selValue;
@@ -2443,7 +2451,7 @@
         return okType && okQ;
       });
     }
-    var selLabel = selValue==="all" ? (selKind==="wh" ? "전체 창고" : "전체 자재") : selValue;
+    var selLabel = selValue==="all" ? (selKind==="wh" ? "전체 창고" : selKind==="cat" ? "전체 카테고리" : "전체 자재") : selValue;
     var selHtml = selItems.length ? '<div class="guide-grid" style="margin-top:8px">'+selItems.map(function(m){
         return '<div class="guide-card" style="cursor:pointer" onclick="openGuideDetailModal(\''+m.code+'\')">'+
           (m.note ? '<div class="guide-card-noted" title="설명 작성됨">✓</div>' : '')+
@@ -2455,6 +2463,7 @@
     return '<div class="pos-hint">신입사원도 한눈에 볼 수 있도록 자재를 정리한 안내서입니다. 품목 등록·수정은 자재관리 → 품목관리에서 진행합니다.</div>'+
       '<div class="toolbar">'+
         '<div class="field"><label>자재구분</label><div class="pill-row" style="margin-top:6px">'+typePillsHtml+'</div></div>'+
+        '<div class="field"><label>카테고리</label><div class="pill-row" style="margin-top:6px">'+catPillsHtml+'</div></div>'+
         '<div class="field"><label>창고</label><div class="pill-row" style="margin-top:6px">'+whPillsHtml+'</div></div>'+
       '</div>'+
       '<div class="panel"><div class="panel-header"><h3>선택된 카테고리 품목 · '+esc(selLabel)+'</h3><span class="count" style="color:var(--text-400)">'+selItems.length+'건</span></div>'+
