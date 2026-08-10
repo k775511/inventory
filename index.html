@@ -531,9 +531,9 @@
         return t;
       });
       s.stockAsOf = TODAY;
-      s.stockFrom = s.stockFrom || addDays(TODAY,-89);
+      s.stockFrom = addDays(TODAY,-89);
       s.stockTo = TODAY;
-      s.historyFrom = s.historyFrom || addDays(TODAY,-29);
+      s.historyFrom = addDays(TODAY,-29);
       s.historyTo = TODAY;
       s.stockWh = s.stockWh || "all";
       s.stockSortKey = s.stockSortKey || "wh";
@@ -545,7 +545,7 @@
       s.stocktakeSortDir = s.stocktakeSortDir || "asc";
       s.stocktakeLogs = s.stocktakeLogs || [];
       s.usageType = s.usageType || "all";
-      s.usageFrom = s.usageFrom || usageDefaultFrom();
+      s.usageFrom = usageDefaultFrom();
       s.usageTo = TODAY;
       s.usageWhs = s.usageWhs || null;
       s.usageQuery = s.usageQuery || "";
@@ -592,9 +592,9 @@
     s.matTypes = (typeof s.matTypes !== 'undefined') ? s.matTypes : cloneMatTypes();
     s.matTypes = s.matTypes.map(function(t){ if(typeof t === "string") return { name:t, purchasable:(t==="소모품"||t==="기타") }; return t; });
     s.stockAsOf = TODAY;
-    s.stockFrom = s.stockFrom || addDays(TODAY,-89);
+    s.stockFrom = addDays(TODAY,-89);
     s.stockTo = TODAY;
-    s.historyFrom = s.historyFrom || addDays(TODAY,-29);
+    s.historyFrom = addDays(TODAY,-29);
     s.historyTo = TODAY;
     s.stockWh = s.stockWh || "all";
     s.stockSortKey = s.stockSortKey || "wh";
@@ -609,7 +609,7 @@
     s.materialSortKey = s.materialSortKey || "code";
     s.materialSortDir = s.materialSortDir || "asc";
     s.usageType = s.usageType || "all";
-    s.usageFrom = s.usageFrom || usageDefaultFrom();
+    s.usageFrom = usageDefaultFrom();
     s.usageTo = TODAY;
     s.usageWhs = s.usageWhs || null;
     s.usageQuery = s.usageQuery || "";
