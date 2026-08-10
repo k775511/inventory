@@ -705,6 +705,168 @@
   function newId(prefix){ return prefix+"-"+Date.now()+"-"+Math.random().toString(36).slice(2,7); }
   function nowTimeStr(){ var d=new Date(); function pad(n){ return (n<10?"0":"")+n; } return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
   function byCode(code){ return APP.mats.filter(function(m){ return m.code===code; })[0]; }
+
+  /* ================= xlsx 생성 (외부 라이브러리 없이 zip+OOXML을 직접 작성) ================= */
+  var XLSX_COLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  var XLSX_CRC_TABLE = (function(){
+    var t = [];
+    for(var n=0;n<256;n++){
+      var c = n;
+      for(var k=0;k<8;k++){ c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); }
+      t[n] = c>>>0;
+    }
+    return t;
+  })();
+  function xlsxCrc32(bytes){
+    var crc = 0xFFFFFFFF;
+    for(var i=0;i<bytes.length;i++){ crc = XLSX_CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8); }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function xmlEsc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  // 압축 없이(STORE) zip 컨테이너를 만든다. 엑셀은 압축 안 된 zip 엔트리도 정상적으로 읽는다.
+  function buildZip(files){
+    var enc = new TextEncoder();
+    var localChunks = [], centralChunks = [];
+    var offset = 0;
+    files.forEach(function(f){
+      var nameBytes = enc.encode(f.name);
+      var data = (f.data instanceof Uint8Array) ? f.data : enc.encode(f.data);
+      var crc = xlsxCrc32(data);
+      var local = new Uint8Array(30 + nameBytes.length);
+      var dv = new DataView(local.buffer);
+      dv.setUint32(0, 0x04034b50, true);
+      dv.setUint16(4, 20, true);
+      dv.setUint16(6, 0, true);
+      dv.setUint16(8, 0, true);
+      dv.setUint16(10, 0, true);
+      dv.setUint16(12, 0x21, true);
+      dv.setUint32(14, crc, true);
+      dv.setUint32(18, data.length, true);
+      dv.setUint32(22, data.length, true);
+      dv.setUint16(26, nameBytes.length, true);
+      dv.setUint16(28, 0, true);
+      local.set(nameBytes, 30);
+      localChunks.push(local, data);
+
+      var central = new Uint8Array(46 + nameBytes.length);
+      var cdv = new DataView(central.buffer);
+      cdv.setUint32(0, 0x02014b50, true);
+      cdv.setUint16(4, 20, true);
+      cdv.setUint16(6, 20, true);
+      cdv.setUint16(8, 0, true);
+      cdv.setUint16(10, 0, true);
+      cdv.setUint16(12, 0, true);
+      cdv.setUint16(14, 0x21, true);
+      cdv.setUint32(16, crc, true);
+      cdv.setUint32(20, data.length, true);
+      cdv.setUint32(24, data.length, true);
+      cdv.setUint16(28, nameBytes.length, true);
+      cdv.setUint16(30, 0, true);
+      cdv.setUint16(32, 0, true);
+      cdv.setUint16(34, 0, true);
+      cdv.setUint16(36, 0, true);
+      cdv.setUint32(38, 0, true);
+      cdv.setUint32(42, offset, true);
+      central.set(nameBytes, 46);
+      centralChunks.push(central);
+
+      offset += local.length + data.length;
+    });
+    var centralStart = offset;
+    var centralSize = 0;
+    centralChunks.forEach(function(c){ centralSize += c.length; });
+    var eocd = new Uint8Array(22);
+    var edv = new DataView(eocd.buffer);
+    edv.setUint32(0, 0x06054b50, true);
+    edv.setUint16(4, 0, true);
+    edv.setUint16(6, 0, true);
+    edv.setUint16(8, files.length, true);
+    edv.setUint16(10, files.length, true);
+    edv.setUint32(12, centralSize, true);
+    edv.setUint32(16, centralStart, true);
+    edv.setUint16(20, 0, true);
+    return new Blob(localChunks.concat(centralChunks, [eocd]), { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  }
+  function xlsxCellNum(ref, s, v){ return '<c r="'+ref+'" s="'+s+'">'+(v==null?'':'<v>'+v+'</v>')+'</c>'; }
+  function xlsxCellStr(ref, s, text){ return '<c r="'+ref+'" t="inlineStr" s="'+s+'"><is><t xml:space="preserve">'+xmlEsc(text)+'</t></is></c>'; }
+  function xlsxCellFormula(ref, s, formula, cachedVal){ return '<c r="'+ref+'" s="'+s+'"><f>'+xmlEsc(formula)+'</f>'+(cachedVal==null?'':'<v>'+xmlEsc(cachedVal)+'</v>')+'</c>'; }
+  function xlsxCellBlank(ref, s){ return '<c r="'+ref+'" s="'+s+'"/>'; }
+  function xlsxRow(r, cells){
+    // cells: [colIndex(1-based), style, value, isNum]
+    var xml = cells.map(function(c){
+      var ref = XLSX_COLS[c[0]-1]+r;
+      return c[3] ? xlsxCellNum(ref, c[1], c[2]) : xlsxCellStr(ref, c[1], c[2]);
+    }).join("");
+    return '<row r="'+r+'">'+xml+'</row>';
+  }
+  var XLSX_STYLES_XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font><font><b/><sz val="10"/><name val="Calibri"/></font></fonts>'+
+    '<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFDCE6F1"/><bgColor indexed="64"/></patternFill></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFF2F2F2"/><bgColor indexed="64"/></patternFill></fill></fills>'+
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'+
+    '<border><left style="thin"><color indexed="64"/></left><right style="thin"><color indexed="64"/></right><top style="thin"><color indexed="64"/></top><bottom style="thin"><color indexed="64"/></bottom><diagonal/></border></borders>'+
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+    '<cellXfs count="6">'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'+
+    '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>'+
+    '<xf numFmtId="0" fontId="0" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'+
+    '</cellXfs></styleSheet>';
+  function xlsxDownload(sheet1Xml, sheet2Xml, filename){
+    var contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+      '<Default Extension="xml" ContentType="application/xml"/>'+
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+      '<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+      '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'+
+      '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>'+
+      '</Types>';
+    var rootRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'+
+      '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>'+
+      '</Relationships>';
+    var coreXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'+
+      '<dc:title>'+xmlEsc(filename)+'</dc:title><dc:creator>PLUSDOOR 재고관리</dc:creator></cp:coreProperties>';
+    var appXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>PLUSDOOR Inventory</Application></Properties>';
+    var workbookXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+      '<sheets><sheet name="자재관리리스트" sheetId="1" r:id="rId1"/><sheet name="등급기준안내" sheetId="2" r:id="rId2"/></sheets>'+
+      '<calcPr calcId="0" fullCalcOnLoad="1"/></workbook>';
+    var workbookRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>'+
+      '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+      '</Relationships>';
+    var files = [
+      {name:"[Content_Types].xml", data:contentTypes},
+      {name:"_rels/.rels", data:rootRels},
+      {name:"docProps/core.xml", data:coreXml},
+      {name:"docProps/app.xml", data:appXml},
+      {name:"xl/workbook.xml", data:workbookXml},
+      {name:"xl/_rels/workbook.xml.rels", data:workbookRels},
+      {name:"xl/styles.xml", data:XLSX_STYLES_XML},
+      {name:"xl/worksheets/sheet1.xml", data:sheet1Xml},
+      {name:"xl/worksheets/sheet2.xml", data:sheet2Xml}
+    ];
+    var blob = buildZip(files);
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
   function activeSafe(m, dateStr){
     dateStr = dateStr || TODAY;
     var mo = parseInt(dateStr.slice(5,7),10);
@@ -2223,9 +2385,36 @@
       '<div class="form-field full" style="margin-top:10px"><label>설명 메모 (안내서에 표시)</label><textarea id="f-note" rows="2" placeholder="예: 도어락 조립 시 사용하는 부자재입니다. 습기에 약하니 서늘한 곳에 보관하세요." style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+(m?esc(m.note||""):"")+'</textarea></div>'+
       (m ? '<label class="check-row" style="margin-top:14px"><input type="checkbox" id="f-discontinued" '+(m.discontinued?"checked":"")+'>사용중지 처리 (더 이상 출고POS·자재입고에서 선택되지 않지만, 월별 사용량비교 등 이력 집계에는 계속 표시됩니다)</label>' : '')+
       '</div>'+
-      '<div class="modal-footer">'+(m?'<button type="button" class="btn btn-outline" style="color:var(--low-text)" onclick="delMat(\''+m.code+'\')">삭제</button>':'<span></span>')+
+      '<div class="modal-footer" style="justify-content:space-between">'+(m?('<div class="btn-row"><button type="button" class="btn btn-outline" style="color:var(--low-text)" onclick="delMat(\''+m.code+'\')">삭제</button><button type="button" class="btn btn-outline" onclick="dupMat(\''+m.code+'\')">복사</button></div>'):'<span></span>')+
       '<div class="btn-row"><button type="button" class="btn btn-outline" onclick="closeModal()">취소</button><button type="button" class="btn btn-primary" onclick="saveMat('+(m?("'"+m.code+"'"):"null")+')">저장</button></div></div>';
     openModal(html);
+  };
+  window.dupMat = function(code){
+    var src = byCode(code); if(!src) return;
+    openMatModal();
+    document.getElementById("f-cat").value = src.cat;
+    document.getElementById("f-mattype").value = src.matType||"";
+    document.getElementById("f-name").value = src.name+" (복사본)";
+    document.getElementById("f-wh").value = src.wh;
+    document.getElementById("f-unit").value = src.unit;
+    document.getElementById("f-loc").value = src.loc||"";
+    document.getElementById("f-safeoff").value = src.safeOff||0;
+    document.getElementById("f-safepeak").value = src.safePeak||0;
+    document.getElementById("f-vendor").value = src.vendor||"";
+    document.getElementById("f-moq").value = src.moq||0;
+    document.getElementById("f-price").value = src.price||0;
+    document.getElementById("f-leadtime").value = src.leadtime||0;
+    document.getElementById("f-note").value = src.note||"";
+    document.getElementById("f-prodformula").value = src.prodFormula||"";
+    var simple = parseSimpleProdFormula(src.prodFormula||"");
+    if(src.prodFormula && simple){
+      document.getElementById("pf-op").value = simple.op;
+      document.getElementById("pf-num").value = simple.num;
+      document.getElementById("pf-floor").checked = simple.floor;
+      setProdFormulaMode("simple");
+    } else if(src.prodFormula){
+      setProdFormulaMode("advanced");
+    }
   };
   window.setProdFormulaMode = function(mode){
     document.getElementById("pf-mode-simple").classList.toggle("active", mode==="simple");
@@ -2468,7 +2657,10 @@
       '</div>'+
       '<div class="panel"><div class="panel-header"><h3>선택된 카테고리 품목 · '+esc(selLabel)+'</h3><span class="count" style="color:var(--text-400)">'+selItems.length+'건</span></div>'+
         '<div class="panel-body pad">'+
-          '<div class="field" style="max-width:240px"><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.pmGuideQuery||"")+'" placeholder="품명, 코드, 거래처로 검색" oninput="debounceSearch(\'pmGuideQ\', this.value, setPmGuideQuery)"></div></div>'+
+          '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;justify-content:space-between">'+
+            '<div class="field" style="max-width:240px"><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.pmGuideQuery||"")+'" placeholder="품명, 코드, 거래처로 검색" oninput="debounceSearch(\'pmGuideQ\', this.value, setPmGuideQuery)"></div></div>'+
+            '<button class="btn btn-outline" onclick="guideAbcExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 다운로드 (ABC 등급표)</button>'+
+          '</div>'+
           '<div style="margin-top:12px">'+selHtml+'</div>'+
         '</div>'+
       '</div>';
@@ -2508,6 +2700,100 @@
   };
   window.setPmGuideQuery = function(v){ APP.pmGuideQuery=v; persist(); renderContent(); var el=document.querySelector('input[placeholder="품명, 코드, 거래처로 검색"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.selectPmGuide = function(kind, value){ APP.pmGuideSelKind=kind; APP.pmGuideSelValue=value; persist(); renderContent(); };
+  window.guideAbcExport = function(){
+    try{
+      var items = APP.mats.filter(function(m){ return !m.discontinued; });
+      var headerLabels = ["연번","품목코드","자재명/규격","단위","현재고","안전재고(비수기)","안전재고(성수기)","공정영향도(상/중/하)","조달난이도(상/중/하)","리드타임(일)","공정영향도점수","조달난이도점수","리드타임점수","종합점수(3~9)","등급","관리책임자(사무실/현장)","담당현장명","발주권한자","최종실사일","비고"];
+      var colCount = headerLabels.length;
+      var dataStart = 4;
+      var lastRow = dataStart + Math.max(items.length,1) - 1;
+      // 자재별 마지막 재고실사일: 재고실사 이력 중 해당 자재코드의 가장 최근 date를 찾는다.
+      var lastStocktake = {};
+      (APP.stocktakeLogs||[]).forEach(function(l){
+        if(!lastStocktake[l.code] || l.date > lastStocktake[l.code]) lastStocktake[l.code] = l.date;
+      });
+
+      var rowsXml = "";
+      rowsXml += '<row r="1">'+xlsxCellStr("A1",1,"자재관리 리스트 (공정영향도 / 조달난이도 / 리드타임 기반 ABC 등급)")+'</row>';
+      rowsXml += '<row r="2">'+xlsxCellStr("A2",0,"※ 흰 칸(현재고·안전재고·리드타임·최종실사일)은 시스템 값이 자동으로 채워집니다. 노란 칸(공정영향도·조달난이도·관리분담)만 직접 입력하면 회색 칸(점수·종합점수·등급)은 자동 계산됩니다. 등급 기준은 등급기준안내 시트를 참고하세요.")+'</row>';
+      var headCells = headerLabels.map(function(label, i){ return xlsxCellStr(XLSX_COLS[i]+"3", 2, label); }).join("");
+      rowsXml += '<row r="3" ht="30" customHeight="1">'+headCells+'</row>';
+
+      items.forEach(function(m, idx){
+        var r = dataStart + idx;
+        var leadtime = m.leadtime || 0;
+        var mScore = leadtime>=30 ? 3 : (leadtime>=7 ? 2 : 1);
+        var cells = "";
+        cells += xlsxCellNum("A"+r, 5, idx+1);
+        cells += xlsxCellStr("B"+r, 5, m.code);
+        cells += xlsxCellStr("C"+r, 5, m.name);
+        cells += xlsxCellStr("D"+r, 5, m.unit||"");
+        cells += xlsxCellNum("E"+r, 5, m.stock||0);
+        cells += xlsxCellNum("F"+r, 5, m.safeOff||0);
+        cells += xlsxCellNum("G"+r, 5, m.safePeak||0);
+        cells += xlsxCellBlank("H"+r, 3);
+        cells += xlsxCellBlank("I"+r, 3);
+        cells += xlsxCellNum("J"+r, 5, leadtime);
+        cells += xlsxCellFormula("K"+r, 4, 'IF(H'+r+'="상",3,IF(H'+r+'="중",2,IF(H'+r+'="하",1,"")))');
+        cells += xlsxCellFormula("L"+r, 4, 'IF(I'+r+'="상",3,IF(I'+r+'="중",2,IF(I'+r+'="하",1,"")))');
+        cells += xlsxCellFormula("M"+r, 4, 'IF(J'+r+'="","",IF(J'+r+'>=30,3,IF(J'+r+'>=7,2,1)))', mScore);
+        cells += xlsxCellFormula("N"+r, 4, 'IF(OR(K'+r+'="",L'+r+'="",M'+r+'=""),"",K'+r+'+L'+r+'+M'+r+')');
+        cells += xlsxCellFormula("O"+r, 4, 'IF(N'+r+'="","",IF(N'+r+'>=7,"A",IF(N'+r+'>=5,"B","C")))');
+        cells += xlsxCellBlank("P"+r, 3);
+        cells += xlsxCellBlank("Q"+r, 3);
+        cells += xlsxCellBlank("R"+r, 3);
+        var lastCheck = lastStocktake[m.code];
+        cells += lastCheck ? xlsxCellStr("S"+r, 5, lastCheck) : xlsxCellBlank("S"+r, 3);
+        cells += xlsxCellBlank("T"+r, 3);
+        rowsXml += '<row r="'+r+'">'+cells+'</row>';
+      });
+
+      var sheet1 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+        '<dimension ref="A1:'+XLSX_COLS[colCount-1]+lastRow+'"/>'+
+        '<sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A4" sqref="A4"/></sheetView></sheetViews>'+
+        '<cols><col min="1" max="1" width="6" customWidth="1"/><col min="2" max="2" width="12" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/>'+
+        '<col min="4" max="4" width="8" customWidth="1"/><col min="5" max="7" width="12" customWidth="1"/><col min="8" max="9" width="16" customWidth="1"/>'+
+        '<col min="10" max="10" width="10" customWidth="1"/><col min="11" max="14" width="10" customWidth="1"/><col min="15" max="15" width="8" customWidth="1"/>'+
+        '<col min="16" max="16" width="16" customWidth="1"/><col min="17" max="20" width="13" customWidth="1"/></cols>'+
+        '<sheetData>'+rowsXml+'</sheetData>'+
+        '<mergeCells count="2"><mergeCell ref="A1:T1"/><mergeCell ref="A2:T2"/></mergeCells>'+
+        '</worksheet>';
+
+      var s2 = "";
+      s2 += xlsxRow(1, [[1,1,"ABC 등급 산정 기준"]]);
+      s2 += xlsxRow(2, [[1,0,"3가지 요소(공정영향도, 조달난이도, 리드타임)를 각 1~3점으로 환산 후 합산(3~9점)하여 등급을 결정합니다."]]);
+      s2 += xlsxRow(3, [[1,2,"① 공정영향도 (결품 시 공정에 미치는 영향)"]]);
+      s2 += xlsxRow(4, [[1,2,"구분"],[2,2,"점수"],[3,2,"기준"]]);
+      s2 += xlsxRow(5, [[1,5,"상"],[2,5,3,true],[3,5,"결품 시 공정 중단/전면 지연 발생 (대체 불가)"]]);
+      s2 += xlsxRow(6, [[1,5,"중"],[2,5,2,true],[3,5,"결품 시 부분 지연·재작업 발생 (단기 대체 가능)"]]);
+      s2 += xlsxRow(7, [[1,5,"하"],[2,5,1,true],[3,5,"결품되어도 공정에 미치는 영향 미미 (대체재 다수)"]]);
+      s2 += xlsxRow(8, [[1,2,"② 조달난이도 (구매/확보의 어려움)"]]);
+      s2 += xlsxRow(9, [[1,2,"구분"],[2,2,"점수"],[3,2,"기준"]]);
+      s2 += xlsxRow(10,[[1,5,"상"],[2,5,3,true],[3,5,"특수 규격/제작발주/수입자재 등 구매처가 제한적"]]);
+      s2 += xlsxRow(11,[[1,5,"중"],[2,5,2,true],[3,5,"일반 유통이나 견적·검수 등 절차가 필요"]]);
+      s2 += xlsxRow(12,[[1,5,"하"],[2,5,1,true],[3,5,"시중에서 즉시 구매 가능한 범용 자재"]]);
+      s2 += xlsxRow(13,[[1,2,"③ 리드타임 (발주 후 입고까지 소요일)"]]);
+      s2 += xlsxRow(14,[[1,2,"구분"],[2,2,"점수"],[3,2,"기준"]]);
+      s2 += xlsxRow(15,[[1,5,"장기"],[2,5,3,true],[3,5,"30일 이상"]]);
+      s2 += xlsxRow(16,[[1,5,"중기"],[2,5,2,true],[3,5,"7일 ~ 29일"]]);
+      s2 += xlsxRow(17,[[1,5,"단기"],[2,5,1,true],[3,5,"7일 미만"]]);
+      s2 += xlsxRow(18,[[1,2,"④ 종합점수 → 등급 매핑 (①+②+③ 합산, 3~9점)"]]);
+      s2 += xlsxRow(19,[[1,2,"등급"],[2,2,"종합점수"],[3,2,"관리 방식(권장)"],[4,2,"관리 주체"],[5,2,"실사 주기(권장)"]]);
+      s2 += xlsxRow(20,[[1,5,"A"],[2,5,"7~9점"],[3,5,"핵심 관리 대상. 발주 전 승인 필요, 재고 상시 모니터링"],[4,5,"본사(관리자) 직접 관리"],[5,5,"주 1회"]]);
+      s2 += xlsxRow(21,[[1,5,"B"],[2,5,"5~6점"],[3,5,"정기 보고 대상. 현장 책임자 관리 + 주기적 보고"],[4,5,"현장 책임자 관리"],[5,5,"월 1회"]]);
+      s2 += xlsxRow(22,[[1,5,"C"],[2,5,"3~4점"],[3,5,"소모성 자재. 현장 자율 관리, 최소 재고만 체크"],[4,5,"현장 자율 관리"],[5,5,"분기 1회"]]);
+      var sheet2 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+        '<dimension ref="A1:E22"/>'+
+        '<cols><col min="1" max="1" width="10" customWidth="1"/><col min="2" max="2" width="10" customWidth="1"/><col min="3" max="3" width="55" customWidth="1"/><col min="4" max="4" width="22" customWidth="1"/><col min="5" max="5" width="16" customWidth="1"/></cols>'+
+        '<sheetData>'+s2+'</sheetData>'+
+        '</worksheet>';
+
+      xlsxDownload(sheet1, sheet2, "자재관리리스트_ABC등급.xlsx");
+      showToast("ABC 등급표 엑셀 파일을 다운로드했습니다.");
+    }catch(e){ console.warn(e); showToast("이 환경에서는 다운로드가 제한됩니다. (프로토타입)"); }
+  };
   function buildPmReqText(m, qty, urgent){
     return "품목코드: "+m.code+"\n품명: "+m.name+"\n수량: "+qty+"\n긴급여부: "+urgent+"\n거래처: "+(m.vendor||"-")+"\n최소발주수량: "+(m.moq||0)+"\n단가: "+fmt(m.price||0)+"원";
   }
