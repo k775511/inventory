@@ -997,9 +997,10 @@
     if(!btn) return;
     if(APP.cur !== btn.dataset.sub) clearSearchQueries();
     APP.cur = btn.dataset.sub;
+    persist(); // 새로고침해도 마지막으로 보던 화면이 그대로 열리도록 현재 화면을 저장해둔다.
     renderContent();
   });
-  window.go = function(sub){ if(APP.cur !== sub) clearSearchQueries(); APP.cur = sub; renderContent(); };
+  window.go = function(sub){ if(APP.cur !== sub) clearSearchQueries(); APP.cur = sub; persist(); renderContent(); };
 
   /* ================= modal helpers ================= */
   var backdrop = document.getElementById("modalBackdrop");
@@ -1386,9 +1387,9 @@
     return '<div class="sub-view">'+tabs+materialRegisterHtml()+'</div>';
   }
   window.setMaterialTab = function(t){ APP.materialTab=t; renderContent(); };
-  window.goMaterialUsage = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="usage"; renderContent(); };
-  window.goMaterialAlert = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="alert"; renderContent(); };
-  window.goPurchaseManage = function(){ clearSearchQueries(); APP.cur="purchase"; APP.purchaseTab="manage"; renderContent(); };
+  window.goMaterialUsage = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="usage"; persist(); renderContent(); };
+  window.goMaterialAlert = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="alert"; persist(); renderContent(); };
+  window.goPurchaseManage = function(){ clearSearchQueries(); APP.cur="purchase"; APP.purchaseTab="manage"; persist(); renderContent(); };
 
   function materialShortageAlertHtml(){
     var asOf = APP.stockAsOf || TODAY;
