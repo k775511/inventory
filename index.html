@@ -421,7 +421,7 @@
   .mat-card-num-val.low{ color:var(--low-text); }
   .mat-card-num-label{ font-size:10.5px; color:var(--text-400); margin-top:2px; }
 
-  @media (max-width: 720px){
+  @media (max-width: 900px){
     .topbar, .sub-nav{ display:none; }
     .mobile-topbar{ display:flex; }
     .app-main{ padding-top:52px; }
@@ -1102,7 +1102,7 @@
   document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ closeModal(); closeLightbox(); } });
 
   /* ================= RENDER: dispatcher ================= */
-  function isMobileView(){ return window.matchMedia("(max-width: 720px)").matches; }
+  function isMobileView(){ return window.matchMedia("(max-width: 900px)").matches; }
   var MOBILE_TITLES = {
     dashboard:"PLUSDOOR", pos:"출고POS", receive:"자재입고", stock:"재고현황",
     purchase:"구매요청", matmaster:"자재마스터", history:"입출고내역", admin:"설정"
