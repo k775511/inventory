@@ -663,7 +663,14 @@
       if(snapshot.exists()){
         var serverState = snapshot.data().app || snapshot.data();
         if(serverState && typeof serverState === "object"){
+          // 지금 보고 있는 화면은 이 기기만의 로컬 상태다. 다른 기기·다른 세션이 마지막으로
+          // 저장한 화면 값으로 갑자기 덮어써져 화면이 순간 바뀌어 보이는 일이 없도록,
+          // 서버 데이터를 받아온 뒤에도 이 기기가 보고 있던 화면/탭 상태는 그대로 유지한다.
+          var localCur = APP.cur, localMaterialTab = APP.materialTab, localPurchaseTab = APP.purchaseTab,
+            localStockTab = APP.stockTab, localMatMasterTab = APP.matMasterTab;
           APP = normalizeState(serverState);
+          APP.cur = localCur; APP.materialTab = localMaterialTab; APP.purchaseTab = localPurchaseTab;
+          APP.stockTab = localStockTab; APP.matMasterTab = localMatMasterTab;
           renderContent();
         }
       } else {
