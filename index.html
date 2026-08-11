@@ -1,4 +1,5 @@
 <title>PLUSDOOR 재고관리 프로토타입</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -46,6 +47,9 @@
   <symbol id="i-upload" viewBox="0 0 24 24"><path d="M6 10l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="4" x2="12" y2="16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="4" y1="19" x2="20" y2="19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
   <symbol id="i-camera" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 7l1.5-2.5h5L16 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><polyline points="8 12.5 11 15.5 16 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><polyline points="12 7 12 12 16 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 
 <style>
@@ -203,7 +207,7 @@
   .stock-row:hover{ background:#f7f9fc; }
   .stock-row-main{ min-width:0; }
   .stock-row-name{ font-size:13.5px; font-weight:800; color:var(--text-900); }
-  .stock-row-name .stock-code{ color:var(--text-400); font-weight:700; font-size:11.5px; margin-left:8px; }
+  .stock-row-meta .stock-code{ font-weight:700; }
   .stock-row-meta{ font-size:11.5px; color:var(--text-400); margin-top:3px; }
   .stock-row-nums{ display:flex; gap:26px; flex:none; }
   .stock-num{ text-align:right; min-width:60px; }
@@ -289,6 +293,7 @@
   .btn-minus{ width:30px; height:30px; border-radius:8px; background:var(--sub-bg); color:var(--text-600); display:flex; align-items:center; justify-content:center; border:1px solid var(--border-strong); flex:none; }
   .btn-add:hover{ background:var(--blue-700); }
   .pos-meta-grid{ display:grid; grid-template-columns:1.2fr 1fr 1.4fr; gap:10px; }
+  .pos-meta-grid.cols-2{ grid-template-columns:1fr 1fr; }
   .cart-wrap{ border:1px solid var(--border); border-radius:10px; min-height:120px; }
   .cart-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); }
   .cart-row:last-child{ border-bottom:none; }
@@ -367,8 +372,64 @@
     .stat-cards.cols-3{ grid-template-columns:repeat(2,1fr); }
     .series-grid{ grid-template-columns:repeat(2,1fr); }
     .grid-2, .report-grid, .pos-grid, .backup-grid{ grid-template-columns:1fr; }
-    .form-grid, .pos-meta-grid{ grid-template-columns:1fr; }
+    .form-grid, .pos-meta-grid, .pos-meta-grid.cols-2{ grid-template-columns:1fr; }
     .season-grid{ grid-template-columns:repeat(4,1fr); }
+  }
+
+  /* ---- 모바일(폰 너비): 토스포스 스타일 홈 화면 ---- */
+  .mobile-topbar{ display:none; position:fixed; top:0; left:0; right:0; z-index:80; background:#fff; border-bottom:1px solid var(--border); padding:10px 14px; align-items:center; gap:8px; }
+  .mobile-back{ background:none; border:none; color:var(--text-900); font-size:14px; font-weight:700; display:flex; align-items:center; gap:2px; padding:6px 4px; }
+  .mobile-topbar-title{ font-size:15px; font-weight:800; color:var(--text-900); }
+
+  .mhome{ display:flex; flex-direction:column; gap:10px; }
+  .mhome-hero{ background:#fff; border-radius:16px; padding:18px; box-shadow:0 1px 3px rgba(20,29,52,.06); border:none; text-align:left; width:100%; }
+  .mhome-hero-top{ display:flex; justify-content:space-between; align-items:center; font-size:12.5px; color:var(--text-400); }
+  .mhome-hero-val{ font-size:26px; font-weight:800; color:var(--text-900); margin-top:8px; display:flex; align-items:center; gap:4px; }
+  .mhome-hero-sub{ font-size:12.5px; color:var(--text-400); margin-top:8px; }
+  .mhome-hero-foot{ display:flex; margin-top:16px; border-top:1px solid var(--border); }
+  .mhome-hero-foot > div{ flex:1; text-align:center; padding:12px 4px; font-size:12.5px; font-weight:700; color:var(--text-600); cursor:pointer; }
+  .mhome-hero-foot > div:not(:last-child){ border-right:1px solid var(--border); }
+
+  .mhome-menu{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 1px 3px rgba(20,29,52,.06); }
+  .mhome-menu-row{ width:100%; background:none; border:none; display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); text-align:left; }
+  .mhome-menu-row:last-child{ border-bottom:none; }
+  .mhome-menu-ic{ width:34px; height:34px; border-radius:9px; background:var(--blue-050); color:var(--blue-700); display:flex; align-items:center; justify-content:center; flex:none; }
+  .mhome-menu-ic.warn{ background:var(--low-bg); color:var(--low-text); }
+  .mhome-menu-ic.adj{ background:var(--over-bg); color:var(--over-text); }
+  .mhome-menu-label{ flex:1; font-size:14px; font-weight:700; color:var(--text-900); }
+  .mhome-menu-row .chev{ color:var(--text-400); transform:rotate(-90deg); }
+  .mhome-menu-2col{ display:flex; }
+  .mhome-menu-2col .mhome-menu-row{ flex:1; flex-direction:column; justify-content:center; gap:6px; padding:16px 8px; border-bottom:none; border-right:1px solid var(--border); text-align:center; }
+  .mhome-menu-2col .mhome-menu-row:last-child{ border-right:none; }
+  .mhome-menu-2col .mhome-menu-label{ flex:none; }
+  .mhome-menu-2col .chev{ display:none; }
+
+  .mat-card-list{ display:flex; flex-direction:column; gap:10px; }
+  .mat-card{ background:#fff; border-radius:14px; padding:14px; box-shadow:0 1px 3px rgba(20,29,52,.06); }
+  .mat-card-top{ display:flex; gap:12px; align-items:flex-start; }
+  .mat-card-photo{ position:relative; width:64px; height:64px; border-radius:12px; overflow:hidden; flex:none; background:var(--sub-bg); display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--text-400); }
+  .mat-card-photo img{ width:100%; height:100%; object-fit:cover; }
+  .mat-card-photo-btn{ position:absolute; right:0; bottom:0; width:22px; height:22px; border-radius:50%; background:var(--blue-600); color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
+  .mat-card-photo-btn .ic{ width:11px; height:11px; }
+  .mat-card-name{ font-size:14.5px; font-weight:800; color:var(--text-900); }
+  .mat-card-code{ font-size:11.5px; color:var(--text-400); margin-top:1px; }
+  .mat-card-tags{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .mat-card-tag{ font-size:10.5px; font-weight:700; color:var(--text-600); background:var(--sub-bg); border-radius:999px; padding:2px 8px; }
+  .mat-card-nums{ display:flex; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .mat-card-num{ flex:1; text-align:center; }
+  .mat-card-num-val{ font-size:15px; font-weight:800; color:var(--text-900); }
+  .mat-card-num-val.low{ color:var(--low-text); }
+  .mat-card-num-label{ font-size:10.5px; color:var(--text-400); margin-top:2px; }
+
+  @media (max-width: 720px){
+    .topbar, .sub-nav{ display:none; }
+    .mobile-topbar{ display:flex; }
+    .app-main{ padding-top:52px; }
+    .sub-view{ padding:14px; gap:10px; }
+    .modal{ max-width:96vw; width:96vw; max-height:92vh; }
+    .grid-3{ grid-template-columns:1fr; }
+    .stat-cards, .stat-cards.cols-3{ grid-template-columns:repeat(2,1fr); }
+    table{ font-size:11.5px; min-width:520px; }
   }
 </style>
 
@@ -382,6 +443,11 @@
     </div>
     <div class="topbar-right"></div>
   </header>
+
+  <div class="mobile-topbar" id="mobileTopbar">
+    <button class="mobile-back" id="mobileBackBtn" onclick="go('dashboard')" style="display:none">‹ 홈</button>
+    <span class="mobile-topbar-title" id="mobileTopbarTitle">PLUSDOOR</span>
+  </div>
 
   <main class="app-main">
     <div class="stub-view" id="stubView" hidden>
@@ -504,7 +570,9 @@
       pm: seedPm(),
       logs: seedLogs(),
       inLogs: seedInLogs(),
+      adjLogs: [],
       stocktakeLogs: [],
+      materialAlertView: "overview",
       alerts: seedAlerts(),
       safety: { mode:"auto", peakMonths:[3,4,5,9,10] },
       cur:"dashboard", materialTab:"register", materialQ:"", materialSortKey:"code", materialSortDir:"asc",
@@ -551,6 +619,8 @@
       s.stocktakeSortKey = s.stocktakeSortKey || "wh";
       s.stocktakeSortDir = s.stocktakeSortDir || "asc";
       s.stocktakeLogs = s.stocktakeLogs || [];
+      s.adjLogs = s.adjLogs || [];
+      s.materialAlertView = s.materialAlertView || "overview";
       s.usageType = s.usageType || "all";
       s.usageFrom = usageDefaultFrom();
       s.usageTo = TODAY;
@@ -617,6 +687,8 @@
     s.stocktakeSortKey = s.stocktakeSortKey || "wh";
     s.stocktakeSortDir = s.stocktakeSortDir || "asc";
     s.stocktakeLogs = s.stocktakeLogs || [];
+    s.adjLogs = s.adjLogs || [];
+    s.materialAlertView = s.materialAlertView || "overview";
     s.materialQ = s.materialQ || "";
     s.materialSortKey = s.materialSortKey || "code";
     s.materialSortDir = s.materialSortDir || "asc";
@@ -1030,14 +1102,42 @@
   document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ closeModal(); closeLightbox(); } });
 
   /* ================= RENDER: dispatcher ================= */
+  function isMobileView(){ return window.matchMedia("(max-width: 720px)").matches; }
+  var MOBILE_TITLES = {
+    dashboard:"PLUSDOOR", pos:"출고POS", receive:"자재입고", stock:"재고현황",
+    purchase:"구매요청", matmaster:"자재마스터", history:"입출고내역", admin:"설정"
+  };
+  var MOBILE_MATERIAL_TITLES = { register:"품목관리", alert:"재고부족알림", stocktake:"재고실사", usage:"사용량분석", monthly:"월별 사용량비교", yearly:"연도별 동일월비교" };
+  function updateMobileTopbar(){
+    var backBtn = document.getElementById("mobileBackBtn");
+    var titleEl = document.getElementById("mobileTopbarTitle");
+    if(!backBtn || !titleEl) return;
+    var onHome = APP.cur==="dashboard";
+    backBtn.style.display = onHome ? "none" : "flex";
+    var title = APP.cur==="material" ? (MOBILE_MATERIAL_TITLES[APP.materialTab]||"자재관리") : (MOBILE_TITLES[APP.cur]||"PLUSDOOR");
+    titleEl.textContent = title;
+  }
+  window.addEventListener("resize", (function(){
+    var lastMobile = isMobileView();
+    var timer = null;
+    return function(){
+      clearTimeout(timer);
+      timer = setTimeout(function(){
+        var nowMobile = isMobileView();
+        if(nowMobile !== lastMobile){ lastMobile = nowMobile; renderContent(); }
+      }, 150);
+    };
+  })());
   function renderContent(){
     subNav.querySelectorAll(".sub-item").forEach(function(b){ b.classList.toggle("active", b.dataset.sub===APP.cur); });
+    updateMobileTopbar();
     var fn = SCREENS[APP.cur] || SCREENS.dashboard;
     document.getElementById("content").innerHTML = fn();
   }
 
   /* ---------------- 대시보드 ---------------- */
   function screenDashboard(){
+    if(isMobileView()) return mobileHomeHtml();
     var low = APP.mats.filter(function(m){ return !isPurchasableType(m.matType) && isLow(m); });
     var curMonth = TODAY.slice(0,7); // "이번달"은 하드코딩하지 않고 오늘 날짜 기준으로 매번 계산한다.
     var curMonthStart = curMonth+"-01";
@@ -1096,6 +1196,38 @@
     '</div>';
   }
 
+  /* ---------------- 모바일 홈 (토스포스 스타일) ---------------- */
+  function mobileHomeHtml(){
+    var pmItems = consumableMats();
+    var needCnt = pmItems.filter(function(m){ return m.orderStatus==="발주필요"; }).length;
+    var holdCnt = pmItems.filter(function(m){ return m.orderStatus==="보류"; }).length;
+    var doneCnt = pmItems.filter(function(m){ return m.orderStatus==="발주완료"; }).length;
+    var lowCnt = APP.mats.filter(function(m){ return !isPurchasableType(m.matType) && isLow(m); }).length;
+
+    return '<div class="mhome">'+
+      '<div class="mhome-hero">'+
+        '<div style="cursor:pointer" onclick="goPurchaseManage()">'+
+          '<div class="mhome-hero-top"><span>발주 진행도</span><span>'+TODAY+' 기준</span></div>'+
+          '<div class="mhome-hero-val">발주필요 '+needCnt+'건 <svg class="ic" style="width:16px;height:16px;transform:rotate(-90deg)"><use href="#i-chevron"/></svg></div>'+
+          '<div class="mhome-hero-sub">보류 '+holdCnt+'건 · 발주완료 '+doneCnt+'건</div>'+
+        '</div>'+
+        '<div class="mhome-hero-foot"><div onclick="goPurchaseRequest()">구매요청</div></div>'+
+      '</div>'+
+      '<div class="mhome-menu mhome-menu-2col">'+
+        '<button type="button" class="mhome-menu-row" onclick="go(\'receive\')"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-in"/></svg></span><span class="mhome-menu-label">입고</span></button>'+
+        '<button type="button" class="mhome-menu-row" onclick="go(\'pos\')"><span class="mhome-menu-ic warn"><svg class="ic"><use href="#i-out"/></svg></span><span class="mhome-menu-label">출고</span></button>'+
+      '</div>'+
+      '<div class="mhome-menu">'+
+        '<button type="button" class="mhome-menu-row" onclick="goMobileMaterial()"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-list"/></svg></span><span class="mhome-menu-label">품목관리</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
+        '<button type="button" class="mhome-menu-row" onclick="goMobileStocktake()"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-check"/></svg></span><span class="mhome-menu-label">재고실사</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
+        '<button type="button" class="mhome-menu-row" onclick="goMaterialAlert()"><span class="mhome-menu-ic warn"><svg class="ic"><use href="#i-alert"/></svg></span><span class="mhome-menu-label">재고부족알림'+(lowCnt?' ('+lowCnt+')':'')+'</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
+        '<button type="button" class="mhome-menu-row" onclick="go(\'history\')"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-clock"/></svg></span><span class="mhome-menu-label">입출고내역</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
+      '</div>'+
+    '</div>';
+  }
+  window.goMobileMaterial = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="register"; persist(); renderContent(); };
+  window.goMobileStocktake = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="stocktake"; persist(); renderContent(); };
+
   /* ---------------- 출고POS ---------------- */
   function catalogForWh(wh, q){
     q = (q||"").trim().toLowerCase();
@@ -1142,7 +1274,7 @@
       '</div>'+
       '<div class="pos-panel">'+
         '<div class="pos-panel-title"><span class="step-badge">2</span>출고자 및 출고목록</div>'+
-        '<div class="pos-meta-grid" style="grid-template-columns:1fr 1fr">'+
+        '<div class="pos-meta-grid cols-2">'+
           '<div class="form-field"><label>출고자</label><select id="posIssuer">'+ISSUERS.map(function(u){ return '<option>'+u+'</option>'; }).join("")+'</select></div>'+
           '<div class="form-field"><label>비고</label><input type="text" id="posNote" placeholder="선택 입력"></div>'+
         '</div>'+
@@ -1287,7 +1419,7 @@
 
   /* ---------------- 재고현황 ---------------- */
   function screenStock(){
-    var tabs = '<div class="pill-row">'+
+    var tabs = isMobileView() ? '' : '<div class="pill-row">'+
       '<button class="pill'+(APP.stockTab==="status"?" active":"")+'" onclick="setStockTab(\'status\')">현재 재고 현황</button>'+
       '<button class="pill'+(APP.stockTab==="shortage"?" active":"")+'" onclick="setStockTab(\'shortage\')">안전재고 미달 이력</button>'+
       '</div>';
@@ -1351,12 +1483,32 @@
     '</div>';
   }
   function stockGroupHtml(kind, label, list, diffLabel, colorVar, tip){
+    if(isMobileView()){
+      var cards = list.length ? list.map(function(x){
+        var m = x.m;
+        var diffText = (x.diff>0?"+":"")+fmt(x.diff);
+        var tags = [m.code, m.cat, m.wh, m.loc, m.unit].filter(Boolean).map(function(t){ return '<span class="mat-card-tag">'+esc(t)+'</span>'; }).join("");
+        return '<div class="mat-card">'+
+          '<div class="mat-card-name">'+esc(m.name)+'</div>'+
+          '<div class="mat-card-tags">'+tags+'</div>'+
+          '<div class="mat-card-nums">'+
+            '<div class="mat-card-num"><div class="mat-card-num-val" style="color:var(--ok-text)">'+fmt(x.safe)+'</div><div class="mat-card-num-label">안전재고</div></div>'+
+            '<div class="mat-card-num"><div class="mat-card-num-val">'+fmt(x.qty)+'</div><div class="mat-card-num-label">현재재고</div></div>'+
+            '<div class="mat-card-num"><div class="mat-card-num-val" style="color:'+colorVar+'">'+diffText+'</div><div class="mat-card-num-label">'+diffLabel+'</div></div>'+
+          '</div>'+
+        '</div>';
+      }).join("") : '';
+      return '<div class="stock-group">'+
+        '<div class="stock-group-head"><span class="stock-dot '+kind+'"></span>'+label+' <span class="stock-group-count">('+list.length+')</span></div>'+
+        '<div class="mat-card-list">'+(cards||'<div class="result-empty">해당 품목이 없습니다.</div>')+'</div>'+
+      '</div>';
+    }
     var rowsHtml = list.length ? list.map(function(x){
       var m = x.m;
       var diffText = (x.diff>0?"+":"")+fmt(x.diff);
       return '<div class="stock-row">'+
-        '<div class="stock-row-main"><div class="stock-row-name">'+esc(m.name)+'<span class="stock-code">'+esc(m.code)+'</span></div>'+
-        '<div class="stock-row-meta">'+esc(m.cat)+' · '+esc(m.wh)+' · '+esc(m.loc)+' · '+esc(m.unit)+'</div></div>'+
+        '<div class="stock-row-main"><div class="stock-row-name">'+esc(m.name)+'</div>'+
+        '<div class="stock-row-meta"><span class="stock-code">'+esc(m.code)+'</span> · '+esc(m.cat)+' · '+esc(m.wh)+' · '+esc(m.loc)+' · '+esc(m.unit)+'</div></div>'+
         '<div class="stock-row-nums">'+
           '<div class="stock-num"><div class="stock-num-val" style="color:var(--ok-text)">'+fmt(x.safe)+'</div><div class="stock-num-label">안전재고</div></div>'+
           '<div class="stock-num"><div class="stock-num-val">'+fmt(x.qty)+'</div><div class="stock-num-label">현재재고</div></div>'+
@@ -1378,7 +1530,7 @@
 
   /* ---------------- 자재관리 ---------------- */
   function screenMaterial(){
-    var tabs = '<div class="pill-row">'+
+    var tabs = isMobileView() ? '' : '<div class="pill-row">'+
       '<button class="pill'+(APP.materialTab==="register"?" active":"")+'" onclick="setMaterialTab(\'register\')">품목관리</button>'+
       '<button class="pill'+(APP.materialTab==="alert"?" active":"")+'" onclick="setMaterialTab(\'alert\')">재고부족알림</button>'+
       '<button class="pill'+(APP.materialTab==="stocktake"?" active":"")+'" onclick="setMaterialTab(\'stocktake\')">재고실사</button>'+
@@ -1395,10 +1547,43 @@
   }
   window.setMaterialTab = function(t){ APP.materialTab=t; renderContent(); };
   window.goMaterialUsage = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="usage"; persist(); renderContent(); };
-  window.goMaterialAlert = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="alert"; persist(); renderContent(); };
+  window.goMaterialAlert = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="alert"; APP.materialAlertView="overview"; persist(); renderContent(); };
   window.goPurchaseManage = function(){ clearSearchQueries(); APP.cur="purchase"; APP.purchaseTab="manage"; persist(); renderContent(); };
+  window.goPurchaseRequest = function(){ clearSearchQueries(); APP.cur="purchase"; APP.purchaseTab="request"; persist(); renderContent(); };
 
+  function materialShortageOverviewCounts(wh, asOf){
+    var counts = { low:0, warn:0, over:0 };
+    APP.mats.forEach(function(m){
+      if(isPurchasableType(m.matType)) return;
+      if(wh!=="all" && m.wh!==wh) return;
+      var qty = stockAsOfQty(m, asOf);
+      var safe = activeSafe(m, asOf);
+      var level = stockLevel4(qty, safe);
+      if(counts[level]!=null) counts[level]++;
+    });
+    return counts;
+  }
+  function materialShortageOverviewHtml(){
+    var asOf = APP.stockAsOf || TODAY;
+    function card(label, wh){
+      var c = materialShortageOverviewCounts(wh, asOf);
+      return '<div class="mat-card" style="cursor:pointer" onclick="selectAlertWh(\''+esc(wh)+'\')">'+
+        '<div class="mat-card-name">'+esc(label)+'</div>'+
+        '<div class="mat-card-nums">'+
+          '<div class="mat-card-num"><div class="mat-card-num-val" style="color:var(--low-text)">'+c.low+'</div><div class="mat-card-num-label">재고부족</div></div>'+
+          '<div class="mat-card-num"><div class="mat-card-num-val" style="color:var(--warn-text)">'+c.warn+'</div><div class="mat-card-num-label">부족임박</div></div>'+
+          '<div class="mat-card-num"><div class="mat-card-num-val" style="color:var(--over-text)">'+c.over+'</div><div class="mat-card-num-label">과재고</div></div>'+
+        '</div>'+
+      '</div>';
+    }
+    var cards = card("전체", "all") + APP.whs.map(function(w){ return card(w, w); }).join("");
+    return '<div class="pos-hint">창고를 선택하면 그 창고의 재고부족·임박·과재고 품목을 확인할 수 있어요.</div>'+
+      '<div class="mat-card-list">'+cards+'</div>';
+  }
+  window.selectAlertWh = function(wh){ APP.stockWh = wh; APP.materialAlertView = "list"; persist(); renderContent(); };
+  window.backToAlertOverview = function(){ APP.materialAlertView = "overview"; renderContent(); };
   function materialShortageAlertHtml(){
+    if(isMobileView() && APP.materialAlertView!=="list") return materialShortageOverviewHtml();
     var asOf = APP.stockAsOf || TODAY;
     var isPast = asOf < TODAY;
     var stockWh = APP.stockWh || "all";
@@ -1419,7 +1604,8 @@
 
     var whOptions = ['<option value="all"'+(stockWh==="all"?" selected":"")+'>전체</option>']
       .concat(APP.whs.map(function(w){ return '<option'+(stockWh===w?" selected":"")+'>'+esc(w)+'</option>'; })).join("");
-    return '<div class="toolbar">'+
+    return (isMobileView() ? '<button type="button" class="btn btn-ghost btn-sm" onclick="backToAlertOverview()">‹ 창고별로 보기</button>' : '')+
+      '<div class="toolbar">'+
         '<div class="field"><label>창고</label><div class="select-wrap" style="position:relative"><select onchange="setStockWh(this.value)">'+whOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
         '<div class="field"><label>기준일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+asOf+'" max="'+TODAY+'" onchange="setStockAsOf(this.value)"></div></div>'+
       '</div>'+
@@ -1990,6 +2176,38 @@
     }catch(e){ showToast("이 환경에서는 다운로드가 제한됩니다. (프로토타입)"); }
   };
 
+  function materialRegisterMobileHtml(visible, q, totalActive){
+    var cards = visible.map(function(m){
+      var tags = [m.matType||"-", m.cat, m.wh, m.unit].concat(m.loc?[m.loc]:[]).map(function(t){ return '<span class="mat-card-tag">'+esc(t)+'</span>'; }).join("");
+      var low = m.stock < activeSafe(m);
+      return '<div class="mat-card">'+
+        '<div class="mat-card-top">'+
+          '<label class="mat-card-photo" title="탭하여 사진 등록/변경">'+
+            '<input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\')">'+
+            (m.photo ? '<img src="'+m.photo+'" alt="">' : '📦')+
+            '<span class="mat-card-photo-btn"><svg class="ic"><use href="#i-camera"/></svg></span>'+
+          '</label>'+
+          '<div style="flex:1;min-width:0" onclick="openMatModal(\''+m.code+'\')">'+
+            '<div class="mat-card-name">'+esc(m.name)+'</div>'+
+            '<div class="mat-card-code">'+esc(m.code)+'</div>'+
+            '<div class="mat-card-tags">'+tags+'</div>'+
+          '</div>'+
+          stockBadge(m)+
+        '</div>'+
+        '<div class="mat-card-nums" onclick="openMatModal(\''+m.code+'\')">'+
+          '<div class="mat-card-num"><div class="mat-card-num-val'+(low?' low':'')+'">'+fmt(m.stock)+'</div><div class="mat-card-num-label">현재고</div></div>'+
+          '<div class="mat-card-num"><div class="mat-card-num-val">'+fmt(m.safeOff)+'</div><div class="mat-card-num-label">비수기안전</div></div>'+
+          '<div class="mat-card-num"><div class="mat-card-num-val">'+fmt(m.safePeak)+'</div><div class="mat-card-num-label">성수기안전</div></div>'+
+        '</div>'+
+      '</div>';
+    }).join("");
+    return '<div class="toolbar">'+
+        '<div class="field" style="flex:1;min-width:0"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.materialQ||"")+'" placeholder="자재명, 코드, 카테고리 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openMatModal()"><svg class="ic"><use href="#i-plus"/></svg>신규등록</button>'+
+      '</div>'+
+      '<div class="pos-hint">'+(q?'검색결과 '+visible.length+'건 / 전체 '+totalActive+'건':'등록된 자재 '+visible.length+'건')+' · 카드를 탭하면 수정, 사진을 탭하면 사진을 바꿀 수 있어요.</div>'+
+      '<div class="mat-card-list">'+(cards||'<div class="result-empty">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</div>')+'</div>';
+  }
   function materialRegisterHtml(){
     var discCnt = APP.mats.filter(function(m){ return m.discontinued; }).length;
     var q = (APP.materialQ||"").trim().toLowerCase();
@@ -2004,6 +2222,7 @@
     var matSortGetters = { code:function(m){return m.code;}, name:function(m){return m.name;}, matType:function(m){return m.matType||"";}, cat:function(m){return m.cat||"";}, wh:function(m){return m.wh||"";} };
     var matSortKey = APP.materialSortKey||"code";
     visible.sort(byStringKey(matSortGetters[matSortKey]||matSortGetters.code, APP.materialSortDir));
+    if(isMobileView()) return materialRegisterMobileHtml(visible, q, totalActive);
     var rows = visible.map(function(m){
       return '<tr><td><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td>'+photoCell(m,false)+'</td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num">'+fmt(m.safeOff)+'</td><td class="num">'+fmt(m.safePeak)+'</td><td>'+stockBadge(m)+'</td>'+
         '<td><div class="row-actions"><label class="btn btn-outline icon-only" title="사진"><input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\')"><svg class="ic"><use href="#i-camera"/></svg></label>'+
@@ -2153,9 +2372,15 @@
     } else {
       var wh = APP.stocktakeWh || "all";
       items = APP.mats.filter(function(m){ return !isPurchasableType(m.matType) && !m.discontinued && (wh==="all" || m.wh===wh); });
-      var whPills = ['<button class="pill'+(wh==="all"?" active":"")+'" onclick="setStocktakeWh(\'all\')">전체</button>']
-        .concat(APP.whs.map(function(w){ return '<button class="pill'+(wh===w?" active":"")+'" onclick="setStocktakeWh(\''+w+'\')">'+esc(w)+'</button>'; })).join("");
-      pickerHtml = '<div style="flex:1;min-width:240px"><div class="pos-section-label" style="margin-bottom:8px">실사할 창고 선택</div><div class="pill-row">'+whPills+'</div></div>';
+      var whSelectOptions = '<option value="all"'+(wh==="all"?" selected":"")+'>전체</option>'+
+        APP.whs.map(function(w){ return '<option value="'+esc(w)+'"'+(wh===w?" selected":"")+'>'+esc(w)+'</option>'; }).join("");
+      pickerHtml = '<div class="field" style="max-width:220px">'+
+          '<label>실사할 창고 선택</label>'+
+          '<div class="select-wrap" style="position:relative">'+
+            '<select onchange="setStocktakeWh(this.value)">'+whSelectOptions+'</select>'+
+            '<svg class="ic"><use href="#i-chevron"/></svg>'+
+          '</div>'+
+        '</div>';
       hintText = "선택한 창고의 자재만 실사 대상으로 표시됩니다. 전산재고와 실사수량을 비교하여 차이를 확인한 뒤 \"실사 반영\"을 누르면 현재고에 반영되고 실사 이력에 기록됩니다.";
       emptyText = "해당 창고에 등록된 자재가 없습니다.";
       scopeLabel = wh==="all" ? "전체 창고" : wh;
@@ -2164,6 +2389,27 @@
     var stkSortGetters = { wh:function(m){return m.wh||"";}, name:function(m){return m.name;}, code:function(m){return m.code;} };
     items.sort(byStringKey(stkSortGetters[APP.stocktakeSortKey]||stkSortGetters.wh, APP.stocktakeSortDir));
     var isSingle = mode==="single";
+    if(isMobileView()){
+      var cards = items.length ? items.map(function(m){
+        return '<div class="mat-card">'+
+          (isSingle ? '<label class="check-row" style="margin-bottom:8px;font-size:12.5px;font-weight:700"><input type="checkbox" id="stkchk-'+m.code+'" onchange="stocktakeToggle(\''+m.code+'\')"> 실사 대상으로 포함</label>' : '')+
+          '<div class="mat-card-name">'+esc(m.name)+'</div>'+
+          '<div class="mat-card-tags"><span class="mat-card-tag">'+esc(m.code)+'</span><span class="mat-card-tag">'+esc(m.wh)+'</span></div>'+
+          '<div class="mat-card-nums">'+
+            '<div class="mat-card-num"><div class="mat-card-num-val">'+fmt(m.stock)+'</div><div class="mat-card-num-label">전산재고</div></div>'+
+            '<div class="mat-card-num"><div class="mat-card-num-val" id="stkdiff-'+m.code+'">-</div><div class="mat-card-num-label">차이</div></div>'+
+          '</div>'+
+          '<div style="display:flex;gap:8px;margin-top:10px">'+
+            '<input type="number" placeholder="실사수량" style="flex:1;min-width:0" id="stk-'+m.code+'" '+(isSingle?"disabled":"")+' oninput="stocktakeDiff(\''+m.code+'\')">'+
+            '<input type="text" placeholder="비고" style="flex:1;min-width:0" id="stknote-'+m.code+'" '+(isSingle?"disabled":"")+'>'+
+          '</div>'+
+        '</div>';
+      }).join("") : '<div class="result-empty">'+emptyText+'</div>';
+      return '<div class="toolbar">'+modeSelect+pickerHtml+'</div>'+
+        '<div class="mat-card-list">'+cards+'</div>'+
+        '<div class="toolbar-actions"><div class="muted" style="font-size:12px;color:var(--text-400)">'+esc(scopeLabel)+' 실사 대상 '+items.length+'건</div>'+
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" '+(items.length===0?"disabled":"")+' onclick="applyStocktake()">실사 반영</button></div>';
+    }
     var rows = items.map(function(m){
       return '<tr>'+
         (isSingle ? '<td><input type="checkbox" id="stkchk-'+m.code+'" onchange="stocktakeToggle(\''+m.code+'\')"></td>' : '')+
@@ -2208,6 +2454,8 @@
   window.applyStocktake = function(){
     var applied = 0;
     var beforeLow = lowCodesSnapshot();
+    var batchId = newId("ADJBATCH");
+    var actionTime = nowTimeStr();
     APP.mats.forEach(function(m){
       var el = document.getElementById("stk-"+m.code);
       if(!el || el.value==="") return;
@@ -2215,6 +2463,14 @@
       var note = (document.getElementById("stknote-"+m.code)||{}).value || "-";
       var diff = actual - m.stock;
       APP.stocktakeLogs.unshift({ date:TODAY, time:"now", wh:m.wh, code:m.code, name:m.name, before:m.stock, actual:actual, diff:diff, memo:note });
+      // 재고실사로 수량이 실제로 바뀐 품목만, 입출고내역에서 "조정"으로 함께 볼 수 있도록 남겨둔다.
+      if(diff !== 0){
+        APP.adjLogs.unshift({
+          id:newId("ADJLOG"), batchId:batchId, date:TODAY, time:actionTime,
+          wh:m.wh, code:m.code, name:m.name, qty:diff, unit:m.unit, worker:"재고실사", memo:note,
+          beforeQty:m.stock, afterQty:actual
+        });
+      }
       m.stock = actual;
       applied++;
     });
@@ -2619,7 +2875,7 @@
 
   /* ---------------- 구매마스터 ---------------- */
   function screenPurchase(){
-    var tabs = '<div class="pill-row">'+
+    var tabs = isMobileView() ? '' : '<div class="pill-row">'+
       '<button class="pill'+(APP.purchaseTab!=="manage"?" active":"")+'" onclick="setPurchaseTab(\'request\')">자재 요청</button>'+
       '<button class="pill'+(APP.purchaseTab==="manage"?" active":"")+'" onclick="setPurchaseTab(\'manage\')">발주진행도</button>'+
       '</div>';
@@ -2629,7 +2885,7 @@
   window.setPurchaseTab = function(t){ APP.purchaseTab=t; persist(); renderContent(); };
   /* ---------------- 자재마스터 (자재 안내서 / 도어별 안내서) ---------------- */
   function screenMatMaster(){
-    var tabs = '<div class="pill-row">'+
+    var tabs = isMobileView() ? '' : '<div class="pill-row">'+
       '<button class="pill'+(APP.matMasterTab!=="door"?" active":"")+'" onclick="setMatMasterTab(\'guide\')">자재 안내서</button>'+
       '<button class="pill'+(APP.matMasterTab==="door"?" active":"")+'" onclick="setMatMasterTab(\'door\')">도어별 안내서</button>'+
       '</div>';
@@ -2922,7 +3178,7 @@
       group("발주필요","low",groups["발주필요"])+
       group("보류","warn",groups["보류"])+
       group("발주완료","ok",groups["발주완료"],true)+
-      '<div class="pos-hint" style="margin:0">발주완료로 바뀐 품목은 완료일로부터 3일간만 이 목록에 표시됩니다.</div>'+
+      '<div class="pos-hint" style="margin:0">발주완료 품목은 3일간 표시됩니다.</div>'+
     '</div></div>';
   }
   window.setPmReqQuery = function(v){ APP.pmReqQuery=v; persist(); renderContent(); var el=document.querySelector('.search-input-lg'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
@@ -2938,8 +3194,34 @@
     if(status==="보류") return { bg:"var(--warn-bg)", fg:"var(--warn-text)" };
     return { bg:"var(--sub-bg)", fg:"var(--sub-text)" };
   }
+  function purchaseListMobileHtml(items){
+    var cards = items.map(function(m){
+      var sc = matOrderStatusColorVars(m.orderStatus);
+      var tags = [m.matType||"-", m.vendor||"-"].map(function(t){ return '<span class="mat-card-tag">'+esc(t)+'</span>'; }).join("");
+      return '<div class="mat-card">'+
+        '<div class="mat-card-top">'+
+          photoCell(m,false)+
+          '<div style="flex:1;min-width:0">'+
+            '<div class="mat-card-name">'+esc(m.name)+'</div>'+
+            '<div class="mat-card-tags"><span class="mat-card-tag">'+esc(m.code)+'</span>'+tags+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="mat-card-nums">'+
+          '<div class="mat-card-num"><div class="mat-card-num-val">'+fmt(m.moq||0)+'</div><div class="mat-card-num-label">최소발주</div></div>'+
+          '<div class="mat-card-num"><div class="mat-card-num-val">'+(m.leadtime||0)+'일</div><div class="mat-card-num-label">리드타임</div></div>'+
+        '</div>'+
+        '<select style="width:100%;margin-top:10px;font-size:12.5px;font-weight:800;padding:8px 6px;height:36px;border-radius:10px;text-align:center;text-align-last:center;background:'+sc.bg+';color:'+sc.fg+';border-color:'+sc.bg+'" onchange="setMatOrderStatusInline(\''+m.code+'\', this.value)">'+
+          ["", "발주필요", "보류", "발주완료"].map(function(s){ return '<option value="'+s+'"'+(m.orderStatus===s?" selected":"")+'>'+(s||"일반")+'</option>'; }).join("")+
+        '</select>'+
+      '</div>';
+    }).join("");
+    return pmStatusGroupsHtml()+
+      '<div class="pos-hint">총 '+items.length+'건 · 발주필요 '+items.filter(function(m){return m.orderStatus==="발주필요";}).length+'건</div>'+
+      '<div class="mat-card-list">'+(cards||'<div class="result-empty">자재구분이 '+esc(purchasableTypeNames())+'인 품목이 없습니다.</div>')+'</div>';
+  }
   function purchaseListHtml(){
     var items = consumableMats();
+    if(isMobileView()) return purchaseListMobileHtml(items);
     var rows = items.map(function(m){
       var sc = matOrderStatusColorVars(m.orderStatus);
       return '<tr><td>'+photoCell(m,false)+'</td><td>'+esc(m.code)+'<div class="result-meta">'+esc(m.matType||"-")+'</div></td><td class="wrap"><a href="#" onclick="event.preventDefault();openMatModal(\''+m.code+'\')" style="color:inherit;text-decoration:underline;text-underline-offset:2px">'+esc(m.name)+'</a></td><td>'+esc(m.vendor||"-")+'</td><td class="num">'+fmt(m.moq||0)+'</td><td class="num">'+fmt(m.price||0)+'원</td><td class="num">'+(m.leadtime||0)+'일</td>'+
@@ -2948,7 +3230,7 @@
         '</select></td></tr>';
     }).join("");
     return pmStatusGroupsHtml()+
-      '<div class="pos-hint">자재관리에서 "자재 구분"이 '+esc(purchasableTypeNames())+'인 품목이 여기 표시됩니다 (설정 → 자재 구분 관리에서 변경 가능). 품목명을 누르면 자재관리 수정 화면으로 이동해 거래처·최소발주수량·단가·리드타임 등을 편집할 수 있고, 발주 상태는 이 화면에서 바로 바꿀 수 있습니다.</div>'+
+      (isMobileView() ? '' : '<div class="pos-hint">자재관리에서 "자재 구분"이 '+esc(purchasableTypeNames())+'인 품목이 여기 표시됩니다 (설정 → 자재 구분 관리에서 변경 가능). 품목명을 누르면 자재관리 수정 화면으로 이동해 거래처·최소발주수량·단가·리드타임 등을 편집할 수 있고, 발주 상태는 이 화면에서 바로 바꿀 수 있습니다.</div>')+
       '<div class="toolbar-actions"><div style="font-size:13px;font-weight:700;color:var(--text-600)">총 '+items.length+'건 · 발주필요 '+items.filter(function(m){return m.orderStatus==="발주필요";}).length+'건</div></div>'+
       '<div class="table-wrap"><table style="table-layout:fixed"><colgroup>'+
         '<col style="width:64px"><col style="width:100px"><col style="width:auto"><col style="width:140px"><col style="width:84px"><col style="width:96px"><col style="width:76px"><col style="width:100px">'+
@@ -3233,7 +3515,9 @@
 
   /* ---------------- 입출고내역 ---------------- */
   function historyRows(){
-    return APP.logs.map(function(l,i){ return {type:"out", d:l, idx:i}; }).concat(APP.inLogs.map(function(l,i){ return {type:"in", d:l, idx:i}; }))
+    return APP.logs.map(function(l,i){ return {type:"out", d:l, idx:i}; })
+      .concat(APP.inLogs.map(function(l,i){ return {type:"in", d:l, idx:i}; }))
+      .concat((APP.adjLogs||[]).map(function(l,i){ return {type:"adj", d:l, idx:i}; }))
       .sort(function(a,b){ return a.d.date < b.d.date ? 1 : a.d.date > b.d.date ? -1 : 0; });
   }
   function historyGroups(start, end){
@@ -3254,15 +3538,53 @@
     }
     addAll(APP.logs, "out");
     addAll(APP.inLogs, "in");
+    addAll(APP.adjLogs||[], "adj");
     return order.map(function(k){ return map[k]; }).sort(function(a,b){
       if(a.date!==b.date) return a.date<b.date?1:-1;
       return (a.time<b.time)?1:(a.time>b.time?-1:0);
     });
   }
+  function historyMobileCards(groups){
+    return groups.length ? groups.map(function(g){
+      var first = g.items[0];
+      var label = esc(first.name)+(g.items.length>1 ? ' 외 '+(g.items.length-1)+'건' : '');
+      var timeDisplay = (g.time && g.time!=="-") ? g.time.slice(0,5) : "";
+      var isIn = g.type==="in", isAdj = g.type==="adj";
+      var icClass = isAdj ? " adj" : (isIn ? "" : " warn");
+      var icSym = isAdj ? "i-check" : (isIn ? "i-in" : "i-out");
+      var badgeHtml = isAdj ? '<span class="badge" style="background:var(--over-bg);color:var(--over-text)">조정</span>'
+        : isIn ? '<span class="badge badge-in">입고</span>' : '<span class="badge badge-out">출고</span>';
+      return '<div class="mat-card" style="cursor:pointer" onclick="openBatchModal(\''+g.type+'\',\''+esc(g.batchId)+'\')">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'+
+          '<div style="display:flex;gap:10px;align-items:flex-start;min-width:0">'+
+            '<span class="mhome-menu-ic'+icClass+'" style="width:32px;height:32px;flex:none"><svg class="ic"><use href="#'+icSym+'"/></svg></span>'+
+            '<div style="min-width:0">'+
+              '<div class="mat-card-name" style="font-size:13.5px">'+label+'</div>'+
+              '<div class="mat-card-code">'+g.date+(timeDisplay?' · '+timeDisplay:'')+'</div>'+
+            '</div>'+
+          '</div>'+
+          badgeHtml+
+        '</div>'+
+        '<div class="mat-card-tags" style="margin-top:8px"><span class="mat-card-tag">'+esc(g.wh)+'</span><span class="mat-card-tag">'+esc(g.person)+'</span></div>'+
+        (g.memo && g.memo!=="-" ? '<div class="mat-card-code" style="margin-top:6px">'+esc(g.memo)+'</div>' : '')+
+      '</div>';
+    }).join("") : '<div class="result-empty">해당 기간에 내역이 없습니다.</div>';
+  }
   function screenHistory(){
     var start = APP.historyFrom || addDays(TODAY,-29), end = APP.historyTo || TODAY;
     if(start > end){ var t0=start; start=end; end=t0; }
     var groups = historyGroups(start, end);
+    if(isMobileView()){
+      return '<div class="sub-view">'+
+        '<div class="toolbar">'+
+          '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="setHistoryFrom(this.value)"></div></div>'+
+          '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+end+'" onchange="setHistoryTo(this.value)"></div></div>'+
+          '<button class="btn btn-outline" style="width:100%;justify-content:center" onclick="resetHistoryRange()">최근 1개월</button>'+
+        '</div>'+
+        '<div class="pos-hint">'+start+' ~ '+end+' · 총 '+groups.length+'건</div>'+
+        '<div class="mat-card-list">'+historyMobileCards(groups)+'</div>'+
+      '</div>';
+    }
     var rangeBar = '<div class="toolbar">'+
         '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="setHistoryFrom(this.value)"></div></div>'+
         '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+end+'" onchange="setHistoryTo(this.value)"></div></div>'+
@@ -3272,13 +3594,16 @@
       var first = g.items[0];
       var label = esc(first.name)+(g.items.length>1 ? ' 외 '+(g.items.length-1)+'건' : '');
       var timeDisplay = (g.time && g.time!=="-") ? g.time.slice(0,5) : "";
-      return '<tr class="pm-row" style="cursor:pointer" onclick="openBatchModal(\''+g.type+'\',\''+esc(g.batchId)+'\')" title="클릭하면 세부 내역을 확인·수정할 수 있습니다"><td>'+g.date+(timeDisplay?'<div class="stock-row-meta" style="margin-top:2px">'+esc(timeDisplay)+'</div>':'')+'</td><td>'+(g.type==="in"?'<span class="badge badge-in">입고</span>':'<span class="badge badge-out">출고</span>')+'</td><td>'+label+'</td><td>'+esc(g.wh)+'</td><td>'+esc(g.person)+'</td><td class="wrap">'+esc(g.memo)+'</td></tr>';
+      var badgeHtml = g.type==="adj" ? '<span class="badge" style="background:var(--over-bg);color:var(--over-text)">조정</span>'
+        : g.type==="in" ? '<span class="badge badge-in">입고</span>' : '<span class="badge badge-out">출고</span>';
+      return '<tr class="pm-row" style="cursor:pointer" onclick="openBatchModal(\''+g.type+'\',\''+esc(g.batchId)+'\')" title="클릭하면 세부 내역을 확인·수정할 수 있습니다"><td>'+g.date+(timeDisplay?'<div class="stock-row-meta" style="margin-top:2px">'+esc(timeDisplay)+'</div>':'')+'</td><td>'+badgeHtml+'</td><td>'+label+'</td><td>'+esc(g.wh)+'</td><td>'+esc(g.person)+'</td><td class="wrap">'+esc(g.memo)+'</td></tr>';
     }).join("");
     var itemCount = groups.reduce(function(s,g){ return s+g.items.length; },0);
     var outCnt = groups.filter(function(g){ return g.type==="out"; }).reduce(function(s,g){ return s+g.items.length; },0);
     var inCnt = groups.filter(function(g){ return g.type==="in"; }).reduce(function(s,g){ return s+g.items.length; },0);
+    var adjCnt = groups.filter(function(g){ return g.type==="adj"; }).reduce(function(s,g){ return s+g.items.length; },0);
     return '<div class="sub-view">'+
-      '<div class="pos-hint">이전에 사용하던 프로그램의 입출고 내역을 CSV로 업로드하면 이 화면에 이력으로 추가됩니다. 업로드한 내역은 조회용 기록으로만 반영되며 현재 재고 수량에는 영향을 주지 않습니다. CSV 형식: 일자(YYYY-MM-DD 또는 YYYY-MM-DD HH:MM:SS),구분(입고/출고),자재명/규격,자재구분,수량,변동전,변동후,창고,담당자,비고<br>변동전(그 당시 재고, 기준 수량)/변동후는 선택 항목이며, 둘 다 입력하면 그 차이를 실제 입출고 수량으로 계산해 사용합니다(수량 칸에 이전 프로그램이 내보낸 음수·부호 값이 들어 있어도 자동으로 절대값 처리되어 오류 없이 업로드됩니다). 변동전/변동후가 없을 때만 수량 칸 값을 그대로 사용합니다. 한 번에 여러 품목을 처리한 내역은 대표 품목명 외 N건으로 묶여 표시되며, 행을 클릭하면 세부 내역별로 수량 수정·삭제가 가능하고 그 차이는 해당 자재의 현재고에도 자동 반영됩니다.<br>CSV의 자재명/규격이 자재관리에 등록된 이름과 일치하면 그 자재로 연결되고, 일치하는 자재가 없으면(예: 지금은 단종·사용중지된 품목) 자재관리에 "사용중지" 자재로 자동 등록됩니다 — 이때 자재구분 칸에 원자재/부자재/소모품/기타 중 하나를 적어두면 그 값으로 등록되고(비워두면 부자재로 등록), 이미 등록된 자재명/규격이면 자재구분 칸은 무시되고 기존 자재관리 설정을 따릅니다.</div>'+
+      (isMobileView() ? '' : '<div class="pos-hint">이전에 사용하던 프로그램의 입출고 내역을 CSV로 업로드하면 이 화면에 이력으로 추가됩니다. 업로드한 내역은 조회용 기록으로만 반영되며 현재 재고 수량에는 영향을 주지 않습니다. CSV 형식: 일자(YYYY-MM-DD 또는 YYYY-MM-DD HH:MM:SS),구분(입고/출고),자재명/규격,자재구분,수량,변동전,변동후,창고,담당자,비고<br>변동전(그 당시 재고, 기준 수량)/변동후는 선택 항목이며, 둘 다 입력하면 그 차이를 실제 입출고 수량으로 계산해 사용합니다(수량 칸에 이전 프로그램이 내보낸 음수·부호 값이 들어 있어도 자동으로 절대값 처리되어 오류 없이 업로드됩니다). 변동전/변동후가 없을 때만 수량 칸 값을 그대로 사용합니다. 한 번에 여러 품목을 처리한 내역은 대표 품목명 외 N건으로 묶여 표시되며, 행을 클릭하면 세부 내역별로 수량 수정·삭제가 가능하고 그 차이는 해당 자재의 현재고에도 자동 반영됩니다.<br>CSV의 자재명/규격이 자재관리에 등록된 이름과 일치하면 그 자재로 연결되고, 일치하는 자재가 없으면(예: 지금은 단종·사용중지된 품목) 자재관리에 "사용중지" 자재로 자동 등록됩니다 — 이때 자재구분 칸에 원자재/부자재/소모품/기타 중 하나를 적어두면 그 값으로 등록되고(비워두면 부자재로 등록), 이미 등록된 자재명/규격이면 자재구분 칸은 무시되고 기존 자재관리 설정을 따릅니다.</div>')+
       rangeBar+
       '<div class="toolbar-actions"><div style="font-size:13px;font-weight:700;color:var(--text-600)">'+start+' ~ '+end+' · 총 '+groups.length+'건 (품목 '+itemCount+'개) · 출고 '+outCnt+' · 입고 '+inCnt+'</div>'+
       '<div class="btn-row">'+
