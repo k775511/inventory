@@ -2227,10 +2227,8 @@
     visible.sort(byStringKey(matSortGetters[matSortKey]||matSortGetters.code, APP.materialSortDir));
     if(isMobileView()) return materialRegisterMobileHtml(visible, q, totalActive);
     var rows = visible.map(function(m){
-      return '<tr><td><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td>'+photoCell(m,false)+'</td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num">'+fmt(m.safeOff)+'</td><td class="num">'+fmt(m.safePeak)+'</td><td>'+stockBadge(m)+'</td>'+
-        '<td><div class="row-actions"><label class="btn btn-outline icon-only" title="사진"><input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\')"><svg class="ic"><use href="#i-camera"/></svg></label>'+
-        (m.photo ? '<button class="btn btn-outline icon-only" title="사진 삭제" onclick="matPhotoDelete(\''+m.code+'\')"><svg class="ic"><use href="#i-close"/></svg></button>' : '')+
-        '<button class="btn btn-outline icon-only" onclick="openMatModal(\''+m.code+'\')"><svg class="ic"><use href="#i-edit"/></svg></button>'+
+      return '<tr><td><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td><div class="photo-box" title="사진 등록/변경/삭제" onclick="openMatPhotoModal(\''+m.code+'\')">'+(m.photo?'<img src="'+m.photo+'" alt="">':'📦')+'</div></td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num">'+fmt(m.safeOff)+'</td><td class="num">'+fmt(m.safePeak)+'</td><td>'+stockBadge(m)+'</td>'+
+        '<td><div class="row-actions"><button class="btn btn-outline icon-only" onclick="openMatModal(\''+m.code+'\')"><svg class="ic"><use href="#i-edit"/></svg></button>'+
         '<button class="btn btn-outline icon-only" onclick="delMat(\''+m.code+'\')"><svg class="ic"><use href="#i-trash"/></svg></button></div></td></tr>';
     }).join("");
     return '<div class="toolbar">'+
@@ -2526,6 +2524,19 @@
       m.photo = ""; persist(); renderContent();
       showToast(m.name+" 사진을 삭제했습니다.");
     });
+  };
+  window.openMatPhotoModal = function(code){
+    var m = byCode(code); if(!m) return;
+    var html = '<div class="modal-header"><h3>사진 관리</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body" style="display:flex;flex-direction:column;align-items:center;gap:12px">'+
+        '<div class="photo-box-lg">'+(m.photo?'<img src="'+m.photo+'" alt="">':'📦')+'</div>'+
+        '<div style="font-size:13.5px;font-weight:700;color:var(--text-900)">'+esc(m.name)+'<span style="font-weight:500;color:var(--text-400)"> · '+esc(m.code)+'</span></div>'+
+      '</div>'+
+      '<div class="modal-footer" style="justify-content:space-between">'+
+        (m.photo ? '<button type="button" class="btn btn-outline" style="color:var(--low-text)" onclick="matPhotoDelete(\''+m.code+'\')">삭제</button>' : '<span></span>')+
+        '<label class="btn btn-primary"><input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\');closeModal()"><svg class="ic"><use href="#i-camera"/></svg>'+(m.photo?'사진 변경':'사진 등록')+'</label>'+
+      '</div>';
+    openModal(html);
   };
   var PENDING_PHOTO_IMPORT = null;
   window.bulkPhotoUpload = function(input){
