@@ -2231,7 +2231,7 @@
     var peakNow = isCurrentlyPeak();
     var safeColor = peakNow ? "var(--low-text)" : "var(--blue-600)";
     var rows = visible.map(function(m){
-      return '<tr class="pm-row" style="cursor:pointer" onclick="openMatModal(\''+m.code+'\')" title="클릭하면 수정할 수 있습니다"><td onclick="event.stopPropagation()"><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td onclick="event.stopPropagation();openMatPhotoModal(\''+m.code+'\')"><div class="photo-box" title="사진 등록/변경/삭제">'+(m.photo?'<img src="'+m.photo+'" alt="">':'📦')+'</div></td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num" style="color:'+safeColor+';font-weight:700">'+fmt(activeSafe(m))+'</td><td>'+stockBadge(m)+'</td></tr>';
+      return '<tr class="pm-row" style="cursor:pointer" onclick="openMatModal(\''+m.code+'\')" title="클릭하면 수정할 수 있습니다"><td class="ctr" onclick="event.stopPropagation()"><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td class="ctr" onclick="event.stopPropagation();openMatPhotoModal(\''+m.code+'\')"><div class="photo-box" style="margin:0 auto" title="사진 등록/변경/삭제">'+(m.photo?'<img src="'+m.photo+'" alt="">':'📦')+'</div></td><td class="ctr">'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td class="ctr">'+esc(m.matType||"-")+'</td><td class="ctr">'+esc(m.cat)+'</td><td class="ctr">'+esc(m.wh)+'</td><td class="ctr">'+esc(m.unit)+'</td><td class="ctr">'+esc(m.loc)+'</td><td class="num ctr">'+fmt(m.stock)+'</td><td class="num ctr" style="color:'+safeColor+';font-weight:700">'+fmt(activeSafe(m))+'</td><td class="ctr">'+stockBadge(m)+'</td></tr>';
     }).join("");
     return '<div class="toolbar">'+
         '<div class="field" style="flex:1;min-width:220px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.materialQ||"")+'" placeholder="자재명/규격, 코드, 카테고리, 자재구분, 창고, 위치로 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
@@ -2259,13 +2259,13 @@
         '<div style="margin-top:6px">CSV 업로드: "CSV 다운로드"로 받은 양식에 맞춰 작성해주세요. "#"로 시작하는 줄은 주석이라 무시됩니다.</div>'+
         '<div style="margin-top:6px">사용중지 자재는 출고POS·자재입고에는 안 보이지만, 사용량 이력에는 계속 표시돼요.</div>'+
       '</div>'+
-      '<div class="table-wrap"><table><thead><tr><th style="width:30px"><input type="checkbox" id="mat-sel-all" onchange="toggleMatSelAll(this.checked)"></th><th>사진</th>'+
-        sortTh("코드","code","materialSortKey","materialSortDir","setMaterialSort")+
+      '<div class="table-wrap"><table><thead><tr><th class="ctr" style="width:30px"><input type="checkbox" id="mat-sel-all" onchange="toggleMatSelAll(this.checked)"></th><th class="ctr">사진</th>'+
+        sortTh("코드","code","materialSortKey","materialSortDir","setMaterialSort","ctr")+
         sortTh("자재명/규격","name","materialSortKey","materialSortDir","setMaterialSort")+
-        sortTh("자재구분","matType","materialSortKey","materialSortDir","setMaterialSort")+
-        sortTh("카테고리","cat","materialSortKey","materialSortDir","setMaterialSort")+
-        sortTh("창고","wh","materialSortKey","materialSortDir","setMaterialSort")+
-        '<th>단위</th><th>위치</th><th class="num">현재고</th><th class="num"><div style="display:flex;flex-direction:column;align-items:center;gap:3px">안전재고<span class="badge" style="background:'+(isCurrentlyPeak()?"var(--low-bg)":"var(--in-bg)")+';color:'+(isCurrentlyPeak()?"var(--low-text)":"var(--blue-600)")+'">'+(isCurrentlyPeak()?"성수기":"비수기")+'</span></div></th><th>상태</th></tr></thead><tbody>'+(rows||'<tr><td colspan="12" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
+        sortTh("자재구분","matType","materialSortKey","materialSortDir","setMaterialSort","ctr")+
+        sortTh("카테고리","cat","materialSortKey","materialSortDir","setMaterialSort","ctr")+
+        sortTh("창고","wh","materialSortKey","materialSortDir","setMaterialSort","ctr")+
+        '<th class="ctr">단위</th><th class="ctr">위치</th><th class="num ctr">현재고</th><th class="num ctr"><div style="display:flex;flex-direction:column;align-items:center;gap:3px">안전재고<span class="badge" style="background:'+(isCurrentlyPeak()?"var(--low-bg)":"var(--in-bg)")+';color:'+(isCurrentlyPeak()?"var(--low-text)":"var(--blue-600)")+'">'+(isCurrentlyPeak()?"성수기":"비수기")+'</span></div></th><th class="ctr">상태</th></tr></thead><tbody>'+(rows||'<tr><td colspan="12" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
   }
   window.setMaterialQ = function(v){
     APP.materialQ = v; persist(); renderContent();
