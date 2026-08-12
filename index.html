@@ -1301,7 +1301,7 @@
       '</div>'+
     '</div></div>';
   }
-  window.posSetWh = function(w){ APP.posWh=w; renderContent(); };
+  window.posSetWh = function(w){ APP.posWh=w; persist(); renderContent(); };
   window.posSetQ = function(v){ APP.posQ=v; renderContent(); var el=document.querySelector('.search-input-lg'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.posAdd = function(code){
     var m = byCode(code); if(!m) return;
@@ -1394,7 +1394,7 @@
       '</div>'+
     '</div></div>';
   }
-  window.rcvSetWh = function(w){ APP.receiveWh=w; renderContent(); };
+  window.rcvSetWh = function(w){ APP.receiveWh=w; persist(); renderContent(); };
   window.rcvSetQ = function(v){ APP.receiveQ=v; renderContent(); var el=document.querySelector('.search-input-lg'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.rcvAdd = function(code){
     var m = byCode(code); if(!m) return;
@@ -1539,7 +1539,7 @@
       '<div class="stock-list">'+rowsHtml+'</div>'+
     '</div>';
   }
-  window.setStockTab = function(t){ APP.stockTab=t; renderContent(); };
+  window.setStockTab = function(t){ APP.stockTab=t; persist(); renderContent(); };
   window.setStockWh = function(v){ APP.stockWh = v || "all"; persist(); renderContent(); };
   window.setStockSort = function(key){ toggleSort("stockSortKey","stockSortDir",key); persist(); renderContent(); };
   window.setStockAsOf = function(v){ APP.stockAsOf = v || TODAY; persist(); renderContent(); };
@@ -1564,7 +1564,7 @@
     if(APP.materialTab==="yearly") return '<div class="sub-view">'+tabs+materialYearlyHtml()+'</div>';
     return '<div class="sub-view">'+tabs+materialRegisterHtml()+'</div>';
   }
-  window.setMaterialTab = function(t){ APP.materialTab=t; renderContent(); };
+  window.setMaterialTab = function(t){ APP.materialTab=t; persist(); renderContent(); };
   window.goMaterialUsage = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="usage"; persist(); renderContent(); };
   window.goMaterialAlert = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="alert"; APP.materialAlertView="overview"; persist(); renderContent(); };
   window.goPurchaseManage = function(){ clearSearchQueries(); APP.cur="purchase"; APP.purchaseTab="manage"; persist(); renderContent(); };
@@ -1600,7 +1600,7 @@
       '<div class="mat-card-list">'+cards+'</div>';
   }
   window.selectAlertWh = function(wh){ APP.stockWh = wh; APP.materialAlertView = "list"; persist(); renderContent(); };
-  window.backToAlertOverview = function(){ APP.materialAlertView = "overview"; renderContent(); };
+  window.backToAlertOverview = function(){ APP.materialAlertView = "overview"; persist(); renderContent(); };
   function materialShortageAlertHtml(){
     if(isMobileView() && APP.materialAlertView!=="list") return materialShortageOverviewHtml();
     var asOf = APP.stockAsOf || TODAY;
@@ -2473,9 +2473,9 @@
     if(noteEl) noteEl.disabled = !chk.checked;
     if(!chk.checked && qtyEl){ qtyEl.value = ""; stocktakeDiff(code); }
   };
-  window.setStocktakeMode = function(v){ APP.stocktakeMode = v; renderContent(); };
+  window.setStocktakeMode = function(v){ APP.stocktakeMode = v; persist(); renderContent(); };
   window.setStocktakeSort = function(key){ toggleSort("stocktakeSortKey","stocktakeSortDir",key); persist(); renderContent(); };
-  window.setStocktakeWh = function(w){ APP.stocktakeWh = w; renderContent(); };
+  window.setStocktakeWh = function(w){ APP.stocktakeWh = w; persist(); renderContent(); };
   window.setStocktakeQ = function(v){ APP.stocktakeQ = v; renderContent(); var el=document.querySelector('.search-input-lg'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.stocktakeDiff = function(code){
     var m = byCode(code); var el = document.getElementById("stk-"+code); var out = document.getElementById("stkdiff-"+code);
