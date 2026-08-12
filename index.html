@@ -50,6 +50,7 @@
   <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><polyline points="8 12.5 11 15.5 16 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><polyline points="12 7 12 12 16 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="10" y1="20" x2="10" y2="14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="20" x2="14" y2="14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
 </svg>
 
@@ -201,8 +202,41 @@
   .stock-dot.over{ background:var(--over-text); }
   .stock-dot.ok{ background:var(--ok-text); }
   .stock-group-count{ color:var(--text-400); font-weight:700; }
+  .stock-group-mobile-row{ width:100%; background:none; border:none; display:flex; align-items:center; gap:8px; padding:14px 16px; border-bottom:1px solid var(--border); text-align:left; font-size:14px; font-weight:800; color:var(--text-900); }
+  .stock-group-mobile-row:last-child{ border-bottom:none; }
+  .stock-group-mobile-label{ flex:1; }
+  .stock-group-mobile-row .chev{ width:16px; height:16px; color:var(--text-400); flex:none; }
   .stock-info-ic{ color:var(--text-400); display:inline-flex; cursor:help; }
+  /* 모바일 출고/입고 폼(박스히어로 스타일) */
+  .mform-card{ background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(20,29,52,.06); }
+  .mform-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border); min-height:22px; }
+  .mform-row:last-child{ border-bottom:none; }
+  .mform-row-label{ font-size:14px; font-weight:600; color:var(--text-600); flex:none; }
+  .mform-row-value{ font-size:14px; font-weight:700; color:var(--text-900); text-align:right; }
+  .mform-row-select-wrap{ display:flex; align-items:center; gap:2px; }
+  .mform-row select{ appearance:none; -webkit-appearance:none; border:none; background:none; font-size:14px; font-weight:700; color:var(--text-900); text-align:right; }
+  .mform-row select:focus{ outline:none; }
+  .mform-row input[type="text"]{ border:none; background:none; font-size:14px; font-weight:700; color:var(--text-900); text-align:right; flex:1; padding:0; min-width:0; }
+  .mform-row input[type="text"]::placeholder{ color:var(--text-400); font-weight:500; }
+  .mform-row .chev{ width:16px; height:16px; color:var(--text-400); flex:none; transform:rotate(-90deg); }
+  .mform-add-btn{ display:flex; align-items:center; justify-content:center; gap:6px; padding:14px 16px; font-size:14px; font-weight:700; color:var(--blue-600); cursor:pointer; }
+  .mform-product-row{ display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .mform-product-row:last-child{ border-bottom:none; }
+  /* 모바일 전체화면모드: 데스크탑 2단 레이아웃을 화면 폭에 맞춰 축소 표시 */
+  .fs-exit-bar{ position:sticky; top:0; z-index:60; background:#fff; border-bottom:1px solid var(--border); padding:8px 12px; display:flex; justify-content:flex-end; }
+  .force-desktop-grid{ overflow:hidden; }
+  /* 전체화면모드는 화면이 좁아서 창고 알약 버튼이 줄바꿈되면 답답해 보이니, 드롭다운 대신
+     한 줄로 옆으로 슥 넘기는 방식으로 바꾼다 — 탭 한 번으로 바로 선택되는 속도는 그대로 유지. */
+  .force-desktop-grid .pill-row{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:thin; }
+  .force-desktop-grid .pill-row .pill{ flex:none; }
+  .force-desktop-grid .pos-grid{ grid-template-columns:1fr 1.15fr !important; }
   .stock-list{ border:1px solid var(--border); border-radius:var(--radius); background:#fff; overflow:hidden; }
+  .pmreq-left .stock-list{ max-height:200px; overflow-y:auto; }
+  .pmreq-right-col{ display:flex; flex-direction:column; min-height:0; }
+  .pmreq-right-col .panel{ flex:1; display:flex; flex-direction:column; min-height:0; }
+  .pmreq-right-col .panel-body{ flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .pmreq-right-col .result-list{ flex:1; max-height:none; min-height:0; }
+  .pmreq-right-col .table-wrap{ flex:1; overflow-y:auto; min-height:0; border:none; border-radius:0; }
   .stock-row{ display:flex; align-items:center; justify-content:space-between; gap:18px; padding:13px 16px; border-bottom:1px solid var(--border); }
   .stock-row:last-child{ border-bottom:none; }
   .stock-row:hover{ background:#f7f9fc; }
@@ -336,8 +370,27 @@
   .guide-card-name{ font-size:14px; font-weight:800; color:var(--text-900); }
   .guide-card-alias{ font-size:11.5px; color:var(--text-400); font-weight:700; }
   .guide-card-note{ font-size:12px; color:var(--text-900); background:var(--blue-050); border:1px solid var(--blue-100); border-radius:var(--radius-sm); padding:8px 10px; line-height:1.5; }
-  .door-model-photo{ width:265px; height:430px; border-radius:14px; border:1px dashed var(--border-strong); background:var(--sub-bg); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:52px; color:var(--text-400); flex:none; cursor:pointer; }
+  .door-model-photo{ position:relative; width:265px; height:430px; border-radius:14px; border:1px dashed var(--border-strong); background:var(--sub-bg); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:52px; color:var(--text-400); flex:none; cursor:pointer; }
   .door-model-photo img{ width:100%; height:100%; object-fit:cover; }
+  .door-model-photo-del{ position:absolute; right:10px; top:10px; width:28px; height:28px; border-radius:50%; background:var(--low-text); color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
+  .door-model-photo-del .ic{ width:14px; height:14px; }
+  .guide-grid-mobile{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .guide-card-mobile{ position:relative; background:#fff; border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; }
+  .guide-card-mobile img{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; }
+  .guide-card-mobile-ph{ width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; background:var(--sub-bg); font-size:24px; color:var(--text-400); }
+  .guide-card-mobile-name{ font-size:10.5px; font-weight:700; color:var(--text-900); padding:5px 6px; line-height:1.3; }
+  .guide-card-noted-sm{ position:absolute; right:4px; top:4px; width:16px; height:16px; border-radius:50%; background:var(--ok-text); color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; z-index:2; }
+  /* 스르륵 올라오는 바텀시트 (모바일 창고/담당자 선택 등) */
+  .sheet-backdrop{ position:fixed; inset:0; background:rgba(10,15,25,.45); z-index:200; display:flex; align-items:flex-end; justify-content:center; opacity:0; transition:opacity .22s ease; }
+  .sheet-backdrop[hidden]{ display:none; }
+  .sheet-backdrop.show{ opacity:1; }
+  .sheet-box{ background:#fff; width:100%; max-width:520px; border-radius:20px 20px 0 0; padding:8px 0 max(14px,env(safe-area-inset-bottom)); max-height:70vh; overflow-y:auto; transform:translateY(100%); transition:transform .28s cubic-bezier(.32,.72,0,1); box-shadow:0 -8px 30px rgba(20,29,52,.15); }
+  .sheet-backdrop.show .sheet-box{ transform:translateY(0); }
+  .sheet-handle{ width:36px; height:4px; border-radius:99px; background:var(--border-strong); margin:6px auto 8px; }
+  .sheet-title{ font-size:13px; font-weight:800; color:var(--text-400); padding:6px 18px 8px; }
+  .sheet-option{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; background:none; border:none; padding:14px 18px; font-size:15px; font-weight:700; color:var(--text-900); text-align:left; }
+  .sheet-option.active{ color:var(--blue-600); }
+  .sheet-option .ic{ width:17px; height:17px; color:var(--blue-600); flex:none; }
   .photo-lightbox{ position:fixed; inset:0; background:rgba(10,15,25,.78); display:flex; align-items:center; justify-content:center; z-index:150; padding:24px; }
   .photo-lightbox[hidden]{ display:none; }
   .photo-lightbox img{ max-width:min(90vw,640px); max-height:80vh; border-radius:12px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
@@ -439,6 +492,11 @@
     .grid-3{ grid-template-columns:1fr; }
     .stat-cards, .stat-cards.cols-3{ grid-template-columns:repeat(2,1fr); }
     table{ font-size:11.5px; min-width:520px; }
+    /* 데스크탑용 화면을 모바일에서 그대로 쓰는 곳들의 검색창이 좁게(max-width) 잘려 보이던 것을
+       화면 폭에 맞춰 꽉 채우도록 통일한다. 특정 화면 하나만이 아니라 이 패턴을 쓰는 모든 곳에 적용. */
+    .toolbar .field:has(.input-icon){ max-width:none !important; width:100%; flex:1 1 100% !important; min-width:0 !important; }
+    .input-icon{ width:100%; }
+    .input-icon input{ width:100%; }
   }
 </style>
 
@@ -472,8 +530,8 @@
     <div class="inventory-module" id="inventoryModule">
       <nav class="sub-nav" id="subNav">
         <button class="sub-item active" data-sub="dashboard">대시보드</button>
-        <button class="sub-item" data-sub="pos">출고POS</button>
-        <button class="sub-item" data-sub="receive">자재입고</button>
+        <button class="sub-item" data-sub="pos">출고</button>
+        <button class="sub-item" data-sub="receive">입고</button>
         <button class="sub-item" data-sub="stock">재고현황</button>
         <button class="sub-item" data-sub="material">자재관리</button>
         <button class="sub-item" data-sub="purchase">구매마스터</button>
@@ -489,6 +547,9 @@
 <div class="toast" id="toast"></div>
 <div class="modal-backdrop" id="modalBackdrop" hidden>
   <div class="modal" id="modalBox"></div>
+</div>
+<div class="sheet-backdrop" id="sheetBackdrop" hidden onclick="if(event.target===this) closeSheet()">
+  <div class="sheet-box" id="sheetBox"></div>
 </div>
 <div class="photo-lightbox" id="photoLightbox" hidden onclick="if(event.target===this) closeLightbox()">
   <button onclick="closeLightbox()"><svg class="ic" style="width:18px;height:18px;color:#fff"><use href="#i-close"/></svg></button>
@@ -676,6 +737,7 @@
   // 등으로 persist()가 호출될 경우 로컬의 기본 샘플 데이터로 실제 운영 데이터를 덮어써버릴 수
   // 있다 — 실제로 이 문제로 발주 데이터가 사라진 적이 있어 반드시 필요한 안전장치다.
   var firebaseSyncReady = false;
+  var firebaseSyncRetries = 0;
   function persist(){
     // 출고목록(cart)·입고목록(inCart)은 지금 화면에서만 의미있는 "작업 중" 임시 목록이라
     // 로컬저장소·Firestore(다른 기기와 공유되는 DB)에는 남기지 않는다. 그대로 저장하면
@@ -777,10 +839,15 @@
       }
     }).catch(function(err){
       console.warn("Firestore load failed:", err);
-      // 서버 데이터를 못 읽은 상태로 남겨두면 이후 어떤 동작도 저장이 안 돼 앱이 사실상 멈추므로,
-      // (네트워크 일시 오류 등을 감안해) 이후 저장은 허용한다 — 다만 이 기기가 방금 읽은 것은
-      // 로컬 캐시(정상 데이터일 수도, 오래된 값일 수도 있음)일 뿐 서버 최신값이 아님에 유의.
-      firebaseSyncReady = true;
+      // 서버 데이터를 못 읽은 상태에서 저장을 허용해버리면, 이 기기의 오래된 로컬 캐시로
+      // 실제 운영 데이터를 덮어쓸 위험이 있다(실제로 이 문제로 데이터가 사라진 적이 있다).
+      // 그래서 여기서는 절대 firebaseSyncReady를 켜지 않고, 잠시 후 자동으로 재시도만 한다.
+      firebaseSyncRetries++;
+      if(firebaseSyncRetries <= 6){
+        setTimeout(initFirebaseState, Math.min(30000, 2000*firebaseSyncRetries));
+      } else {
+        try{ showToast("서버와 연결이 되지 않습니다. 새로고침 해주세요. (연결 전까지 변경사항이 저장되지 않습니다)"); }catch(e){}
+      }
     });
   }
 
@@ -1107,12 +1174,35 @@
   subNav.addEventListener("click", function(e){
     var btn = e.target.closest(".sub-item");
     if(!btn) return;
-    if(APP.cur !== btn.dataset.sub) clearSearchQueries();
-    APP.cur = btn.dataset.sub;
+    var sub = btn.dataset.sub;
+    // 데스크탑에서 상단 탭으로 "출고"에 처음 들어갈 때는 일반/전체화면 중 고를 수 있게 물어본다.
+    if(sub==="pos" && !isMobileView() && APP.cur!=="pos"){ openDesktopPosModeChoice(); return; }
+    if(APP.cur !== sub) clearSearchQueries();
+    APP.cur = sub;
     persist(); // 새로고침해도 마지막으로 보던 화면이 그대로 열리도록 현재 화면을 저장해둔다.
     renderContent();
   });
   window.go = function(sub){ if(APP.cur !== sub) clearSearchQueries(); APP.cur = sub; persist(); renderContent(); };
+  window.openDesktopPosModeChoice = function(){
+    var html = '<div class="modal-header"><h3>출고 화면</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body"><div class="pos-hint" style="margin:0">어떤 화면으로 보시겠어요?</div></div>'+
+      '<div class="modal-footer"><button class="btn btn-outline" onclick="chooseDesktopPosMode(false)">일반 화면</button><button class="btn btn-primary" onclick="chooseDesktopPosMode(true)">전체화면</button></div>';
+    openModal(html);
+  };
+  window.chooseDesktopPosMode = function(fullscreen){
+    closeModal();
+    if(APP.cur !== "pos") clearSearchQueries();
+    APP.cur = "pos";
+    persist();
+    renderContent();
+    if(fullscreen){
+      try{
+        var el = document.documentElement;
+        var reqFs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+        if(reqFs) Promise.resolve(reqFs.call(el)).catch(function(){});
+      }catch(e){}
+    }
+  };
 
   /* ================= modal helpers ================= */
   var backdrop = document.getElementById("modalBackdrop");
@@ -1122,6 +1212,19 @@
     modalBox.className = "modal" + (wide ? " wide" : "");
     modalBox.innerHTML = html;
     backdrop.hidden = false;
+  };
+  // 아래로 쓸어내리면(또는 바깥 탭하면) 닫히는, 아래에서 스르륵 올라오는 선택 시트.
+  // 모바일 출고/입고 폼의 창고·담당자 선택처럼 네이티브 select보다 예쁜 UI가 필요한 곳에 쓴다.
+  var sheetBackdrop = document.getElementById("sheetBackdrop");
+  var sheetBox = document.getElementById("sheetBox");
+  window.openSheet = function(html){
+    sheetBox.innerHTML = html;
+    sheetBackdrop.hidden = false;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ sheetBackdrop.classList.add("show"); }); });
+  };
+  window.closeSheet = function(){
+    sheetBackdrop.classList.remove("show");
+    setTimeout(function(){ sheetBackdrop.hidden = true; sheetBox.innerHTML=""; }, 260);
   };
   // 네이티브 confirm()은 이 미리보기(iframe 샌드박스) 환경에서 뜨지 않거나 무시될 수 있어
   // 삭제 등 위험한 동작 앞에서 이 커스텀 확인 모달을 대신 사용합니다.
@@ -1137,7 +1240,7 @@
   /* ================= RENDER: dispatcher ================= */
   function isMobileView(){ return window.matchMedia("(max-width: 900px)").matches; }
   var MOBILE_TITLES = {
-    dashboard:"PLUSDOOR", pos:"출고POS", receive:"자재입고", stock:"재고현황",
+    dashboard:"PLUSDOOR", pos:"출고", receive:"입고", stock:"재고현황",
     purchase:"구매요청", matmaster:"자재마스터", history:"입출고내역", admin:"설정"
   };
   var MOBILE_MATERIAL_TITLES = { register:"품목관리", alert:"재고부족알림", stocktake:"재고실사", usage:"사용량분석", monthly:"월별 사용량비교", yearly:"연도별 동일월비교" };
@@ -1167,7 +1270,7 @@
   })());
   var lastRenderedCur = null;
   function renderContent(){
-    // 다른 화면으로 넘어가면(=대시보드 등 화면이 실제로 바뀌면) 출고POS·자재입고 화면에 담아뒀던
+    // 다른 화면으로 넘어가면(=대시보드 등 화면이 실제로 바뀌면) 출고·입고 화면에 담아뒀던
     // 작업 중인 목록은 비운다. 안 그러면 잊고 떠난 목록이 계속 남아 다음에 다시 들어왔을 때
     // 헷갈리거나 실수로 그대로 처리될 수 있다.
     if(lastRenderedCur !== null && lastRenderedCur !== APP.cur){
@@ -1179,6 +1282,23 @@
     updateMobileTopbar();
     var fn = SCREENS[APP.cur] || SCREENS.dashboard;
     document.getElementById("content").innerHTML = fn();
+    syncPmReqPanelHeight();
+  }
+  // 구매마스터 > 자재요청 화면(데스크탑)에서, 오른쪽 검색결과 목록 높이를 왼쪽 "상태별 현황"
+  // 패널의 실제 렌더링 높이에 딱 맞춰서, 그 안에서만 스크롤되게 한다. 렌더링 직후 한 번만
+  // 높이를 재면 사진 로딩 등으로 왼쪽 높이가 나중에 미세하게 바뀔 때 어긋날 수 있어서,
+  // ResizeObserver로 왼쪽 패널 크기가 바뀔 때마다 계속 맞춰준다.
+  var pmReqHeightObserver = null;
+  function syncPmReqPanelHeight(){
+    if(pmReqHeightObserver){ pmReqHeightObserver.disconnect(); pmReqHeightObserver = null; }
+    var left = document.querySelector(".pmreq-left");
+    var right = document.querySelector(".pmreq-right-col");
+    if(!left || !right) return;
+    right.style.height = (left.offsetHeight - 18) + "px";
+    if(window.ResizeObserver){
+      pmReqHeightObserver = new ResizeObserver(function(){ right.style.height = (left.offsetHeight - 18) + "px"; });
+      pmReqHeightObserver.observe(left);
+    }
   }
 
   /* ---------------- 대시보드 ---------------- */
@@ -1205,7 +1325,10 @@
 
     // 로그 배열 순서는 실제 최신순이 아닐 수 있다(이전 내역 업로드는 파일 순서대로 끝에 추가됨) —
     // 항상 일자·시간 기준으로 최신순 정렬한 뒤 상위 5건만 보여준다.
-    var recentRows = APP.logs.slice().sort(function(a,b){
+    var recentRows = APP.logs.filter(function(l){
+      var m = byCode(l.code);
+      return !(m && isPurchasableType(m.matType)); // 입출고내역과 동일하게, 구매마스터 대상 자재는 제외
+    }).sort(function(a,b){
       if(a.date!==b.date) return a.date<b.date?1:-1;
       return (a.time<b.time)?1:(a.time>b.time?-1:0);
     }).slice(0,5).map(function(l){
@@ -1229,7 +1352,7 @@
 
       '<div class="panel"><div class="panel-header"><h3>창고별 현황</h3></div><div class="panel-body pad"><div class="series-grid">'+whCards+'</div></div></div>'+
 
-      pmStatusGroupsHtml(true)+
+      pmStatusGroupsHtml(true, true)+
 
       '<div class="grid-2">'+
         '<div class="panel"><div class="panel-header"><h3>재고부족 알림</h3><span class="count">'+low.length+'건</span><span class="btn btn-ghost btn-sm" onclick="goMaterialAlert()">전체보기</span></div><div class="panel-body"><ul class="alert-list">'+
@@ -1264,15 +1387,64 @@
         '<button type="button" class="mhome-menu-row" onclick="go(\'receive\')"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-in"/></svg></span><span class="mhome-menu-label">입고</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
       '</div>'+
       '<div class="mhome-menu">'+
-        '<button type="button" class="mhome-menu-row" onclick="goMobileMaterial()"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-list"/></svg></span><span class="mhome-menu-label">품목관리</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
-        '<button type="button" class="mhome-menu-row" onclick="goMobileStocktake()"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-check"/></svg></span><span class="mhome-menu-label">재고실사</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
-        '<button type="button" class="mhome-menu-row" onclick="goMaterialAlert()"><span class="mhome-menu-ic warn"><svg class="ic"><use href="#i-alert"/></svg></span><span class="mhome-menu-label">재고부족알림'+(lowCnt?' ('+lowCnt+')':'')+'</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
-        '<button type="button" class="mhome-menu-row" onclick="go(\'history\')"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-clock"/></svg></span><span class="mhome-menu-label">입출고내역</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
+        '<button type="button" class="mhome-menu-row" onclick="enterFullscreenPos(\'pos\')"><span class="mhome-menu-ic warn"><svg class="ic"><use href="#i-expand"/></svg></span><span class="mhome-menu-label">출고 [전체화면모드]</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
+      '</div>'+
+      (function(){
+        var visible = getMhomeMenuVisible();
+        var badges = { alert: lowCnt?' ('+lowCnt+')':'' };
+        var rowsHtml = MHOME_MENU_ITEMS.filter(function(it){ return visible.indexOf(it.key)>-1; }).map(function(it){
+          return '<button type="button" class="mhome-menu-row" onclick="'+it.onclick+'"><span class="mhome-menu-ic'+(it.warn?" warn":"")+'"><svg class="ic"><use href="#'+it.icon+'"/></svg></span><span class="mhome-menu-label">'+it.label+(badges[it.key]||"")+'</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>';
+        }).join("");
+        return rowsHtml ? '<div class="mhome-menu">'+rowsHtml+'</div>' : '';
+      })()+
+      '<div class="mhome-menu">'+
+        '<button type="button" class="mhome-menu-row" onclick="openMhomeMenuEditSheet()"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-list"/></svg></span><span class="mhome-menu-label">메뉴 편집</span></button>'+
       '</div>'+
     '</div>';
   }
+  // 사람마다 자주 쓰는 메뉴가 다르므로(어떤 사람은 6개 다 필요하고, 어떤 사람은 3개만 있으면 됨),
+  // 홈 화면 아래쪽 메뉴는 항목별로 켜고 끌 수 있게 한다. 이 설정은 이 기기(브라우저)에만
+  // 적용되는 개인 취향이라 공유 데이터(APP)에는 안 넣고 로컬저장소에만 따로 저장한다.
+  var MHOME_MENU_ITEMS = [
+    { key:"register", label:"품목관리", icon:"i-list", warn:false, onclick:"goMobileMaterial()" },
+    { key:"stocktake", label:"재고실사", icon:"i-check", warn:false, onclick:"goMobileStocktake()" },
+    { key:"alert", label:"재고부족알림", icon:"i-alert", warn:true, onclick:"goMaterialAlert()" },
+    { key:"history", label:"입출고내역", icon:"i-clock", warn:false, onclick:"go('history')" },
+    { key:"matguide", label:"자재안내서", icon:"i-box", warn:false, onclick:"goMobileMatGuide()" },
+    { key:"doorguide", label:"도어별 안내서", icon:"i-box", warn:false, onclick:"goMobileDoorGuide()" }
+  ];
+  var MHOME_MENU_STORE_KEY = "pd_mhome_menu_visible_v1";
+  function getMhomeMenuVisible(){
+    var allKeys = MHOME_MENU_ITEMS.map(function(x){ return x.key; });
+    try{
+      var raw = localStorage.getItem(MHOME_MENU_STORE_KEY);
+      if(!raw) return allKeys;
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : allKeys;
+    }catch(e){ return allKeys; }
+  }
+  window.openMhomeMenuEditSheet = function(){
+    var visible = getMhomeMenuVisible();
+    var rowsHtml = MHOME_MENU_ITEMS.map(function(it){
+      var checked = visible.indexOf(it.key)>-1;
+      return '<label class="sheet-option" style="cursor:pointer">'+
+        '<span style="display:flex;align-items:center;gap:10px"><svg class="ic" style="width:18px;height:18px;color:var(--text-600)"><use href="#'+it.icon+'"/></svg>'+it.label+'</span>'+
+        '<input type="checkbox" class="mhome-menu-chk" value="'+it.key+'" '+(checked?"checked":"")+' style="width:20px;height:20px;accent-color:var(--blue-600)">'+
+      '</label>';
+    }).join("");
+    openSheet('<div class="sheet-handle"></div><div class="sheet-title">홈 화면에 보여줄 메뉴 선택</div>'+rowsHtml+
+      '<div style="padding:12px 18px 4px"><button type="button" class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveMhomeMenuVisible()">저장</button></div>');
+  };
+  window.saveMhomeMenuVisible = function(){
+    var checked = Array.prototype.slice.call(document.querySelectorAll(".mhome-menu-chk:checked")).map(function(el){ return el.value; });
+    try{ localStorage.setItem(MHOME_MENU_STORE_KEY, JSON.stringify(checked)); }catch(e){}
+    closeSheet();
+    renderContent();
+  };
   window.goMobileMaterial = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="register"; persist(); renderContent(); };
   window.goMobileStocktake = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="stocktake"; persist(); renderContent(); };
+  window.goMobileMatGuide = function(){ clearSearchQueries(); APP.cur="matmaster"; APP.matMasterTab="guide"; persist(); renderContent(); };
+  window.goMobileDoorGuide = function(){ clearSearchQueries(); APP.cur="matmaster"; APP.matMasterTab="door"; persist(); renderContent(); };
 
   /* ---------------- 출고POS ---------------- */
   function catalogForWh(wh, q){
@@ -1286,7 +1458,146 @@
       return okWh && okQ;
     });
   }
+  window.openMformWhSheet = function(type){
+    var isPos = type==="pos";
+    var cur = isPos ? (APP.posWh||"all") : (APP.receiveWh||"all");
+    var setFn = isPos ? "posSetWh" : "rcvSetWh";
+    var options = [["all","전체"]].concat(APP.whs.map(function(w){ return [w,w]; }));
+    var rowsHtml = options.map(function(o){
+      return '<button type="button" class="sheet-option'+(cur===o[0]?" active":"")+'" onclick="'+setFn+'(\''+o[0]+'\');closeSheet();">'+esc(o[1])+(cur===o[0]?'<svg class="ic"><use href="#i-check"/></svg>':'')+'</button>';
+    }).join("");
+    openSheet('<div class="sheet-handle"></div><div class="sheet-title">창고 선택</div>'+rowsHtml);
+  };
+  window.openMformIssuerSheet = function(type){
+    var id = type==="pos" ? "posIssuer" : "rcvReceiver";
+    var curEl = document.getElementById(id);
+    var cur = curEl ? curEl.value : ISSUERS[0];
+    var rowsHtml = ISSUERS.map(function(u){
+      return '<button type="button" class="sheet-option'+(cur===u?" active":"")+'" onclick="setMformIssuer(\''+type+'\',\''+esc(u)+'\')">'+esc(u)+(cur===u?'<svg class="ic"><use href="#i-check"/></svg>':'')+'</button>';
+    }).join("");
+    openSheet('<div class="sheet-handle"></div><div class="sheet-title">담당자 선택</div>'+rowsHtml);
+  };
+  window.setMformIssuer = function(type, val){
+    var id = type==="pos" ? "posIssuer" : "rcvReceiver";
+    var el = document.getElementById(id); if(el) el.value = val;
+    var disp = document.getElementById(id+"Display"); if(disp) disp.textContent = val;
+    closeSheet();
+  };
+  // 모바일 출고/입고 화면: 박스히어로 스타일의 "항목 목록 → 제품 선택 모달" 형태.
+  // 바코드 스캔/거래처 선택은 사용자 요청으로 제외했다.
+  function mobileTxnFormHtml(type){
+    var isPos = type==="pos";
+    var wh = isPos ? (APP.posWh||"all") : (APP.receiveWh||"all");
+    var whLabel = wh==="all" ? "전체" : wh;
+    var cart = isPos ? APP.cart : APP.inCart;
+    var qtyFn = isPos ? "posQty" : "rcvQty";
+    var setFn = isPos ? "posSetQty" : "rcvSetQty";
+    var rmFn = isPos ? "posRemove" : "rcvRemove";
+    var cartHtml = cart.length===0 ? '<div class="cart-empty">아직 추가된 품목이 없습니다.</div>' : cart.map(function(c){
+      return '<div class="cart-row"><div class="cart-main"><div class="cart-name">'+esc(c.name)+'</div><div class="cart-meta">'+esc(c.wh)+' · '+esc(c.unit)+'</div></div>'+
+        '<div class="qty-stepper"><button onclick="'+qtyFn+'(\''+c.code+'\',-1)">−</button><input type="number" value="'+c.qty+'" min="1" onchange="'+setFn+'(\''+c.code+'\', this.value)"><button onclick="'+qtyFn+'(\''+c.code+'\',1)">+</button></div>'+
+        '<button class="cart-remove" onclick="'+rmFn+'(\''+c.code+'\')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
+    }).join("");
+    var totalQty = cart.reduce(function(s,c){ return s+c.qty; },0);
+    var issuerId = isPos ? "posIssuer" : "rcvReceiver";
+    var noteId = isPos ? "posNote" : "rcvNote";
+    var actionFn = isPos ? "posIssue" : "rcvIssue";
+    var actionLabel = isPos ? "출고 완료" : "입고 완료";
+    return '<div class="mform-card">'+
+        '<div class="mform-row" style="cursor:pointer" onclick="openMformWhSheet(\''+type+'\')"><span class="mform-row-label">창고</span><span style="display:flex;align-items:center;gap:2px"><span class="mform-row-value">'+esc(whLabel)+'</span><svg class="ic chev"><use href="#i-chevron"/></svg></span></div>'+
+        '<div class="mform-row" style="cursor:pointer" onclick="openMformIssuerSheet(\''+type+'\')"><span class="mform-row-label">담당자</span><span style="display:flex;align-items:center;gap:2px"><span class="mform-row-value" id="'+issuerId+'Display">'+esc(ISSUERS[0])+'</span><svg class="ic chev"><use href="#i-chevron"/></svg></span></div>'+
+        '<input type="hidden" id="'+issuerId+'" value="'+esc(ISSUERS[0])+'">'+
+      '</div>'+
+      '<div class="mform-card" style="margin-top:12px">'+
+        '<div class="mform-row"><span class="mform-row-label">제품</span><span class="mform-row-value">'+cart.length+'개 품목 · 총 '+totalQty+'개</span></div>'+
+        (cart.length ? '<div class="cart-wrap" style="border-top:1px solid var(--border)">'+cartHtml+'</div>' : '')+
+        '<div class="mform-add-btn" onclick="openMobileProductPicker(\''+type+'\')"><svg class="ic" style="width:15px;height:15px"><use href="#i-plus"/></svg>제품 선택</div>'+
+      '</div>'+
+      '<div class="mform-card" style="margin-top:12px">'+
+        '<div class="mform-row"><span class="mform-row-label">비고</span><input type="text" id="'+noteId+'" placeholder="작성"></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:16px" '+(cart.length===0?"disabled":"")+' onclick="'+actionFn+'()">'+actionLabel+'</button>';
+  }
+  function mobileProductPickerItemsHtml(type, wh, q){
+    var rows = catalogForWh(wh, q);
+    var cart = type==="pos" ? APP.cart : APP.inCart;
+    var cartCodes = {}; cart.forEach(function(c){ cartCodes[c.code]=true; });
+    return rows.length ? rows.map(function(m){
+      var checked = !!cartCodes[m.code];
+      return '<label class="mform-product-row"><input type="checkbox" '+(checked?"checked":"")+' onchange="toggleMobileProductPick(\''+type+'\',\''+m.code+'\',this.checked)">'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px">'+esc(m.name)+'</div><div style="font-size:11.5px;color:var(--text-400)">'+esc(m.code)+' · '+esc(m.wh)+(m.loc?'/'+esc(m.loc):'')+'</div></div>'+
+        '<div style="font-size:12.5px;color:var(--text-400);flex:none">재고 '+fmt(m.stock)+'</div>'+
+      '</label>';
+    }).join("") : '<div class="result-empty">검색 결과가 없습니다.</div>';
+  }
+  window.openMobileProductPicker = function(type){
+    var wh = type==="pos" ? (APP.posWh||"all") : (APP.receiveWh||"all");
+    var itemsHtml = mobileProductPickerItemsHtml(type, wh, "");
+    var cnt = (type==="pos" ? APP.cart : APP.inCart).length;
+    var html = '<div class="modal-header"><h3>제품 선택</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body" style="padding:0">'+
+        '<div style="padding:14px 16px"><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="제품 이름, 코드 검색" oninput="mobileProductPickerSearch(\''+type+'\', this.value)"></div></div>'+
+        '<div id="mobileProductPickerList" style="max-height:48vh;overflow-y:auto;border-top:1px solid var(--border)">'+itemsHtml+'</div>'+
+      '</div>'+
+      '<div class="modal-footer between"><div style="font-size:12.5px;color:var(--text-400)" id="mobileProductPickerCount">'+cnt+'개 품목</div><button class="btn btn-primary" onclick="closeModal()">선택 완료</button></div>';
+    openModal(html, true);
+  };
+  window.mobileProductPickerSearch = function(type, v){
+    var wh = type==="pos" ? (APP.posWh||"all") : (APP.receiveWh||"all");
+    var listEl = document.getElementById("mobileProductPickerList");
+    if(listEl) listEl.innerHTML = mobileProductPickerItemsHtml(type, wh, v);
+  };
+  window.toggleMobileProductPick = function(type, code, checked){
+    if(type==="pos"){ if(checked) posAdd(code); else posRemove(code); }
+    else { if(checked) rcvAdd(code); else rcvRemove(code); }
+    var cnt = (type==="pos" ? APP.cart : APP.inCart).length;
+    var el = document.getElementById("mobileProductPickerCount");
+    if(el) el.textContent = cnt+"개 품목";
+  };
+  // 모바일 "전체화면모드": 화면 회전(가로)·풀스크린을 시도하면서, 모바일 전용 폼 대신
+  // 데스크탑 레이아웃(2단 그리드)을 화면 폭에 맞춰 그대로 보여준다. iOS Safari 등 일부
+  // 브라우저는 화면회전 고정/풀스크린 API를 지원하지 않을 수 있어, 그 경우에도 레이아웃
+  // 자체는 정상 표시되고 최신 화면 방향에 맞춰 보인다(사용자가 직접 기기를 돌리면 됨).
+  var fsMode = null;
+  window.enterFullscreenPos = function(type){
+    fsMode = type;
+    go(type);
+    try{
+      var el = document.documentElement;
+      var reqFs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+      if(reqFs){
+        Promise.resolve(reqFs.call(el)).then(function(){
+          if(screen.orientation && screen.orientation.lock){ screen.orientation.lock("landscape").catch(function(){}); }
+        }).catch(function(){});
+      } else if(screen.orientation && screen.orientation.lock){
+        screen.orientation.lock("landscape").catch(function(){});
+      }
+    }catch(e){}
+  };
+  window.exitFullscreenPos = function(){
+    fsMode = null;
+    try{
+      if(document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+      if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+    }catch(e){}
+    go("dashboard");
+  };
+  function fitFullscreenPosScale(){
+    var wrap = document.getElementById("fsFitWrap");
+    var inner = document.getElementById("fsFitInner");
+    if(!wrap || !inner) return;
+    inner.style.transform = "scale(1)";
+    var naturalW = inner.scrollWidth;
+    var scale = naturalW > window.innerWidth ? window.innerWidth / naturalW : 1;
+    inner.style.transform = "scale("+scale+")";
+    inner.style.transformOrigin = "top left";
+    inner.style.width = (100/scale)+"%";
+    wrap.style.height = (inner.scrollHeight*scale)+"px";
+  }
+  window.addEventListener("resize", function(){ if(fsMode) fitFullscreenPosScale(); });
   function screenPos(){
+    if(isMobileView() && fsMode!=="pos") return mobileTxnFormHtml("pos");
     var rows = catalogForWh(APP.posWh, APP.posQ);
     var resultHtml = rows.length===0 ? '<div class="result-empty">검색 결과가 없습니다.</div>' : rows.map(function(m){
       var low = m.stock < activeSafe(m);
@@ -1310,7 +1621,7 @@
     var whPills = ['<button class="pill'+(APP.posWh==="all"?" active":"")+'" onclick="posSetWh(\'all\')">전체</button>']
       .concat(APP.whs.map(function(w){ return '<button class="pill'+(APP.posWh===w?" active":"")+'" onclick="posSetWh(\''+w+'\')">'+esc(w)+'</button>'; })).join("");
 
-    return '<div class="sub-view"><div class="pos-grid">'+
+    var html = '<div class="sub-view"><div class="pos-grid">'+
       '<div class="pos-panel">'+
         '<div class="pos-panel-title"><span class="step-badge">1</span>창고 선택 및 빠른 품목 검색</div>'+
         '<div><div class="pos-section-label" style="margin-bottom:8px">창고 선택</div><div class="pill-row">'+whPills+'</div></div>'+
@@ -1329,6 +1640,11 @@
           '<div class="pos-actions"><button class="btn btn-outline" onclick="posClear()">전체 비우기</button><button class="btn btn-accent" '+(APP.cart.length===0?"disabled":"")+' onclick="posIssue()">출고 처리</button></div></div>'+
       '</div>'+
     '</div></div>';
+    if(fsMode==="pos"){
+      return '<div class="fs-exit-bar"><button class="btn btn-outline btn-sm" onclick="exitFullscreenPos()">✕ 전체화면 종료</button></div>'+
+        '<div class="force-desktop-grid" id="fsFitWrap"><div id="fsFitInner">'+html+'</div></div>';
+    }
+    return html;
   }
   window.posSetWh = function(w){ APP.posWh=w; persist(); renderContent(); };
   window.posSetQ = function(v){ APP.posQ=v; renderContent(); var el=document.querySelector('.search-input-lg'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
@@ -1382,6 +1698,7 @@
 
   /* ---------------- 자재입고 ---------------- */
   function screenReceive(){
+    if(isMobileView()) return mobileTxnFormHtml("receive");
     var rows = catalogForWh(APP.receiveWh, APP.receiveQ);
     var resultHtml = rows.length===0 ? '<div class="result-empty">검색 결과가 없습니다.</div>' : rows.map(function(m){
       return '<div class="result-row">'+photoCell(m,false)+
@@ -2091,7 +2408,7 @@
       '<div class="stock-group-head" style="margin-top:16px">활성 자재 <span class="stock-group-count">('+activeList.length+'건)</span></div>'+
       '<div class="table-wrap" style="margin-top:8px"><table>'+theadHtml+'<tbody>'+buildRows(activeList)+'</tbody></table></div>'+
       '<div class="stock-group-head" style="margin-top:20px">사용중지 자재 <span class="stock-group-count">('+discList.length+'건)</span></div>'+
-      '<div class="pos-hint" style="margin-top:4px">자재관리에 등록돼 있다가 사용중지 처리된 자재입니다. 현재 자재관리 목록·출고POS·자재입고에는 나오지 않고 과거 사용량 조회용으로만 표시됩니다.</div>'+
+      '<div class="pos-hint" style="margin-top:4px">자재관리에 등록돼 있다가 사용중지 처리된 자재입니다. 현재 자재관리 목록·출고·입고에는 나오지 않고 과거 사용량 조회용으로만 표시됩니다.</div>'+
       '<div class="table-wrap" style="margin-top:8px">'+(discList.length ? '<table>'+theadHtml+'<tbody>'+buildRows(discList)+'</tbody></table>' : '<div class="result-empty">사용중지 자재가 없습니다.</div>')+'</div>'+
       '<div class="stock-group-head" style="margin-top:20px">이전 프로그램 자재 <span class="stock-group-count">('+importedList.length+'건)</span></div>'+
       '<div class="pos-hint" style="margin-top:4px">입출고내역에서 CSV로 옛 내역을 업로드할 때, 자재관리에 등록된 적 없는 이름이라 자동으로 새로 등록된 자재입니다. 과거 사용량 조회용으로만 표시됩니다.</div>'+
@@ -2317,7 +2634,7 @@
       '<div class="pos-hint">'+
         '<div>사진 일괄등록: 파일명(코드 또는 자재명)으로 자동 매칭됩니다.</div>'+
         '<div style="margin-top:6px">CSV 업로드: "CSV 다운로드"로 받은 양식에 맞춰 작성해주세요. "#"로 시작하는 줄은 주석이라 무시됩니다.</div>'+
-        '<div style="margin-top:6px">사용중지 자재는 출고POS·자재입고에는 안 보이지만, 사용량 이력에는 계속 표시돼요.</div>'+
+        '<div style="margin-top:6px">사용중지 자재는 출고·입고에는 안 보이지만, 사용량 이력에는 계속 표시돼요.</div>'+
       '</div>'+
       '<div class="table-wrap"><table><thead><tr><th class="ctr" style="width:30px"><input type="checkbox" id="mat-sel-all" onchange="toggleMatSelAll(this.checked)"></th><th class="ctr">사진</th>'+
         sortTh("코드","code","materialSortKey","materialSortDir","setMaterialSort","ctr")+
@@ -2366,7 +2683,7 @@
   window.bulkDiscontinueMats = function(){
     var codes = selectedMatCodes();
     if(!codes.length) return;
-    confirmAction(codes.length+"개 자재를 사용중지 처리할까요? 출고POS·자재입고 검색에서 제외됩니다.", function(){
+    confirmAction(codes.length+"개 자재를 사용중지 처리할까요? 출고·입고 검색에서 제외됩니다.", function(){
       var set = {}; codes.forEach(function(c){ set[c]=true; });
       APP.mats.forEach(function(m){ if(set[m.code]) m.discontinued = true; });
       persist(); renderContent();
@@ -2386,7 +2703,7 @@
     }).join("") : '<div class="pos-hint">사용중지 처리된 자재가 없습니다.</div>';
     var html = '<div class="modal-header"><h3>사용중지 자재 ('+items.length+'건)</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body">'+
-      '<div class="pos-hint">출고POS·자재입고 검색에서는 제외된 자재입니다. 월별 사용량비교 등 이력 집계 화면에는 계속 표시됩니다. "재사용 처리"를 누르면 다시 활성 자재로 전환됩니다.</div>'+
+      '<div class="pos-hint">출고·입고 검색에서는 제외된 자재입니다. 월별 사용량비교 등 이력 집계 화면에는 계속 표시됩니다. "재사용 처리"를 누르면 다시 활성 자재로 전환됩니다.</div>'+
       '<div class="stock-list">'+rowsHtml+'</div>'+
       '</div>'+
       '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">닫기</button></div>';
@@ -2850,7 +3167,7 @@
         '<div class="form-field"><label>리드타임(일)</label><input type="number" id="f-leadtime" value="'+(m?(m.leadtime||0):0)+'" min="0"></div>'+
       '</div>'+
       '<div class="form-field full" style="margin-top:10px"><label>설명 메모 (안내서에 표시)</label><textarea id="f-note" rows="2" placeholder="예: 도어락 조립 시 사용하는 부자재입니다. 습기에 약하니 서늘한 곳에 보관하세요." style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+(m?esc(m.note||""):"")+'</textarea></div>'+
-      (m ? '<label class="check-row" style="margin-top:14px"><input type="checkbox" id="f-discontinued" '+(m.discontinued?"checked":"")+'>사용중지 처리 (더 이상 출고POS·자재입고에서 선택되지 않지만, 월별 사용량비교 등 이력 집계에는 계속 표시됩니다)</label>' : '')+
+      (m ? '<label class="check-row" style="margin-top:14px"><input type="checkbox" id="f-discontinued" '+(m.discontinued?"checked":"")+'>사용중지 처리 (더 이상 출고·입고에서 선택되지 않지만, 월별 사용량비교 등 이력 집계에는 계속 표시됩니다)</label>' : '')+
       '</div>'+
       '<div class="modal-footer" style="justify-content:space-between">'+(m?('<div class="btn-row"><button type="button" class="btn btn-outline" style="color:var(--low-text)" onclick="delMat(\''+m.code+'\')">삭제</button><button type="button" class="btn btn-outline" onclick="dupMat(\''+m.code+'\')">복사</button></div>'):'<span></span>')+
       '<div class="btn-row"><button type="button" class="btn btn-outline" onclick="closeModal()">취소</button><button type="button" class="btn btn-primary" onclick="saveMat('+(m?("'"+m.code+"'"):"null")+')">저장</button></div></div>';
@@ -3003,26 +3320,50 @@
   }
   function doorGuideModels(wh){ return APP.doorGuides[wh] || []; }
   function doorGuideHtml(){
+    var mobile = isMobileView();
     var visibleWhs = doorGuideVisibleWhs();
     var wh = APP.doorGuideWh;
     if(!wh || visibleWhs.indexOf(wh)===-1) wh = visibleWhs[0]||"";
     var whPills = (visibleWhs.length ? visibleWhs.map(function(w){ return '<button class="pill'+(w===wh?" active":"")+'" onclick="setDoorGuideWh(\''+w+'\')">'+esc(w)+'</button>'; }).join("") : '<span class="pos-hint">표시할 창고를 선택해주세요.</span>');
+    var whSelectHtml = visibleWhs.length ?
+      '<div class="select-wrap" style="position:relative;margin-top:6px"><select onchange="setDoorGuideWh(this.value)">'+
+        visibleWhs.map(function(w){ return '<option value="'+esc(w)+'"'+(w===wh?" selected":"")+'>'+esc(w)+'</option>'; }).join("")+
+      '</select><svg class="ic"><use href="#i-chevron"/></svg></div>' : '<span class="pos-hint">표시할 창고를 선택해주세요.</span>';
 
     var models = doorGuideModels(wh);
     var modelId = APP.doorGuideModelId;
     if(!modelId || !models.some(function(x){ return x.id===modelId; })) modelId = models[0] ? models[0].id : null;
-    var modelPills = models.map(function(x){ return '<button class="pill'+(x.id===modelId?" active":"")+'" onclick="selectDoorGuideModel(\''+x.id+'\')">'+esc(x.name)+'</button>'; }).join("")+
-      '<button type="button" class="pill" style="border-style:dashed" onclick="openDoorGuideAddModelModal(\''+wh+'\')">+ 모델 추가</button>';
+    var modelPills = models.map(function(x){ return '<button class="pill'+(x.id===modelId?" active":"")+'" onclick="selectDoorGuideModel(\''+x.id+'\')">'+esc(x.name)+'</button>'; }).join("");
+    var modelManageBtn = '<button type="button" class="btn btn-outline btn-sm" style="flex:none" onclick="openDoorModelManageModal(\''+wh+'\')">모델관리</button>';
+    var modelSelectHtml = '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'+
+        '<div class="select-wrap" style="position:relative;flex:1">'+
+          (models.length ? '<select onchange="selectDoorGuideModel(this.value)">'+models.map(function(x){ return '<option value="'+esc(x.id)+'"'+(x.id===modelId?" selected":"")+'>'+esc(x.name)+'</option>'; }).join("")+'</select><svg class="ic"><use href="#i-chevron"/></svg>' : '<span class="pos-hint" style="margin:0">등록된 모델이 없습니다.</span>')+
+        '</div>'+
+        modelManageBtn+
+      '</div>';
 
     var mdl = models.filter(function(x){ return x.id===modelId; })[0];
     var mats = mdl ? (mdl.codes||[]).map(byCode).filter(Boolean) : [];
-    var cardsHtml = mats.length ? '<div class="guide-grid" style="margin-top:8px">'+mats.map(function(m){
+    var cardsHtml;
+    if(!mats.length){
+      cardsHtml = '<div class="result-empty">아직 등록된 자재가 없습니다. "자재 선택"에서 추가해주세요.</div>';
+    } else if(mobile){
+      cardsHtml = '<div class="guide-grid-mobile" style="margin-top:8px">'+mats.map(function(m){
+        return '<div class="guide-card-mobile" onclick="openGuideDetailModal(\''+m.code+'\')">'+
+          (m.note ? '<div class="guide-card-noted-sm" title="설명 작성됨">✓</div>' : '')+
+          (m.photo ? '<img src="'+m.photo+'" alt="">' : '<div class="guide-card-mobile-ph">📦</div>')+
+          '<div class="guide-card-mobile-name">'+esc(m.name)+'</div>'+
+        '</div>';
+      }).join("")+'</div>';
+    } else {
+      cardsHtml = '<div class="guide-grid" style="margin-top:8px">'+mats.map(function(m){
         return '<div class="guide-card" style="cursor:pointer" onclick="openGuideDetailModal(\''+m.code+'\')">'+
           (m.note ? '<div class="guide-card-noted" title="설명 작성됨">✓</div>' : '')+
           '<div>'+(m.photo?'<div class="photo-box-md"><img src="'+m.photo+'" alt=""></div>':'<div class="photo-box-md">📦</div>')+'</div>'+
           '<div><div class="guide-card-name">'+esc(m.name)+'</div><div class="guide-card-alias">'+esc(m.matType||"-")+' · '+esc(m.cat||"-")+'</div></div>'+
         '</div>';
-      }).join("")+'</div>' : '<div class="result-empty">아직 등록된 자재가 없습니다. "자재 선택"에서 추가해주세요.</div>';
+      }).join("")+'</div>';
+    }
 
     var detailHtml;
     if(!wh){
@@ -3032,13 +3373,14 @@
     } else {
       detailHtml = '<div class="panel"><div class="panel-body pad">'+
           '<div style="display:flex;justify-content:flex-end"><button type="button" class="btn btn-outline btn-sm" style="color:var(--low-text)" onclick="deleteDoorGuideModel(\''+wh+'\',\''+mdl.id+'\')">모델 삭제</button></div>'+
-          '<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;margin-top:6px">'+
-            '<label class="door-model-photo" title="클릭하여 모델 사진 등록/변경">'+
+          '<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;margin-top:6px'+(mobile?';flex-direction:column;align-items:center':'')+'">'+
+            '<label class="door-model-photo" style="'+(mobile?"width:200px;height:260px":"")+'" title="클릭하여 모델 사진 등록/변경">'+
               '<input type="file" accept="image/*" style="display:none" onchange="doorGuidePhotoUpload(this,\''+wh+'\',\''+mdl.id+'\')">'+
               (mdl.photo ? '<img src="'+mdl.photo+'" alt="">' : '📦')+
+              (mdl.photo ? '<span class="door-model-photo-del" title="사진 삭제" onclick="event.preventDefault();event.stopPropagation();doorGuidePhotoDelete(\''+wh+'\',\''+mdl.id+'\')"><svg class="ic"><use href="#i-close"/></svg></span>' : '')+
             '</label>'+
-            '<div style="flex:1;min-width:260px">'+
-              '<h3 style="margin:0;font-size:20px">'+esc(mdl.name)+'</h3>'+
+            '<div style="flex:1;min-width:'+(mobile?"0;width:100%":"260px")+'">'+
+              '<h3 style="margin:0;font-size:20px'+(mobile?';text-align:center':'')+'">'+esc(mdl.name)+'</h3>'+
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px"><span class="pos-section-label">설명</span><button type="button" class="btn btn-outline btn-sm" onclick="openDoorGuideDescModal(\''+wh+'\',\''+mdl.id+'\')">수정</button></div>'+
               (mdl.desc ? '<div class="guide-card-note" style="margin-top:6px">'+esc(mdl.desc).replace(/\n/g,"<br>")+'</div>' : '<div class="pos-hint" style="margin-top:6px">등록된 설명이 없습니다. 예: "리젠 시리즈의 유리 가네고 도어 모델로, 이런 자재를 사용합니다."</div>')+
               '<div style="margin-top:18px"><span class="pos-section-label">제작순서</span></div>'+
@@ -3050,12 +3392,23 @@
         '</div></div>';
     }
 
-    return '<div class="pos-hint">창고(도어 라인)별로, 그 안의 여러 제품(모델)마다 실제 사용하는 자재를 모아서 보여주는 안내서입니다.</div>'+
-      '<div class="toolbar"><div class="field" style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center"><label>창고</label><button type="button" class="btn btn-outline btn-sm" onclick="openDoorGuideWhPickModal()">표시할 창고 선택</button></div><div class="pill-row" style="margin-top:6px">'+whPills+'</div></div></div>'+
-      (wh ? '<div class="toolbar" style="margin-top:12px"><div class="field" style="flex:1"><label>모델</label><div class="pill-row" style="margin-top:6px">'+modelPills+'</div></div></div>' : '')+
+    return '<div class="pos-hint">도어별 사용되는 원자재, 부자재를 모아서 보여주는 안내서입니다.</div>'+
+      '<div class="toolbar"><div class="field" style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center"><label>창고</label><button type="button" class="btn btn-outline btn-sm" onclick="openDoorGuideWhPickModal()">표시할 창고 선택</button></div>'+(mobile?whSelectHtml:'<div class="pill-row" style="margin-top:6px">'+whPills+'</div>')+'</div></div>'+
+      (wh ? '<div class="toolbar" style="margin-top:12px"><div class="field" style="flex:1"><label>모델</label>'+(mobile?modelSelectHtml:'<div style="display:flex;align-items:center;gap:12px;margin-top:6px"><div class="pill-row" style="flex:1">'+modelPills+'</div>'+modelManageBtn+'</div>')+'</div></div>' : '')+
       '<div style="margin-top:16px">'+detailHtml+'</div>';
   }
   window.selectDoorGuideModel = function(id){ APP.doorGuideModelId=id; persist(); renderContent(); };
+  window.openDoorModelManageModal = function(wh){
+    var models = doorGuideModels(wh);
+    var rowsHtml = models.length ? models.map(function(x){
+      return '<div class="stock-row"><div class="stock-row-main"><div class="stock-row-name">'+esc(x.name)+'</div></div>'+
+        '<button class="btn btn-outline icon-only" title="삭제" onclick="deleteDoorGuideModel(\''+wh+'\',\''+x.id+'\')"><svg class="ic"><use href="#i-trash"/></svg></button></div>';
+    }).join("") : '<div class="stock-row" style="justify-content:center;color:var(--text-400)">등록된 모델이 없습니다.</div>';
+    var html = '<div class="modal-header"><h3>'+esc(wh)+' 모델관리</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body"><div class="stock-list">'+rowsHtml+'</div></div>'+
+      '<div class="modal-footer between"><span></span><button class="btn btn-primary" onclick="openDoorGuideAddModelModal(\''+wh+'\')">+ 모델 추가</button></div>';
+    openModal(html);
+  };
   window.openDoorGuideAddModelModal = function(wh){
     var html = '<div class="modal-header"><h3>'+esc(wh)+' 모델 추가</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body"><div class="form-field full"><label>모델명</label><input type="text" id="dg-model-name" placeholder="예: L101"></div></div>'+
@@ -3111,6 +3464,14 @@
       mdl.photo = dataUrl;
       persist(); renderContent();
       showToast("모델 사진이 등록되었습니다.");
+    });
+  };
+  window.doorGuidePhotoDelete = function(wh, id){
+    var mdl = (APP.doorGuides[wh]||[]).filter(function(x){ return x.id===id; })[0];
+    if(!mdl || !mdl.photo) return;
+    confirmAction(mdl.name+" 모델의 사진을 삭제할까요?", function(){
+      mdl.photo = ""; persist(); renderContent();
+      showToast("모델 사진을 삭제했습니다.");
     });
   };
   var DOOR_PICK_GROUPBY = "cat";
@@ -3247,10 +3608,17 @@
         '<button class="btn btn-accent btn-sm" onclick="openPmReqModal(\''+m.code+'\')" style="margin-left:4px"><svg class="ic" style="width:13px;height:13px"><use href="#i-copy"/></svg>요청</button>'+
         '</div>';
     }).join("") : '<div class="result-empty">검색 결과가 없습니다.</div>';
-    return pmStatusGroupsHtml()+
-      '<div class="pos-hint">자재관리에서 "자재 구분"이 '+esc(purchasableTypeNames())+'인 품목을 검색해 바로 발주 요청문을 작성할 수 있습니다. 어떤 자재 구분을 여기에 표시할지는 설정 → 자재 구분 관리의 "자재요청 표시" 체크박스로 정할 수 있습니다. 품목 등록·수정은 자재관리 → 품목관리에서 진행합니다.</div>'+
-      '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품명, 코드 검색" value="'+esc(APP.pmReqQuery||"")+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
-      '<div class="result-list" style="max-height:560px;margin-top:12px">'+rowsHtml+'</div>';
+    return '<div class="pos-grid">'+
+      '<div class="pmreq-left">'+pmStatusGroupsHtml()+'</div>'+
+      '<div class="pmreq-right-col">'+
+        '<div class="panel"><div class="panel-header"><h3>검색 결과</h3></div>'+
+          '<div class="panel-body pad">'+
+            '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품명, 코드 검색" value="'+esc(APP.pmReqQuery||"")+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
+            '<div class="result-list" style="margin-top:12px">'+rowsHtml+'</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
   }
   function daysSinceOrderCompleted(m){
     if(!m.completedAt) return 0;
@@ -3269,29 +3637,55 @@
     });
     if(changed) persist();
   }
-  function pmStatusGroupsHtml(showLink){
+  function pmStatusGroups(){
     var groups = { "발주필요":[], "발주완료":[], "보류":[] };
     consumableMats().forEach(function(m){
       if(!groups[m.orderStatus]) return;
       if(m.orderStatus==="발주완료" && daysSinceOrderCompleted(m) >= 3) return; // 완료 후 3일이 지나면 목록에서 제외
       groups[m.orderStatus].push(m);
     });
+    return groups;
+  }
+  function pmStatusRowsHtml(list, showDate){
+    return list.length ? list.map(function(m){
+      return '<div class="stock-row"><div class="stock-row-main"><div class="stock-row-name">'+esc(m.name)+'<span class="stock-code">'+esc(m.code)+'</span></div>'+
+        '<div class="stock-row-meta">'+esc(m.cat)+' · '+esc(m.vendor||"-")+' · 리드타임 '+(m.leadtime||0)+'일'+
+        (showDate && m.completedAt ? ' · '+esc(m.completedAt)+' 완료' : '')+
+        '</div></div></div>';
+    }).join("") : '<div class="stock-row" style="justify-content:center;color:var(--text-400)">해당 품목이 없습니다.</div>';
+  }
+  // 모바일에서는 상태별 목록을 그 자리에 다 펼치면 화면이 한없이 길어져 검색창이 저 아래로
+  // 밀려버리므로, 건수만 보여주는 버튼으로 압축하고 탭하면 그 아래에 목록이 펼쳐지게 한다.
+  // 이 펼침 상태는 화면 UI 상태일 뿐이라 APP(저장 대상)에는 넣지 않는다.
+  var pmStatusExpandedMobile = {};
+  window.togglePmStatusGroup = function(label){
+    pmStatusExpandedMobile[label] = !pmStatusExpandedMobile[label];
+    renderContent();
+  };
+  function pmStatusGroupsHtml(showLink, compact){
+    var groups = pmStatusGroups();
+    var mobile = isMobileView() || compact;
     function group(label, kind, list, showDate){
-      var rowsHtml = list.length ? list.map(function(m){
-        return '<div class="stock-row"><div class="stock-row-main"><div class="stock-row-name">'+esc(m.name)+'<span class="stock-code">'+esc(m.code)+'</span></div>'+
-          '<div class="stock-row-meta">'+esc(m.cat)+' · '+esc(m.vendor||"-")+' · 리드타임 '+(m.leadtime||0)+'일</div></div>'+
-          (showDate && m.completedAt ? '<span style="font-size:11.5px;color:var(--text-400);margin-right:8px;white-space:nowrap">'+esc(m.completedAt)+' 완료</span>' : '')+
-          '</div>';
-      }).join("") : '<div class="stock-row" style="justify-content:center;color:var(--text-400)">해당 품목이 없습니다.</div>';
-      return '<div class="stock-group"><div class="stock-group-head"><span class="stock-dot '+kind+'"></span>'+label+' <span class="stock-group-count">('+list.length+')</span></div><div class="stock-list">'+rowsHtml+'</div></div>';
+      if(mobile){
+        var expanded = !!pmStatusExpandedMobile[label];
+        return '<div>'+
+          '<button type="button" class="stock-group-mobile-row" onclick="togglePmStatusGroup(\''+label+'\')">'+
+            '<span class="stock-dot '+kind+'"></span><span class="stock-group-mobile-label">'+label+'</span>'+
+            '<span class="stock-group-count">('+list.length+')</span>'+
+            '<svg class="ic chev" style="transform:rotate('+(expanded?"180":"0")+'deg)"><use href="#i-chevron"/></svg>'+
+          '</button>'+
+          (expanded ? '<div class="stock-list" style="border:none;border-radius:0;border-top:1px solid var(--border)">'+pmStatusRowsHtml(list, showDate)+'</div>' : '')+
+        '</div>';
+      }
+      return '<div class="stock-group"><div class="stock-group-head"><span class="stock-dot '+kind+'"></span>'+label+' <span class="stock-group-count">('+list.length+')</span></div><div class="stock-list">'+pmStatusRowsHtml(list, showDate)+'</div></div>';
     }
     return '<div class="panel" style="margin-bottom:16px"><div class="panel-header"><h3>상태별 현황</h3>'+
       (showLink ? '<span class="btn btn-ghost btn-sm" onclick="goPurchaseManage()">전체보기</span>' : '<span style="font-size:12px;color:var(--text-400)">이미 요청된 품목을 확인해 중복 요청을 방지하세요</span>')+
-      '</div><div class="panel-body pad" style="display:flex;flex-direction:column;gap:16px">'+
+      '</div><div class="panel-body'+(mobile?'':' pad')+'" style="display:flex;flex-direction:column;'+(mobile?'':'gap:16px')+'">'+
       group("발주필요","low",groups["발주필요"])+
       group("보류","warn",groups["보류"])+
       group("발주완료","ok",groups["발주완료"],true)+
-      '<div class="pos-hint" style="margin:0">발주완료 품목은 3일간 표시됩니다.</div>'+
+      (mobile ? '' : '<div class="pos-hint" style="margin:0">발주완료 품목은 3일간 표시됩니다.</div>')+
     '</div></div>';
   }
   window.setPmReqQuery = function(v){ APP.pmReqQuery=v; persist(); renderContent(); var el=document.querySelector('.search-input-lg'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
@@ -3335,19 +3729,24 @@
   function purchaseListHtml(){
     var items = consumableMats();
     if(isMobileView()) return purchaseListMobileHtml(items);
-    var rows = items.map(function(m){
+    var rows = items.length ? items.map(function(m){
       var sc = matOrderStatusColorVars(m.orderStatus);
-      return '<tr><td>'+photoCell(m,false)+'</td><td>'+esc(m.code)+'<div class="result-meta">'+esc(m.matType||"-")+'</div></td><td class="wrap"><a href="#" onclick="event.preventDefault();openMatModal(\''+m.code+'\')" style="color:inherit;text-decoration:underline;text-underline-offset:2px">'+esc(m.name)+'</a></td><td>'+esc(m.vendor||"-")+'</td><td class="num">'+fmt(m.moq||0)+'</td><td class="num">'+fmt(m.price||0)+'원</td><td class="num">'+(m.leadtime||0)+'일</td>'+
-        '<td><select style="width:100%;font-size:11.5px;font-weight:800;padding:5px 6px;height:28px;border-radius:99px;text-align:center;text-align-last:center;background:'+sc.bg+';color:'+sc.fg+';border-color:'+sc.bg+'" onchange="setMatOrderStatusInline(\''+m.code+'\', this.value)">'+
+      return '<div class="result-row"><div style="flex:none">'+photoCell(m,false)+'</div>'+
+        '<div class="result-main"><div class="result-name"><a href="#" onclick="event.preventDefault();openMatModal(\''+m.code+'\')" style="color:inherit;text-decoration:underline;text-underline-offset:2px">'+esc(m.name)+'</a></div>'+
+        '<div class="result-meta">'+esc(m.code)+' · '+esc(m.vendor||"-")+' · 최소발주 '+fmt(m.moq||0)+' · 단가 '+fmt(m.price||0)+'원</div></div>'+
+        '<span class="badge" style="background:var(--warn-bg);color:var(--warn-text);flex:none">리드타임 '+(m.leadtime||0)+'일</span>'+
+        '<select style="flex:none;font-size:11.5px;font-weight:800;padding:5px 10px;height:28px;border-radius:99px;text-align:center;text-align-last:center;background:'+sc.bg+';color:'+sc.fg+';border-color:'+sc.bg+'" onchange="setMatOrderStatusInline(\''+m.code+'\', this.value)">'+
           ["", "발주필요", "보류", "발주완료"].map(function(s){ return '<option value="'+s+'"'+(m.orderStatus===s?" selected":"")+'>'+(s||"일반")+'</option>'; }).join("")+
-        '</select></td></tr>';
-    }).join("");
-    return pmStatusGroupsHtml()+
-      (isMobileView() ? '' : '<div class="pos-hint">자재관리에서 "자재 구분"이 '+esc(purchasableTypeNames())+'인 품목이 여기 표시됩니다 (설정 → 자재 구분 관리에서 변경 가능). 품목명을 누르면 자재관리 수정 화면으로 이동해 거래처·최소발주수량·단가·리드타임 등을 편집할 수 있고, 발주 상태는 이 화면에서 바로 바꿀 수 있습니다.</div>')+
-      '<div class="toolbar-actions"><div style="font-size:13px;font-weight:700;color:var(--text-600)">총 '+items.length+'건 · 발주필요 '+items.filter(function(m){return m.orderStatus==="발주필요";}).length+'건</div></div>'+
-      '<div class="table-wrap"><table style="table-layout:fixed"><colgroup>'+
-        '<col style="width:64px"><col style="width:100px"><col style="width:auto"><col style="width:140px"><col style="width:84px"><col style="width:96px"><col style="width:76px"><col style="width:100px">'+
-      '</colgroup><thead><tr><th>사진</th><th>코드</th><th>품명</th><th>거래처</th><th class="num">최소발주</th><th class="num">단가</th><th class="num">리드타임</th><th style="text-align:center">상태</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" style="text-align:center;color:var(--text-400)">자재구분이 '+esc(purchasableTypeNames())+'인 품목이 없습니다. 자재관리에서 자재 구분을 설정해주세요.</td></tr>')+'</tbody></table></div>';
+        '</select></div>';
+    }).join("") : '<div class="result-empty">자재구분이 '+esc(purchasableTypeNames())+'인 품목이 없습니다. 자재관리에서 자재 구분을 설정해주세요.</div>';
+    return '<div class="pos-grid">'+
+      '<div class="pmreq-left">'+pmStatusGroupsHtml()+'</div>'+
+      '<div class="pmreq-right-col">'+
+        '<div class="panel"><div class="panel-header"><h3>전체 품목</h3><span style="font-size:12.5px;color:var(--text-400)">총 '+items.length+'건 · 발주필요 '+items.filter(function(m){return m.orderStatus==="발주필요";}).length+'건</span></div>'+
+          '<div class="panel-body pad"><div class="result-list">'+rows+'</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
   }
   function purchaseGuideHtml(){
     var q = (APP.pmGuideQuery||"").trim().toLowerCase();
@@ -3388,25 +3787,48 @@
       });
     }
     var selLabel = selValue==="all" ? (selKind==="wh" ? "전체 창고" : selKind==="cat" ? "전체 카테고리" : "전체 자재") : selValue;
-    var selHtml = selItems.length ? '<div class="guide-grid" style="margin-top:8px">'+selItems.map(function(m){
+    var mobile = isMobileView();
+    var selHtml = selItems.length ? '<div class="'+(mobile?"guide-grid-mobile":"guide-grid")+'" style="margin-top:8px">'+selItems.map(function(m){
+        if(mobile){
+          return '<div class="guide-card-mobile" onclick="openGuideDetailModal(\''+m.code+'\')">'+
+            (m.note ? '<div class="guide-card-noted-sm" title="설명 작성됨">✓</div>' : '')+
+            (m.photo ? '<img src="'+m.photo+'" alt="">' : '<div class="guide-card-mobile-ph">📦</div>')+
+            '<div class="guide-card-mobile-name">'+esc(m.name)+'</div>'+
+          '</div>';
+        }
         return '<div class="guide-card" style="cursor:pointer" onclick="openGuideDetailModal(\''+m.code+'\')">'+
           (m.note ? '<div class="guide-card-noted" title="설명 작성됨">✓</div>' : '')+
           '<div>'+(m.photo?'<div class="photo-box-md"><img src="'+m.photo+'" alt=""></div>':'<div class="photo-box-md">📦</div>')+'</div>'+
           '<div><div class="guide-card-name">'+esc(m.name)+'</div><div class="guide-card-alias">구매처: '+esc(m.vendor||"-")+'</div><div class="guide-card-alias">안전재고(비/성): '+(m.safeOff||0)+'/'+(m.safePeak||0)+'</div><div class="guide-card-alias">리드타임: '+(m.leadtime||0)+'일</div></div>'+
         '</div>';
       }).join("")+'</div>' : '<div class="result-empty">조건에 맞는 품목이 없습니다.</div>';
+    function guideFacetSelect(kind, label, pillsHtml){
+      // pillsHtml에 이미 만들어둔 <button class="pill">라벨 (건수)</button> 목록을 그대로 파싱하지 않고,
+      // 동일한 정보로 드롭다운을 새로 만든다 (모바일에서는 pill-row 대신 드롭다운으로 표시).
+      var opts;
+      if(kind==="type") opts = [["all","전체",activeMats.length]].concat(APP.matTypes.map(function(t){ return [t.name,t.name,activeMats.filter(function(m){ return m.matType===t.name; }).length]; }));
+      else if(kind==="cat") opts = [["all","전체",activeMats.length]].concat(APP.cats.map(function(c){ return [c,c,activeMats.filter(function(m){ return m.cat===c; }).length]; }));
+      else opts = [["all","전체",activeMats.length]].concat(APP.whs.map(function(w){ return [w,w,activeMats.filter(function(m){ return m.wh===w; }).length]; }));
+      var curVal = selKind===kind ? selValue : "all";
+      var optionsHtml = opts.map(function(o){ return '<option value="'+esc(o[0])+'"'+(curVal===o[0]?" selected":"")+'>'+esc(o[1])+' ('+o[2]+')</option>'; }).join("");
+      return '<div class="field" style="flex:1;min-width:0"><label>'+label+'</label><div class="select-wrap" style="position:relative"><select onchange="selectPmGuide(\''+kind+'\', this.value)">'+optionsHtml+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>';
+    }
 
-    return '<div class="pos-hint">신입사원도 한눈에 볼 수 있도록 자재를 정리한 안내서입니다. 품목 등록·수정은 자재관리 → 품목관리에서 진행합니다.</div>'+
-      '<div class="toolbar">'+
-        '<div class="field"><label>자재구분</label><div class="pill-row" style="margin-top:6px">'+typePillsHtml+'</div></div>'+
-        '<div class="field"><label>카테고리</label><div class="pill-row" style="margin-top:6px">'+catPillsHtml+'</div></div>'+
-        '<div class="field"><label>창고</label><div class="pill-row" style="margin-top:6px">'+whPillsHtml+'</div></div>'+
-      '</div>'+
+    return '<div class="pos-hint">현장에서 사용하는 자재에 대해 설명한 안내서입니다.</div>'+
+      (mobile ?
+        '<div class="toolbar" style="flex-direction:column;align-items:stretch;gap:10px">'+guideFacetSelect("type","자재구분")+guideFacetSelect("cat","카테고리")+guideFacetSelect("wh","창고")+'</div>'
+        :
+        '<div class="toolbar">'+
+          '<div class="field"><label>자재구분</label><div class="pill-row" style="margin-top:6px">'+typePillsHtml+'</div></div>'+
+          '<div class="field"><label>카테고리</label><div class="pill-row" style="margin-top:6px">'+catPillsHtml+'</div></div>'+
+          '<div class="field"><label>창고</label><div class="pill-row" style="margin-top:6px">'+whPillsHtml+'</div></div>'+
+        '</div>'
+      )+
       '<div class="panel"><div class="panel-header"><h3>선택된 카테고리 품목 · '+esc(selLabel)+'</h3><span class="count" style="color:var(--text-400)">'+selItems.length+'건</span></div>'+
         '<div class="panel-body pad">'+
           '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;justify-content:space-between">'+
             '<div class="field" style="max-width:240px"><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.pmGuideQuery||"")+'" placeholder="품명, 코드, 거래처로 검색" oninput="debounceSearch(\'pmGuideQ\', this.value, setPmGuideQuery)"></div></div>'+
-            '<button class="btn btn-outline" onclick="guideAbcExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 다운로드 (ABC 등급표)</button>'+
+            (mobile ? '' : '<button class="btn btn-outline" onclick="guideAbcExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 다운로드 (ABC 등급표)</button>')+
           '</div>'+
           '<div style="margin-top:12px">'+selHtml+'</div>'+
         '</div>'+
@@ -3718,7 +4140,7 @@
     var inCnt = groups.filter(function(g){ return g.type==="in"; }).reduce(function(s,g){ return s+g.items.length; },0);
     var adjCnt = groups.filter(function(g){ return g.type==="adj"; }).reduce(function(s,g){ return s+g.items.length; },0);
     return '<div class="sub-view">'+
-      (isMobileView() ? '' : '<div class="pos-hint">이전에 사용하던 프로그램의 입출고 내역을 CSV로 업로드하면 이 화면에 이력으로 추가됩니다. 업로드한 내역은 조회용 기록으로만 반영되며 현재 재고 수량에는 영향을 주지 않습니다. CSV 형식: 일자(YYYY-MM-DD 또는 YYYY-MM-DD HH:MM:SS),구분(입고/출고),자재명/규격,자재구분,수량,변동전,변동후,창고,담당자,비고<br>변동전(그 당시 재고, 기준 수량)/변동후는 선택 항목이며, 둘 다 입력하면 그 차이를 실제 입출고 수량으로 계산해 사용합니다(수량 칸에 이전 프로그램이 내보낸 음수·부호 값이 들어 있어도 자동으로 절대값 처리되어 오류 없이 업로드됩니다). 변동전/변동후가 없을 때만 수량 칸 값을 그대로 사용합니다. 한 번에 여러 품목을 처리한 내역은 대표 품목명 외 N건으로 묶여 표시되며, 행을 클릭하면 세부 내역별로 수량 수정·삭제가 가능하고 그 차이는 해당 자재의 현재고에도 자동 반영됩니다.<br>CSV의 자재명/규격이 자재관리에 등록된 이름과 일치하면 그 자재로 연결되고, 일치하는 자재가 없으면(예: 지금은 단종·사용중지된 품목) 자재관리에 "사용중지" 자재로 자동 등록됩니다 — 이때 자재구분 칸에 원자재/부자재/소모품/기타 중 하나를 적어두면 그 값으로 등록되고(비워두면 부자재로 등록), 이미 등록된 자재명/규격이면 자재구분 칸은 무시되고 기존 자재관리 설정을 따릅니다.</div>')+
+      (isMobileView() ? '' : '<div class="pos-hint">이전 프로그램의 입출고 내역을 CSV로 업로드하면 조회용 이력으로 추가됩니다(현재 재고에는 영향 없음).<br>CSV 형식: 일자, 구분(입고/출고), 자재명/규격, 자재구분, 수량, 변동전, 변동후, 창고, 담당자, 비고 — 변동전·변동후를 함께 입력하면 그 차이를 수량으로 자동 계산합니다.<br>자재명/규격이 자재관리에 없는 품목은 "사용중지" 자재로 자동 등록됩니다(자재구분을 안 적으면 부자재로 등록).</div>')+
       rangeBar+
       '<div class="toolbar-actions"><div style="font-size:13px;font-weight:700;color:var(--text-600)">'+start+' ~ '+end+' · 총 '+groups.length+'건 (품목 '+itemCount+'개) · 출고 '+outCnt+' · 입고 '+inCnt+'</div>'+
       '<div class="btn-row">'+
