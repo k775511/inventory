@@ -2265,7 +2265,7 @@
         sortTh("자재구분","matType","materialSortKey","materialSortDir","setMaterialSort")+
         sortTh("카테고리","cat","materialSortKey","materialSortDir","setMaterialSort")+
         sortTh("창고","wh","materialSortKey","materialSortDir","setMaterialSort")+
-        '<th>단위</th><th>위치</th><th class="num">현재고</th><th class="num">안전재고 <span class="badge" style="background:'+(isCurrentlyPeak()?"var(--low-bg)":"var(--in-bg)")+';color:'+(isCurrentlyPeak()?"var(--low-text)":"var(--blue-600)")+'">'+(isCurrentlyPeak()?"성수기":"비수기")+'</span></th><th>상태</th></tr></thead><tbody>'+(rows||'<tr><td colspan="12" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
+        '<th>단위</th><th>위치</th><th class="num">현재고</th><th class="num"><div style="display:flex;flex-direction:column;align-items:center;gap:3px">안전재고<span class="badge" style="background:'+(isCurrentlyPeak()?"var(--low-bg)":"var(--in-bg)")+';color:'+(isCurrentlyPeak()?"var(--low-text)":"var(--blue-600)")+'">'+(isCurrentlyPeak()?"성수기":"비수기")+'</span></div></th><th>상태</th></tr></thead><tbody>'+(rows||'<tr><td colspan="12" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
   }
   window.setMaterialQ = function(v){
     APP.materialQ = v; persist(); renderContent();
