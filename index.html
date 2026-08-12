@@ -965,12 +965,14 @@
     a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
-  function activeSafe(m, dateStr){
+  function isCurrentlyPeak(dateStr){
     dateStr = dateStr || TODAY;
     var mo = parseInt(dateStr.slice(5,7),10);
     var pol = APP.safety;
-    var peak = pol.mode==="peak" ? true : pol.mode==="off" ? false : (pol.peakMonths.indexOf(mo) > -1);
-    return peak ? m.safePeak : m.safeOff;
+    return pol.mode==="peak" ? true : pol.mode==="off" ? false : (pol.peakMonths.indexOf(mo) > -1);
+  }
+  function activeSafe(m, dateStr){
+    return isCurrentlyPeak(dateStr) ? m.safePeak : m.safeOff;
   }
   function isLow(m){ return m.stock < activeSafe(m); }
   // 부족(안전재고 미달) 이력 로그는 이벤트 발생 시점에만 기록됩니다.
@@ -2227,7 +2229,7 @@
     visible.sort(byStringKey(matSortGetters[matSortKey]||matSortGetters.code, APP.materialSortDir));
     if(isMobileView()) return materialRegisterMobileHtml(visible, q, totalActive);
     var rows = visible.map(function(m){
-      return '<tr class="pm-row" style="cursor:pointer" onclick="openMatModal(\''+m.code+'\')" title="클릭하면 수정할 수 있습니다"><td onclick="event.stopPropagation()"><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td onclick="event.stopPropagation();openMatPhotoModal(\''+m.code+'\')"><div class="photo-box" title="사진 등록/변경/삭제">'+(m.photo?'<img src="'+m.photo+'" alt="">':'📦')+'</div></td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num">'+fmt(m.safeOff)+'</td><td class="num">'+fmt(m.safePeak)+'</td><td>'+stockBadge(m)+'</td></tr>';
+      return '<tr class="pm-row" style="cursor:pointer" onclick="openMatModal(\''+m.code+'\')" title="클릭하면 수정할 수 있습니다"><td onclick="event.stopPropagation()"><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td onclick="event.stopPropagation();openMatPhotoModal(\''+m.code+'\')"><div class="photo-box" title="사진 등록/변경/삭제">'+(m.photo?'<img src="'+m.photo+'" alt="">':'📦')+'</div></td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num">'+fmt(activeSafe(m))+'</td><td>'+stockBadge(m)+'</td></tr>';
     }).join("");
     return '<div class="toolbar">'+
         '<div class="field" style="flex:1;min-width:220px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.materialQ||"")+'" placeholder="자재명/규격, 코드, 카테고리, 자재구분, 창고, 위치로 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
@@ -2261,7 +2263,7 @@
         sortTh("자재구분","matType","materialSortKey","materialSortDir","setMaterialSort")+
         sortTh("카테고리","cat","materialSortKey","materialSortDir","setMaterialSort")+
         sortTh("창고","wh","materialSortKey","materialSortDir","setMaterialSort")+
-        '<th>단위</th><th>위치</th><th class="num">현재고</th><th class="num">비수기 안전재고</th><th class="num">성수기 안전재고</th><th>상태</th></tr></thead><tbody>'+(rows||'<tr><td colspan="13" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
+        '<th>단위</th><th>위치</th><th class="num">현재고</th><th class="num">안전재고 ('+(isCurrentlyPeak()?"성수기":"비수기")+' 기준)</th><th>상태</th></tr></thead><tbody>'+(rows||'<tr><td colspan="12" style="text-align:center;color:var(--text-400)">'+(q?'검색 결과가 없습니다.':'표시할 자재가 없습니다.')+'</td></tr>')+'</tbody></table></div>';
   }
   window.setMaterialQ = function(v){
     APP.materialQ = v; persist(); renderContent();
