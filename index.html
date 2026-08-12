@@ -1149,6 +1149,12 @@
     document.getElementById("photoLightboxImg").src = m.photo;
     document.getElementById("photoLightbox").hidden = false;
   };
+  // 자재가 아닌 것(도어 모델 사진 등)의 사진을 그냥 URL로 바로 크게 볼 때 쓴다.
+  window.openLightboxUrl = function(url){
+    if(!url) return;
+    document.getElementById("photoLightboxImg").src = url;
+    document.getElementById("photoLightbox").hidden = false;
+  };
 
   /* ================= top-level & sub nav ================= */
   var mainNav = document.getElementById("mainNav");
@@ -3335,11 +3341,8 @@
     if(!modelId || !models.some(function(x){ return x.id===modelId; })) modelId = models[0] ? models[0].id : null;
     var modelPills = models.map(function(x){ return '<button class="pill'+(x.id===modelId?" active":"")+'" onclick="selectDoorGuideModel(\''+x.id+'\')">'+esc(x.name)+'</button>'; }).join("");
     var modelManageBtn = '<button type="button" class="btn btn-outline btn-sm" style="flex:none" onclick="openDoorModelManageModal(\''+wh+'\')">모델관리</button>';
-    var modelSelectHtml = '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'+
-        '<div class="select-wrap" style="position:relative;flex:1">'+
-          (models.length ? '<select onchange="selectDoorGuideModel(this.value)">'+models.map(function(x){ return '<option value="'+esc(x.id)+'"'+(x.id===modelId?" selected":"")+'>'+esc(x.name)+'</option>'; }).join("")+'</select><svg class="ic"><use href="#i-chevron"/></svg>' : '<span class="pos-hint" style="margin:0">등록된 모델이 없습니다.</span>')+
-        '</div>'+
-        modelManageBtn+
+    var modelSelectHtml = '<div class="select-wrap" style="position:relative;margin-top:6px">'+
+        (models.length ? '<select onchange="selectDoorGuideModel(this.value)">'+models.map(function(x){ return '<option value="'+esc(x.id)+'"'+(x.id===modelId?" selected":"")+'>'+esc(x.name)+'</option>'; }).join("")+'</select><svg class="ic"><use href="#i-chevron"/></svg>' : '<span class="pos-hint" style="margin:0">등록된 모델이 없습니다.</span>')+
       '</div>';
 
     var mdl = models.filter(function(x){ return x.id===modelId; })[0];
@@ -3372,13 +3375,10 @@
       detailHtml = '<div class="panel"><div class="panel-body pad"><div class="result-empty">아직 등록된 모델이 없습니다. "+ 모델 추가"로 만들어주세요.</div></div></div>';
     } else {
       detailHtml = '<div class="panel"><div class="panel-body pad">'+
-          '<div style="display:flex;justify-content:flex-end"><button type="button" class="btn btn-outline btn-sm" style="color:var(--low-text)" onclick="deleteDoorGuideModel(\''+wh+'\',\''+mdl.id+'\')">모델 삭제</button></div>'+
-          '<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;margin-top:6px'+(mobile?';flex-direction:column;align-items:center':'')+'">'+
-            '<label class="door-model-photo" style="'+(mobile?"width:200px;height:260px":"")+'" title="클릭하여 모델 사진 등록/변경">'+
-              '<input type="file" accept="image/*" style="display:none" onchange="doorGuidePhotoUpload(this,\''+wh+'\',\''+mdl.id+'\')">'+
+          '<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap'+(mobile?';flex-direction:column;align-items:center':'')+'">'+
+            '<div class="door-model-photo" style="'+(mobile?"width:200px;height:260px":"")+(mdl.photo?"":";cursor:default")+'" '+(mdl.photo?'onclick="openLightboxUrl(\''+mdl.photo+'\')" title="클릭하면 크게 볼 수 있습니다"':'')+'>'+
               (mdl.photo ? '<img src="'+mdl.photo+'" alt="">' : '📦')+
-              (mdl.photo ? '<span class="door-model-photo-del" title="사진 삭제" onclick="event.preventDefault();event.stopPropagation();doorGuidePhotoDelete(\''+wh+'\',\''+mdl.id+'\')"><svg class="ic"><use href="#i-close"/></svg></span>' : '')+
-            '</label>'+
+            '</div>'+
             '<div style="flex:1;min-width:'+(mobile?"0;width:100%":"260px")+'">'+
               '<h3 style="margin:0;font-size:20px'+(mobile?';text-align:center':'')+'">'+esc(mdl.name)+'</h3>'+
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px"><span class="pos-section-label">설명</span><button type="button" class="btn btn-outline btn-sm" onclick="openDoorGuideDescModal(\''+wh+'\',\''+mdl.id+'\')">수정</button></div>'+
@@ -3394,7 +3394,7 @@
 
     return '<div class="pos-hint">도어별 사용되는 원자재, 부자재를 모아서 보여주는 안내서입니다.</div>'+
       '<div class="toolbar"><div class="field" style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center"><label>창고</label><button type="button" class="btn btn-outline btn-sm" onclick="openDoorGuideWhPickModal()">표시할 창고 선택</button></div>'+(mobile?whSelectHtml:'<div class="pill-row" style="margin-top:6px">'+whPills+'</div>')+'</div></div>'+
-      (wh ? '<div class="toolbar" style="margin-top:12px"><div class="field" style="flex:1"><label>모델</label>'+(mobile?modelSelectHtml:'<div style="display:flex;align-items:center;gap:12px;margin-top:6px"><div class="pill-row" style="flex:1">'+modelPills+'</div>'+modelManageBtn+'</div>')+'</div></div>' : '')+
+      (wh ? '<div class="toolbar" style="margin-top:12px"><div class="field" style="flex:1">'+(mobile?'<div style="display:flex;justify-content:space-between;align-items:center"><label>모델</label>'+modelManageBtn+'</div>'+modelSelectHtml:'<div style="display:flex;justify-content:space-between;align-items:center"><label>모델</label>'+modelManageBtn+'</div><div class="pill-row" style="margin-top:6px">'+modelPills+'</div>')+'</div></div>' : '')+
       '<div style="margin-top:16px">'+detailHtml+'</div>';
   }
   window.selectDoorGuideModel = function(id){ APP.doorGuideModelId=id; persist(); renderContent(); };
@@ -3402,7 +3402,11 @@
     var models = doorGuideModels(wh);
     var rowsHtml = models.length ? models.map(function(x){
       return '<div class="stock-row"><div class="stock-row-main"><div class="stock-row-name">'+esc(x.name)+'</div></div>'+
-        '<button class="btn btn-outline icon-only" title="삭제" onclick="deleteDoorGuideModel(\''+wh+'\',\''+x.id+'\')"><svg class="ic"><use href="#i-trash"/></svg></button></div>';
+        '<div class="row-actions">'+
+          '<label class="btn btn-outline icon-only" title="사진 등록"><input type="file" accept="image/*" style="display:none" onchange="doorGuidePhotoUpload(this,\''+wh+'\',\''+x.id+'\')"><svg class="ic"><use href="#i-camera"/></svg></label>'+
+          (x.photo ? '<button class="btn btn-outline icon-only" title="사진 삭제" onclick="doorGuidePhotoDelete(\''+wh+'\',\''+x.id+'\')"><svg class="ic"><use href="#i-close"/></svg></button>' : '')+
+          '<button class="btn btn-outline icon-only" title="모델 삭제" onclick="deleteDoorGuideModel(\''+wh+'\',\''+x.id+'\')"><svg class="ic"><use href="#i-trash"/></svg></button>'+
+        '</div></div>';
     }).join("") : '<div class="stock-row" style="justify-content:center;color:var(--text-400)">등록된 모델이 없습니다.</div>';
     var html = '<div class="modal-header"><h3>'+esc(wh)+' 모델관리</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body"><div class="stock-list">'+rowsHtml+'</div></div>'+
