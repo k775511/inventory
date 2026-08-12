@@ -1467,15 +1467,17 @@
     var items = APP.mats.filter(function(m){ return !isPurchasableType(m.matType) && (stockWh==="all" || m.wh===stockWh); });
     var stockSortGetters = { wh:function(m){return m.wh||"";}, name:function(m){return m.name;}, code:function(m){return m.code;} };
     items.sort(byStringKey(stockSortGetters[APP.stockSortKey]||stockSortGetters.wh, APP.stockSortDir));
+    var peakAsOf = isCurrentlyPeak(asOf);
+    var safeColorAsOf = peakAsOf ? "var(--low-text)" : "var(--blue-600)";
     var lowCnt=0, okCnt=0;
     var rows2 = items.map(function(m){
       var pastQty = stockAsOfQty(m, asOf);
       var pastSafe = activeSafe(m, asOf);
       if(pastQty < pastSafe) lowCnt++; else okCnt++;
-      return '<tr><td>'+esc(m.wh)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.code)+'</td><td>'+esc(m.loc)+'</td>'+
-        '<td class="num" style="'+(isPast?'font-weight:800;color:var(--blue-700)':'color:var(--text-400)')+'">'+fmt(pastQty)+'</td>'+
-        '<td class="num" style="'+(isPast?'color:var(--text-400)':'font-weight:800;color:var(--blue-700)')+'">'+fmt(m.stock)+'</td>'+
-        '<td class="num">'+fmt(pastSafe)+'</td><td>'+badgeForStock(pastQty, pastSafe)+'</td></tr>';
+      return '<tr><td class="ctr">'+esc(m.wh)+'</td><td>'+esc(m.name)+'</td><td class="ctr">'+esc(m.code)+'</td><td class="ctr">'+esc(m.loc)+'</td>'+
+        '<td class="num ctr" style="'+(isPast?'font-weight:800;color:var(--blue-700)':'color:var(--text-400)')+'">'+fmt(pastQty)+'</td>'+
+        '<td class="num ctr" style="'+(isPast?'color:var(--text-400)':'font-weight:800;color:var(--blue-700)')+'">'+fmt(m.stock)+'</td>'+
+        '<td class="num ctr" style="color:'+safeColorAsOf+';font-weight:700">'+fmt(pastSafe)+'</td><td class="ctr">'+badgeForStock(pastQty, pastSafe)+'</td></tr>';
     }).join("");
     var whOptions = ['<option value="all"'+(stockWh==="all"?" selected":"")+'>전체</option>']
       .concat(APP.whs.map(function(w){ return '<option'+(stockWh===w?" selected":"")+'>'+esc(w)+'</option>'; })).join("");
@@ -1490,10 +1492,10 @@
       '</div>'+
       (isPast ? '<div class="pos-hint">기준일(<b>'+asOf+'</b>) 이후의 입출고·실사 기록을 역산하여 그 시점의 재고를 재구성한 값입니다. "기준일 재고" 열이 해당 시점 기준, "현재고" 열은 참고용 오늘 기준 값입니다.</div>' : '')+
       '<div class="table-wrap"><table><thead><tr>'+
-      sortTh("창고","wh","stockSortKey","stockSortDir","setStockSort")+
-      sortTh("품목명","name","stockSortKey","stockSortDir","setStockSort")+
-      sortTh("코드","code","stockSortKey","stockSortDir","setStockSort")+
-      '<th>위치</th><th class="num">기준일 재고</th><th class="num">현재고</th><th class="num">적용 안전재고</th><th>상태</th></tr></thead><tbody>'+
+      sortTh("창고","wh","stockSortKey","stockSortDir","setStockSort","ctr")+
+      sortTh("품목명/규격","name","stockSortKey","stockSortDir","setStockSort")+
+      sortTh("코드","code","stockSortKey","stockSortDir","setStockSort","ctr")+
+      '<th class="ctr">위치</th><th class="num ctr">기준일 재고</th><th class="num ctr">현재고</th><th class="num ctr"><div style="display:flex;flex-direction:column;align-items:center;gap:3px">적용 안전재고<span class="badge" style="background:'+(peakAsOf?"var(--low-bg)":"var(--in-bg)")+';color:'+(peakAsOf?"var(--low-text)":"var(--blue-600)")+'">'+(peakAsOf?"성수기":"비수기")+'</span></div></th><th class="ctr">상태</th></tr></thead><tbody>'+
       (rows2 || '<tr><td colspan="8" style="text-align:center;color:var(--text-400)">해당 창고에 등록된 자재가 없습니다.</td></tr>')+
       '</tbody></table></div>'+
       '<div class="table-footer"><span>총 '+items.length+'건</span><span>정상 '+okCnt+' · 부족 '+lowCnt+'건'+(isPast?' (기준일 기준)':'')+'</span></div>'+
