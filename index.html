@@ -659,9 +659,13 @@
     }catch(e){ return seedState(); }
   }
   function persist(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(APP)); }catch(e){}
+    // 출고목록(cart)·입고목록(inCart)은 지금 화면에서만 의미있는 "작업 중" 임시 목록이라
+    // 로컬저장소·Firestore(다른 기기와 공유되는 DB)에는 남기지 않는다. 그대로 저장하면
+    // 새로고침·화면 이동 후에도 안 사라지고, 심지어 다른 기기에서도 보이게 된다.
+    var snapshot = Object.assign({}, APP, { cart:[], inCart:[] });
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(snapshot)); }catch(e){}
     if(window.firebaseSetDoc && window.stateDocRef){
-      window.firebaseSetDoc(window.stateDocRef, { app: APP }).catch(function(err){
+      window.firebaseSetDoc(window.stateDocRef, { app: snapshot }).catch(function(err){
         console.warn("Firestore save failed:", err);
       });
     }
@@ -1132,7 +1136,16 @@
       }, 150);
     };
   })());
+  var lastRenderedCur = null;
   function renderContent(){
+    // 다른 화면으로 넘어가면(=대시보드 등 화면이 실제로 바뀌면) 출고POS·자재입고 화면에 담아뒀던
+    // 작업 중인 목록은 비운다. 안 그러면 잊고 떠난 목록이 계속 남아 다음에 다시 들어왔을 때
+    // 헷갈리거나 실수로 그대로 처리될 수 있다.
+    if(lastRenderedCur !== null && lastRenderedCur !== APP.cur){
+      if(lastRenderedCur==="pos" && APP.cart.length) APP.cart = [];
+      if(lastRenderedCur==="receive" && APP.inCart.length) APP.inCart = [];
+    }
+    lastRenderedCur = APP.cur;
     subNav.querySelectorAll(".sub-item").forEach(function(b){ b.classList.toggle("active", b.dataset.sub===APP.cur); });
     updateMobileTopbar();
     var fn = SCREENS[APP.cur] || SCREENS.dashboard;
