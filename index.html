@@ -649,7 +649,7 @@
       s.monthlyWh = s.monthlyWh || "all";
       s.monthlyType = s.monthlyType || "all";
       s.monthlyQ = s.monthlyQ || "";
-      s.yoyMonth = s.yoyMonth || parseInt(TODAY.slice(5,7),10);
+      s.yoyMonth = parseInt(TODAY.slice(5,7),10); // 이전 선택값에 고정되지 않도록 로드할 때마다 이번 달로 재계산
       s.yoyWh = s.yoyWh || "all";
       s.yoyType = s.yoyType || "all";
       s.yoyQ = s.yoyQ || "";
@@ -721,7 +721,7 @@
     s.monthlyWh = s.monthlyWh || "all";
     s.monthlyType = s.monthlyType || "all";
     s.monthlyQ = s.monthlyQ || "";
-    s.yoyMonth = s.yoyMonth || parseInt(TODAY.slice(5,7),10);
+    s.yoyMonth = parseInt(TODAY.slice(5,7),10); // 이전 선택값에 고정되지 않도록 로드할 때마다 이번 달로 재계산
     s.yoyWh = s.yoyWh || "all";
     s.yoyType = s.yoyType || "all";
     s.yoyQ = s.yoyQ || "";
@@ -1801,6 +1801,22 @@
       renderContent();
     });
   };
+  // 최근 6개월(이번 달 포함)의 실제 입고·출고 건수를 집계해 막대그래프용 데이터로 만든다.
+  // 이전에는 이 그래프가 하드코딩된 가짜 값을 보여주고 있었다.
+  function monthlyInOutTrend(){
+    var months = [];
+    for(var i=5;i>=0;i--){ months.push(addMonths(TODAY.slice(0,7)+"-01", -i).slice(0,7)); }
+    var curYm = TODAY.slice(0,7);
+    var data = months.map(function(ym){
+      var inCnt = APP.inLogs.filter(function(l){ return (l.date||"").slice(0,7)===ym; }).length;
+      var outCnt = APP.logs.filter(function(l){ return (l.date||"").slice(0,7)===ym; }).length;
+      var isCur = ym===curYm;
+      return { label: parseInt(ym.slice(5,7),10)+"월"+(isCur?"*":""), inCnt:inCnt, outCnt:outCnt };
+    });
+    var max = Math.max(1, data.reduce(function(s,x){ return Math.max(s,x.inCnt,x.outCnt); },0));
+    data.forEach(function(x){ x.inPct = Math.round(x.inCnt/max*100); x.outPct = Math.round(x.outCnt/max*100); });
+    return data;
+  }
   function materialUsageHtml(){
     var lowTop = APP.mats.slice().filter(isLow).map(function(m){ return {name:m.name, lack:activeSafe(m)-m.stock}; }).sort(function(a,b){ return b.lack-a.lack; }).slice(0,5);
     var catAgg = APP.cats.map(function(c){
@@ -1831,10 +1847,10 @@
     return ''+
       '<div class="report-grid">'+
         '<div class="panel"><div class="panel-header"><h3>월별 입출고 추이 (건수)</h3></div><div class="bar-chart">'+
-          [["2월",77,69],["3월",85,80],["4월",93,87],["5월",88,95],["6월",100,92],["7월*",32,28]].map(function(m){
-            return '<div class="bar-col"><div class="bar-pair"><div class="bar in" style="height:'+m[1]+'%"></div><div class="bar out" style="height:'+m[2]+'%"></div></div><span class="bar-month">'+m[0]+'</span></div>';
+          monthlyInOutTrend().map(function(x){
+            return '<div class="bar-col"><div class="bar-pair"><div class="bar in" style="height:'+x.inPct+'%"></div><div class="bar out" style="height:'+x.outPct+'%"></div></div><span class="bar-month">'+x.label+'</span></div>';
           }).join("")+
-        '</div><div class="legend"><span><i class="li-in"></i>입고</span><span><i class="li-out"></i>출고</span><span style="color:var(--text-400)">* 7월은 11일까지 집계</span></div></div>'+
+        '</div><div class="legend"><span><i class="li-in"></i>입고</span><span><i class="li-out"></i>출고</span><span style="color:var(--text-400)">* '+parseInt(TODAY.slice(5,7),10)+'월은 '+parseInt(TODAY.slice(8,10),10)+'일까지 집계</span></div></div>'+
         '<div class="panel"><div class="panel-header"><h3>재고부족 TOP 5</h3></div><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>자재명/규격</th><th class="num">부족수량</th></tr></thead><tbody>'+
           (lowTop.length ? lowTop.map(function(x){ return '<tr><td>'+esc(x.name)+'</td><td class="num" style="color:var(--low-text);font-weight:800">'+x.lack+'</td></tr>'; }).join("") : '<tr><td colspan="2" style="text-align:center;color:var(--text-400)">부족 품목이 없습니다.</td></tr>')+
         '</tbody></table></div></div>'+
