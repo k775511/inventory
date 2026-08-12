@@ -411,6 +411,8 @@
   .mat-card-photo img{ width:100%; height:100%; object-fit:cover; }
   .mat-card-photo-btn{ position:absolute; right:0; bottom:0; width:22px; height:22px; border-radius:50%; background:var(--blue-600); color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
   .mat-card-photo-btn .ic{ width:11px; height:11px; }
+  .mat-card-photo-del{ position:absolute; right:0; top:0; width:20px; height:20px; border-radius:50%; background:var(--low-text); color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
+  .mat-card-photo-del .ic{ width:10px; height:10px; }
   .mat-card-name{ font-size:14.5px; font-weight:800; color:var(--text-900); }
   .mat-card-code{ font-size:11.5px; color:var(--text-400); margin-top:1px; }
   .mat-card-tags{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
@@ -2186,6 +2188,7 @@
             '<input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\')">'+
             (m.photo ? '<img src="'+m.photo+'" alt="">' : '📦')+
             '<span class="mat-card-photo-btn"><svg class="ic"><use href="#i-camera"/></svg></span>'+
+            (m.photo ? '<span class="mat-card-photo-del" title="사진 삭제" onclick="event.preventDefault();event.stopPropagation();matPhotoDelete(\''+m.code+'\')"><svg class="ic"><use href="#i-close"/></svg></span>' : '')+
           '</label>'+
           '<div style="flex:1;min-width:0" onclick="openMatModal(\''+m.code+'\')">'+
             '<div class="mat-card-name">'+esc(m.name)+'</div>'+
@@ -2226,6 +2229,7 @@
     var rows = visible.map(function(m){
       return '<tr><td><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td>'+photoCell(m,false)+'</td><td>'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.matType||"-")+'</td><td>'+esc(m.cat)+'</td><td>'+esc(m.wh)+'</td><td>'+esc(m.unit)+'</td><td>'+esc(m.loc)+'</td><td class="num">'+fmt(m.stock)+'</td><td class="num">'+fmt(m.safeOff)+'</td><td class="num">'+fmt(m.safePeak)+'</td><td>'+stockBadge(m)+'</td>'+
         '<td><div class="row-actions"><label class="btn btn-outline icon-only" title="사진"><input type="file" accept="image/*" style="display:none" onchange="matPhotoUpload(this,\''+m.code+'\')"><svg class="ic"><use href="#i-camera"/></svg></label>'+
+        (m.photo ? '<button class="btn btn-outline icon-only" title="사진 삭제" onclick="matPhotoDelete(\''+m.code+'\')"><svg class="ic"><use href="#i-close"/></svg></button>' : '')+
         '<button class="btn btn-outline icon-only" onclick="openMatModal(\''+m.code+'\')"><svg class="ic"><use href="#i-edit"/></svg></button>'+
         '<button class="btn btn-outline icon-only" onclick="delMat(\''+m.code+'\')"><svg class="ic"><use href="#i-trash"/></svg></button></div></td></tr>';
     }).join("");
@@ -2514,6 +2518,13 @@
       var m = byCode(code); if(!m) return;
       m.photo = dataUrl; persist(); renderContent();
       showToast(m.name+" 사진이 등록되었습니다.");
+    });
+  };
+  window.matPhotoDelete = function(code){
+    var m = byCode(code); if(!m || !m.photo) return;
+    confirmAction(m.name+"의 사진을 삭제할까요?", function(){
+      m.photo = ""; persist(); renderContent();
+      showToast(m.name+" 사진을 삭제했습니다.");
     });
   };
   var PENDING_PHOTO_IMPORT = null;
