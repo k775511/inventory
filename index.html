@@ -388,12 +388,12 @@
   .mobile-topbar-title{ font-size:13.5px; font-weight:700; color:var(--text-600); }
 
   .mhome{ display:flex; flex-direction:column; gap:10px; }
-  .mhome-hero{ background:#fff; border-radius:16px; padding:18px; box-shadow:0 1px 3px rgba(20,29,52,.06); border:none; text-align:left; width:100%; }
+  .mhome-hero{ background:#fff; border-radius:16px; padding:18px 18px 6px; box-shadow:0 1px 3px rgba(20,29,52,.06); border:none; text-align:left; width:100%; }
   .mhome-hero-top{ display:flex; justify-content:space-between; align-items:center; font-size:12.5px; color:var(--text-400); }
   .mhome-hero-val{ font-size:26px; font-weight:800; color:var(--text-900); margin-top:8px; display:flex; align-items:center; gap:4px; }
   .mhome-hero-sub{ font-size:12.5px; color:var(--text-400); margin-top:8px; }
   .mhome-hero-foot{ display:flex; margin-top:16px; border-top:1px solid var(--border); }
-  .mhome-hero-foot > div{ flex:1; text-align:center; padding:16px 4px; font-size:15.5px; font-weight:800; color:var(--blue-600); cursor:pointer; }
+  .mhome-hero-foot > div{ flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:12px 4px 2px; font-size:17.5px; font-weight:800; color:var(--blue-600); cursor:pointer; }
   .mhome-hero-foot > div:not(:last-child){ border-right:1px solid var(--border); }
 
   .mhome-menu{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 1px 3px rgba(20,29,52,.06); }
@@ -670,13 +670,19 @@
       return s;
     }catch(e){ return seedState(); }
   }
+  // Firestore(다른 기기와 공유되는 실제 DB)에서 기존 데이터를 한 번이라도 불러오기(또는
+  // 문서가 아예 없다는 것을 확인하기) 전까지는 절대 저장(쓰기)하지 않는다. 이 확인 없이
+  // 저장을 허용하면, 아직 서버 데이터를 못 불러온 짧은 순간(화면을 막 열었을 때)에 화면 전환
+  // 등으로 persist()가 호출될 경우 로컬의 기본 샘플 데이터로 실제 운영 데이터를 덮어써버릴 수
+  // 있다 — 실제로 이 문제로 발주 데이터가 사라진 적이 있어 반드시 필요한 안전장치다.
+  var firebaseSyncReady = false;
   function persist(){
     // 출고목록(cart)·입고목록(inCart)은 지금 화면에서만 의미있는 "작업 중" 임시 목록이라
     // 로컬저장소·Firestore(다른 기기와 공유되는 DB)에는 남기지 않는다. 그대로 저장하면
     // 새로고침·화면 이동 후에도 안 사라지고, 심지어 다른 기기에서도 보이게 된다.
     var snapshot = Object.assign({}, APP, { cart:[], inCart:[] });
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(snapshot)); }catch(e){}
-    if(window.firebaseSetDoc && window.stateDocRef){
+    if(firebaseSyncReady && window.firebaseSetDoc && window.stateDocRef){
       window.firebaseSetDoc(window.stateDocRef, { app: snapshot }).catch(function(err){
         console.warn("Firestore save failed:", err);
       });
@@ -761,13 +767,20 @@
           APP = normalizeState(serverState);
           APP.cur = localCur; APP.materialTab = localMaterialTab; APP.purchaseTab = localPurchaseTab;
           APP.stockTab = localStockTab; APP.matMasterTab = localMatMasterTab;
+          firebaseSyncReady = true; // 서버 데이터를 반영한 뒤에야 저장을 허용한다.
           renderContent();
         }
       } else {
+        // Firestore에 문서가 아예 없는 최초 1회뿐이므로, 지금 이 로컬 상태로 새로 만들어도 안전하다.
+        firebaseSyncReady = true;
         persist();
       }
     }).catch(function(err){
       console.warn("Firestore load failed:", err);
+      // 서버 데이터를 못 읽은 상태로 남겨두면 이후 어떤 동작도 저장이 안 돼 앱이 사실상 멈추므로,
+      // (네트워크 일시 오류 등을 감안해) 이후 저장은 허용한다 — 다만 이 기기가 방금 읽은 것은
+      // 로컬 캐시(정상 데이터일 수도, 오래된 값일 수도 있음)일 뿐 서버 최신값이 아님에 유의.
+      firebaseSyncReady = true;
     });
   }
 
@@ -1246,9 +1259,9 @@
         '</div>'+
         '<div class="mhome-hero-foot"><div onclick="goPurchaseRequest()">구매요청</div></div>'+
       '</div>'+
-      '<div class="mhome-menu mhome-menu-2col">'+
-        '<button type="button" class="mhome-menu-row" onclick="go(\'receive\')"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-in"/></svg></span><span class="mhome-menu-label">입고</span></button>'+
-        '<button type="button" class="mhome-menu-row" onclick="go(\'pos\')"><span class="mhome-menu-ic warn"><svg class="ic"><use href="#i-out"/></svg></span><span class="mhome-menu-label">출고</span></button>'+
+      '<div class="mhome-menu">'+
+        '<button type="button" class="mhome-menu-row" onclick="go(\'pos\')"><span class="mhome-menu-ic warn"><svg class="ic"><use href="#i-out"/></svg></span><span class="mhome-menu-label">출고</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
+        '<button type="button" class="mhome-menu-row" onclick="go(\'receive\')"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-in"/></svg></span><span class="mhome-menu-label">입고</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
       '</div>'+
       '<div class="mhome-menu">'+
         '<button type="button" class="mhome-menu-row" onclick="goMobileMaterial()"><span class="mhome-menu-ic"><svg class="ic"><use href="#i-list"/></svg></span><span class="mhome-menu-label">품목관리</span><svg class="ic chev"><use href="#i-chevron"/></svg></button>'+
@@ -3004,7 +3017,8 @@
     var mdl = models.filter(function(x){ return x.id===modelId; })[0];
     var mats = mdl ? (mdl.codes||[]).map(byCode).filter(Boolean) : [];
     var cardsHtml = mats.length ? '<div class="guide-grid" style="margin-top:8px">'+mats.map(function(m){
-        return '<div class="guide-card">'+
+        return '<div class="guide-card" style="cursor:pointer" onclick="openGuideDetailModal(\''+m.code+'\')">'+
+          (m.note ? '<div class="guide-card-noted" title="설명 작성됨">✓</div>' : '')+
           '<div>'+(m.photo?'<div class="photo-box-md"><img src="'+m.photo+'" alt=""></div>':'<div class="photo-box-md">📦</div>')+'</div>'+
           '<div><div class="guide-card-name">'+esc(m.name)+'</div><div class="guide-card-alias">'+esc(m.matType||"-")+' · '+esc(m.cat||"-")+'</div></div>'+
         '</div>';
@@ -3191,11 +3205,39 @@
   function consumableMats(){
     return APP.mats.filter(function(m){ return isPurchasableType(m.matType) && !m.discontinued; });
   }
+  function purchaseRequestMobileHtml(items, q){
+    var cards = items.length ? items.map(function(m){
+      return '<div class="mat-card">'+
+        '<div class="mat-card-top">'+
+          photoCell(m,false)+
+          '<div style="flex:1;min-width:0">'+
+            '<div class="mat-card-name">'+esc(m.name)+'</div>'+
+            '<div class="mat-card-tags"><span class="mat-card-tag">'+esc(m.code)+'</span></div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="mat-card-nums">'+
+          '<div class="mat-card-num"><div class="mat-card-num-val">'+esc(m.vendor||"-")+'</div><div class="mat-card-num-label">거래처</div></div>'+
+          '<div class="mat-card-num"><div class="mat-card-num-val">'+fmt(activeSafe(m))+'</div><div class="mat-card-num-label">안전재고</div></div>'+
+          '<div class="mat-card-num"><div class="mat-card-num-val">'+(m.leadtime||0)+'일</div><div class="mat-card-num-label">리드타임</div></div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px">'+
+          matOrderStatusBadge(m)+
+          '<button class="btn btn-accent btn-sm" style="flex:1;justify-content:center" onclick="openPmReqModal(\''+m.code+'\')"><svg class="ic" style="width:13px;height:13px"><use href="#i-copy"/></svg>요청</button>'+
+        '</div>'+
+      '</div>';
+    }).join("") : '<div class="result-empty">검색 결과가 없습니다.</div>';
+    return pmStatusGroupsHtml()+
+      '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품명, 코드 검색" value="'+esc(q)+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
+      '<div class="mat-card-list" style="margin-top:12px">'+cards+'</div>';
+  }
   function purchaseRequestSearchHtml(){
     var q = (APP.pmReqQuery||"").trim().toLowerCase();
     var items = consumableMats().filter(function(m){
       return !q || m.name.toLowerCase().indexOf(q)>-1 || m.code.toLowerCase().indexOf(q)>-1;
     });
+    // 발주필요 상태인 품목을 목록 맨 위로 몰아서 바로 눈에 띄게 한다 (그 안에서의 순서는 그대로 유지).
+    items.sort(function(a,b){ return (b.orderStatus==="발주필요"?1:0) - (a.orderStatus==="발주필요"?1:0); });
+    if(isMobileView()) return purchaseRequestMobileHtml(items, APP.pmReqQuery||"");
     var rowsHtml = items.length ? items.map(function(m){
       return '<div class="result-row"><div style="flex:none">'+photoCell(m,false)+'</div>'+
         '<div class="result-main"><div class="result-name">'+esc(m.name)+'</div>'+
@@ -3501,7 +3543,7 @@
     }catch(e){ console.warn(e); showToast("이 환경에서는 다운로드가 제한됩니다. (프로토타입)"); }
   };
   function buildPmReqText(m, qty, urgent){
-    return "품목코드: "+m.code+"\n품명: "+m.name+"\n수량: "+qty+"\n긴급여부: "+urgent+"\n거래처: "+(m.vendor||"-")+"\n최소발주수량: "+(m.moq||0)+"\n단가: "+fmt(m.price||0)+"원";
+    return "긴급여부: "+urgent+"\n품목명: "+m.name+"\n거래처: "+(m.vendor||"-")+"\n수량: "+qty+"\n최소발주수량: "+(m.moq||0);
   }
   window.openPmReqModal = function(code){
     var m = byCode(code); if(!m) return;
@@ -3573,7 +3615,9 @@
     m.orderStatus = "발주필요";
     m.completedAt = "";
     persist(); closeModal(); renderContent();
-    showToast(m.name+" 발주 요청문이 전송되었습니다. (프로토타입 · 실제 발송되지 않음)");
+    // TODO: 실제 발주 요청문 발송 기능(카톡/문자/메일 연동 등)을 붙이게 되면,
+    // 그때는 정말 발송된 뒤에만 완료 안내(토스트)를 보여주도록 이 자리에 추가할 것.
+    // 지금은 상태만 "발주필요"로 바뀌고 실제로 전송되는 곳은 없어서 안내 메시지를 띄우지 않는다.
   };
   window.setMatOrderStatusInline = function(code, status){
     var m = byCode(code); if(!m) return;
