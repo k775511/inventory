@@ -1286,8 +1286,17 @@
     lastRenderedCur = APP.cur;
     subNav.querySelectorAll(".sub-item").forEach(function(b){ b.classList.toggle("active", b.dataset.sub===APP.cur); });
     updateMobileTopbar();
+    // 출고POS 등에서 +/- 버튼으로 수량을 조절할 때마다 화면 전체가 다시 그려지면서 검색결과
+    // 목록의 스크롤이 맨 위로 튕겨 올라가던 문제를 막기 위해, 다시 그리기 전후로 스크롤
+    // 위치를 기억했다가 그대로 복원한다.
+    var scrollList = document.querySelector(".result-list");
+    var savedScrollTop = scrollList ? scrollList.scrollTop : null;
     var fn = SCREENS[APP.cur] || SCREENS.dashboard;
     document.getElementById("content").innerHTML = fn();
+    if(savedScrollTop!=null){
+      var newScrollList = document.querySelector(".result-list");
+      if(newScrollList) newScrollList.scrollTop = savedScrollTop;
+    }
     syncPmReqPanelHeight();
   }
   // 구매마스터 > 자재요청 화면(데스크탑)에서, 오른쪽 검색결과 목록 높이를 왼쪽 "상태별 현황"
