@@ -2211,7 +2211,7 @@
             return '<div class="bar-col"><div class="bar-pair"><div class="bar in" style="height:'+x.inPct+'%"></div><div class="bar out" style="height:'+x.outPct+'%"></div></div><span class="bar-month">'+x.label+'</span></div>';
           }).join("")+
         '</div><div class="legend"><span><i class="li-in"></i>입고</span><span><i class="li-out"></i>출고</span><span style="color:var(--text-400)">* '+parseInt(TODAY.slice(5,7),10)+'월은 '+parseInt(TODAY.slice(8,10),10)+'일까지 집계</span></div></div>'+
-        '<div class="panel"><div class="panel-header"><h3>재고부족 TOP 5</h3></div><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>자재명/규격</th><th class="num">부족수량</th></tr></thead><tbody>'+
+        '<div class="panel"><div class="panel-header"><h3>재고부족 TOP 5</h3></div><div class="table-wrap" style="border:none;border-radius:0"><table style="min-width:0"><thead><tr><th>자재명/규격</th><th class="num">부족수량</th></tr></thead><tbody>'+
           (lowTop.length ? lowTop.map(function(x){ return '<tr><td>'+esc(x.name)+'</td><td class="num" style="color:var(--low-text);font-weight:800">'+x.lack+'</td></tr>'; }).join("") : '<tr><td colspan="2" style="text-align:center;color:var(--text-400)">부족 품목이 없습니다.</td></tr>')+
         '</tbody></table></div></div>'+
       '</div>'+
