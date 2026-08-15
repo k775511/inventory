@@ -704,10 +704,10 @@
         <button class="sub-item active" data-sub="dashboard">대시보드</button>
         <button class="sub-item" data-sub="pos">출고</button>
         <button class="sub-item" data-sub="receive">입고</button>
-        <button class="sub-item" data-sub="stock">재고현황</button>
+        <button class="sub-item" data-sub="history">입출고내역</button>
+        <button class="sub-item" data-sub="stock">품목목록</button>
         <button class="sub-item" data-sub="purchase">구매마스터</button>
         <button class="sub-item" data-sub="matmaster">자재마스터</button>
-        <button class="sub-item" data-sub="history">입출고내역</button>
         <button class="sub-item" data-sub="material">재고관리</button>
         <button class="sub-item" data-sub="admin">설정</button>
       </nav>
@@ -1441,7 +1441,7 @@
   /* ================= RENDER: dispatcher ================= */
   function isMobileView(){ return window.matchMedia("(max-width: 900px)").matches; }
   var MOBILE_TITLES = {
-    dashboard:"PLUSDOOR", pos:"출고", receive:"입고", stock:"재고현황",
+    dashboard:"PLUSDOOR", pos:"출고", receive:"입고", stock:"품목목록",
     purchase:"구매요청", matmaster:"자재마스터", history:"입출고내역", admin:"설정"
   };
   var MOBILE_MATERIAL_TITLES = { register:"품목관리", alert:"재고부족알림", stocktake:"재고실사", usage:"사용량분석", monthly:"월별 사용량비교", yearly:"연도별 동일월비교" };
@@ -2119,7 +2119,7 @@
   /* ---------------- 재고현황 ---------------- */
   function screenStock(){
     var tabs = isMobileView() ? '' : '<div class="pill-row">'+
-      '<button class="pill'+(APP.stockTab==="status"?" active":"")+'" onclick="setStockTab(\'status\')">현재 재고 현황</button>'+
+      '<button class="pill'+(APP.stockTab==="status"?" active":"")+'" onclick="setStockTab(\'status\')">재고현황</button>'+
       '<button class="pill'+(APP.stockTab==="shortage"?" active":"")+'" onclick="setStockTab(\'shortage\')">안전재고 미달 이력</button>'+
       '</div>';
     var fillCls = isMobileView() ? "" : " fill-scroll";
