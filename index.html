@@ -368,6 +368,36 @@
     .matdetail-left{ border-right:none; border-bottom:1px solid var(--border); }
   }
 
+  /* 입고 화면(데스크탑) - 참고 이미지 스타일의 세로 폼 레이아웃 */
+  .rcv-form{ max-width:860px; margin:0 auto; background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:26px 28px; }
+  .rcv-form-header{ display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; border-bottom:2px solid var(--blue-600); margin-bottom:22px; }
+  .rcv-form-header h2{ font-size:19px; font-weight:800; color:var(--text-900); display:flex; align-items:center; gap:6px; }
+  .rcv-form-header .reset-link{ font-size:13px; font-weight:700; color:var(--text-400); background:none; border:none; cursor:pointer; }
+  .rcv-form-header .reset-link:hover{ color:var(--text-900); text-decoration:underline; }
+  .rcv-fieldrow{ display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr; gap:16px; margin-bottom:26px; }
+  .rcv-section-title{ font-size:14px; font-weight:800; color:var(--text-900); margin-bottom:10px; }
+  .rcv-add-btn{ display:flex; align-items:center; gap:6px; width:100%; padding:11px 14px; border:1px dashed var(--border-strong); border-radius:var(--radius-sm); background:var(--sub-bg); color:var(--blue-700); font-size:13px; font-weight:700; margin-bottom:12px; }
+  .rcv-add-btn:hover{ background:var(--blue-050); border-color:var(--blue-500); }
+  .rcv-product-table{ border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .rcv-product-head{ display:flex; align-items:center; gap:12px; padding:9px 14px; background:var(--sub-bg); font-size:11.5px; font-weight:700; color:var(--text-400); }
+  .rcv-product-row{ display:flex; align-items:center; gap:12px; padding:11px 14px; border-top:1px solid var(--border); }
+  .rcv-product-row .name{ flex:1; min-width:0; }
+  .rcv-product-row .name b{ font-size:13px; font-weight:700; color:var(--text-900); display:block; }
+  .rcv-product-row .name span{ font-size:11.5px; color:var(--text-400); }
+  .rcv-product-row .stock{ width:90px; text-align:center; font-size:12.5px; color:var(--text-400); flex:none; }
+  .rcv-product-row .qty-stepper{ flex:none; }
+  .rcv-product-row .rm{ flex:none; color:var(--text-400); background:none; border:none; }
+  .rcv-product-row .rm:hover{ color:var(--low-text); }
+  .rcv-summary-row{ display:flex; justify-content:space-between; padding:11px 4px; font-size:13px; font-weight:700; color:var(--text-600); }
+  .rcv-memo{ width:100%; min-height:76px; resize:vertical; border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:10px 12px; font-family:inherit; font-size:13px; }
+  .rcv-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:22px; }
+  @media (max-width:900px){ .rcv-fieldrow{ grid-template-columns:1fr 1fr; } }
+  /* 입고: 왼쪽 검색+빠른담기 / 오른쪽 폼, 2단 레이아웃 */
+  .rcv-2col{ display:grid; grid-template-columns:1fr 1.05fr; gap:16px; align-items:start; }
+  .rcv-2col .rcv-form{ max-width:none; margin:0; }
+  .rcv-search-panel{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:22px; }
+  @media (max-width:1000px){ .rcv-2col{ grid-template-columns:1fr; } }
+
   .toast{ position:fixed; left:50%; bottom:26px; transform:translate(-50%,12px); background:var(--navy-900); color:#fff; padding:11px 20px; border-radius:99px; font-size:13px; font-weight:600; box-shadow:0 10px 30px -8px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease; z-index:200; max-width:90vw; text-align:center; }
   .toast.show{ opacity:1; transform:translate(-50%,0); }
   .proto-tag{ position:fixed; right:16px; bottom:16px; background:var(--navy-900); color:#cfe0ff; font-size:11px; font-weight:700; padding:7px 12px; border-radius:99px; opacity:.85; letter-spacing:.02em; box-shadow:0 6px 20px -6px rgba(0,0,0,.4); z-index:50; }
@@ -427,8 +457,12 @@
   .series-card{ background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:8px; }
   .series-name{ font-size:14.5px; font-weight:800; }
   .series-stat{ font-size:12px; color:var(--text-600); }
-  .series-shortage{ margin-top:2px; font-size:11.5px; color:var(--low-text); background:var(--low-bg); border-radius:8px; padding:6px 8px; }
-  .series-shortage.none{ color:var(--ok-text); background:var(--ok-bg); }
+  .series-shortage{ margin-top:2px; display:flex; align-items:center; gap:6px; width:100%; font-size:11.5px; color:var(--low-text); background:var(--low-bg); border:none; border-radius:8px; padding:6px 8px; white-space:nowrap; overflow:hidden; cursor:pointer; }
+  .series-shortage b{ flex:none; font-weight:800; }
+  .series-shortage span{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; color:var(--text-600); font-weight:500; }
+  .series-shortage:hover{ background:var(--low-text); }
+  .series-shortage:hover b, .series-shortage:hover span{ color:#fff; }
+  .series-shortage.none{ color:var(--ok-text); background:var(--ok-bg); cursor:default; }
 
   /* ---- photo ---- */
   .photo-box{ width:52px; height:52px; border-radius:8px; border:1px solid var(--border); background:var(--sub-bg); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:20px; color:var(--text-400); flex:none; cursor:pointer; }
@@ -642,7 +676,7 @@
         <button class="sub-item" data-sub="purchase">구매마스터</button>
         <button class="sub-item" data-sub="matmaster">자재마스터</button>
         <button class="sub-item" data-sub="history">입출고내역</button>
-        <button class="sub-item" data-sub="material">자재관리</button>
+        <button class="sub-item" data-sub="material">품목분석</button>
         <button class="sub-item" data-sub="admin">설정</button>
       </nav>
       <div id="content"></div>
@@ -1310,8 +1344,8 @@
     var btn = e.target.closest(".sub-item");
     if(!btn) return;
     var sub = btn.dataset.sub;
-    // 데스크탑에서 상단 탭으로 "출고"에 처음 들어갈 때는 일반/전체화면 중 고를 수 있게 물어본다.
-    if(sub==="pos" && !isMobileView() && APP.cur!=="pos"){ openDesktopPosModeChoice(); return; }
+    // 데스크탑에서 상단 탭으로 "출고"에 처음 들어갈 때는 기존 화면/입고와 같은 폼 화면 중 고를 수 있게 물어본다.
+    if(sub==="pos" && !isMobileView() && APP.cur!=="pos"){ openPosStyleChoice(); return; }
     if(APP.cur !== sub) clearSearchQueries();
     APP.cur = sub;
     persist(); // 새로고침해도 마지막으로 보던 화면이 그대로 열리도록 현재 화면을 저장해둔다.
@@ -1389,7 +1423,7 @@
     backBtn.style.display = onHome ? "none" : "flex";
     row2.style.display = onHome ? "none" : "flex";
     if(topbar) topbar.classList.toggle("has-row2", !onHome);
-    var title = APP.cur==="material" ? (MOBILE_MATERIAL_TITLES[APP.materialTab]||"자재관리") : (MOBILE_TITLES[APP.cur]||"PLUSDOOR");
+    var title = APP.cur==="material" ? (MOBILE_MATERIAL_TITLES[APP.materialTab]||"품목분석") : (MOBILE_TITLES[APP.cur]||"PLUSDOOR");
     titleEl.textContent = title;
   }
   window.addEventListener("resize", (function(){
@@ -1500,7 +1534,7 @@
       return '<div class="series-card"><div class="series-name">'+esc(w)+'</div>'+
         '<div class="series-stat">등록 품목 '+items.length+'종 · 오늘 출고 '+fmt(todayOut)+'</div>'+
         (shortages.length
-          ? '<div class="series-shortage">부족 알림 '+shortages.length+'종 · '+shortages.slice(0,2).map(function(m){ return esc(m.name); }).join(", ")+(shortages.length>2?" 외":"")+'</div>'
+          ? '<button type="button" class="series-shortage" onclick="goMaterialAlertForWh(\''+esc(w)+'\')" title="'+esc(shortages.map(function(m){ return m.name; }).join(", "))+'"><b>부족 '+shortages.length+'종</b><span>'+esc(shortages[0].name)+(shortages.length>1?' 외 '+(shortages.length-1)+'건':'')+'</span></button>'
           : '<div class="series-shortage none">부족 품목 없음</div>') +
         '</div>';
     }).join("");
@@ -1778,8 +1812,59 @@
     wrap.style.height = (inner.scrollHeight*scale)+"px";
   }
   window.addEventListener("resize", function(){ if(fsMode) fitFullscreenPosScale(); });
+  // 출고 화면은 기존 2단 방식과, 입고 화면과 동일한 스타일의 세로 폼 방식 중 골라 쓸 수 있다.
+  // (nav 클릭 시 물어보고, 세션 동안만 기억한다 — 새로고침하면 다시 물어봄)
+  var posUseForm = false;
+  window.openPosStyleChoice = function(){
+    var html = '<div class="modal-header"><h3>출고 화면</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body"><div class="pos-hint" style="margin:0">어떤 화면으로 보시겠어요?</div></div>'+
+      '<div class="modal-footer"><button class="btn btn-outline" onclick="choosePosStyle(false)">POS</button><button class="btn btn-primary" onclick="choosePosStyle(true)">PC</button></div>';
+    openModal(html);
+  };
+  window.choosePosStyle = function(useForm){
+    closeModal();
+    posUseForm = useForm;
+    if(APP.cur !== "pos") clearSearchQueries();
+    APP.cur = "pos";
+    persist();
+    renderContent();
+  };
+  function screenPosFormHtml(){
+    var totalQty = APP.cart.reduce(function(s,c){ return s+c.qty; },0);
+    var whOptions = APP.whs.map(function(w){ return '<option value="'+esc(w)+'"'+(APP.posWh===w?" selected":"")+'>'+esc(w)+'</option>'; }).join("");
+    var productRows = APP.cart.length===0
+      ? '<div class="result-empty">"제품 검색"으로 출고할 품목을 담아주세요.</div>'
+      : APP.cart.map(function(c){
+        var m = byCode(c.code);
+        return '<div class="rcv-product-row">'+
+          '<div class="name"><b>'+esc(c.name)+'</b><span>'+esc(c.code)+' · '+esc(c.wh)+'</span></div>'+
+          '<div class="stock">현재고 '+fmt(m?m.stock:0)+'</div>'+
+          '<div class="qty-stepper"><button onclick="posQty(\''+c.code+'\',-1)">−</button><input type="number" value="'+c.qty+'" min="1" onchange="posSetQty(\''+c.code+'\', this.value)"><button onclick="posQty(\''+c.code+'\',1)">+</button></div>'+
+          '<button class="rm" onclick="posRemove(\''+c.code+'\')" aria-label="제거"><svg class="ic" style="width:15px;height:15px"><use href="#i-close"/></svg></button>'+
+        '</div>';
+      }).join("");
+
+    return '<div class="sub-view"><div class="rcv-form">'+
+      '<div class="rcv-form-header"><h2>출고</h2><button type="button" class="reset-link" onclick="posClear()">초기화</button></div>'+
+      '<div class="rcv-fieldrow" style="grid-template-columns:1.2fr 1fr 1fr">'+
+        '<div class="field"><label>창고*</label><div class="select-wrap" style="position:relative"><select onchange="posSetWh(this.value)">'+whOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
+        '<div class="field"><label>출고자</label><select id="posIssuer">'+ISSUERS.map(function(u){ return '<option>'+u+'</option>'; }).join("")+'</select></div>'+
+        '<div class="field"><label>날짜</label><input type="date" id="posDate" value="'+TODAY+'"></div>'+
+      '</div>'+
+      '<div class="rcv-section-title">제품 목록</div>'+
+      '<button type="button" class="rcv-add-btn" onclick="openMobileProductPicker(\'pos\')"><svg class="ic" style="width:14px;height:14px"><use href="#i-search"/></svg>제품 검색</button>'+
+      '<div class="rcv-product-table">'+
+        '<div class="rcv-product-head"><span style="flex:1">제품</span><span style="width:90px;text-align:center">현재고</span><span style="width:118px;text-align:center">출고 수량</span><span style="width:22px"></span></div>'+
+        productRows+
+      '</div>'+
+      '<div class="rcv-summary-row"><span>'+APP.cart.length+'개 품목</span><span>총 수량 <b>'+totalQty+'</b></span></div>'+
+      '<div class="field" style="margin-top:18px"><label>메모</label><textarea class="rcv-memo" id="posNote" placeholder="메모 입력 (선택)"></textarea></div>'+
+      '<div class="rcv-actions"><button class="btn btn-accent" '+(APP.cart.length===0?"disabled":"")+' onclick="posIssue()">출고 완료</button></div>'+
+    '</div></div>';
+  }
   function screenPos(){
     if(isMobileView() && fsMode!=="pos") return mobileTxnFormHtml("pos");
+    if(!isMobileView() && posUseForm && fsMode!=="pos") return screenPosFormHtml();
     var rows = catalogForWh(APP.posWh, APP.posQ);
     var resultHtml = rows.length===0 ? '<div class="result-empty">검색 결과가 없습니다.</div>' : rows.map(function(m){
       var low = m.stock < activeSafe(m);
@@ -1855,13 +1940,14 @@
     if(APP.cart.length===0) return;
     var issuer = (document.getElementById("posIssuer")||{}).value || ISSUERS[0];
     var note = (document.getElementById("posNote")||{}).value || "-";
+    var logDate = (document.getElementById("posDate")||{}).value || TODAY;
     var newlyLow = [];
     var batchId = newId("BATCH");
     var actionTime = nowTimeStr();
     APP.cart.forEach(function(item){
       var m = byCode(item.code); if(!m) return;
       var wasLow = isLow(m);
-      APP.logs.unshift({ id:newId("LOG"), batchId:batchId, date:TODAY, time:actionTime, wh:m.wh, code:m.code, name:m.name, qty:item.qty, unit:m.unit, order:"-", worker:issuer, memo:note });
+      APP.logs.unshift({ id:newId("LOG"), batchId:batchId, date:logDate, time:actionTime, wh:m.wh, code:m.code, name:m.name, qty:item.qty, unit:m.unit, order:"-", worker:issuer, memo:note });
       m.stock = Math.max(0, m.stock - item.qty);
       if(!wasLow && isLow(m)){
         newlyLow.push(m);
@@ -1892,33 +1978,43 @@
         '</div>'+
         '</div>';
     }).join("");
-    var cartHtml = APP.inCart.length===0 ? '<div class="cart-empty">아직 추가된 품목이 없습니다.</div>' : APP.inCart.map(function(c){
-      return '<div class="cart-row"><div class="cart-main"><div class="cart-name">'+esc(c.name)+'</div><div class="cart-meta">'+esc(c.wh)+' · '+esc(c.unit)+'</div></div>'+
-        '<div class="qty-stepper"><button onclick="rcvQty(\''+c.code+'\',-1)">−</button><input type="number" value="'+c.qty+'" min="1" onchange="rcvSetQty(\''+c.code+'\', this.value)"><button onclick="rcvQty(\''+c.code+'\',1)">+</button></div>'+
-        '<button class="cart-remove" onclick="rcvRemove(\''+c.code+'\')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
-    }).join("");
-    var totalQty = APP.inCart.reduce(function(s,c){ return s+c.qty; },0);
     var whPills = ['<button class="pill'+(APP.receiveWh==="all"?" active":"")+'" onclick="rcvSetWh(\'all\')">전체</button>']
       .concat(APP.whs.map(function(w){ return '<button class="pill'+(APP.receiveWh===w?" active":"")+'" onclick="rcvSetWh(\''+w+'\')">'+esc(w)+'</button>'; })).join("");
+    var totalQty = APP.inCart.reduce(function(s,c){ return s+c.qty; },0);
+    var productRows = APP.inCart.length===0
+      ? '<div class="result-empty">왼쪽에서 품목을 선택해 담아주세요.</div>'
+      : APP.inCart.map(function(c){
+        var m = byCode(c.code);
+        return '<div class="rcv-product-row">'+
+          '<div class="name"><b>'+esc(c.name)+'</b><span>'+esc(c.code)+' · '+esc(c.wh)+'</span></div>'+
+          '<div class="stock">현재고 '+fmt(m?m.stock:0)+'</div>'+
+          '<div class="qty-stepper"><button onclick="rcvQty(\''+c.code+'\',-1)">−</button><input type="number" value="'+c.qty+'" min="1" onchange="rcvSetQty(\''+c.code+'\', this.value)"><button onclick="rcvQty(\''+c.code+'\',1)">+</button></div>'+
+          '<button class="rm" onclick="rcvRemove(\''+c.code+'\')" aria-label="제거"><svg class="ic" style="width:15px;height:15px"><use href="#i-close"/></svg></button>'+
+        '</div>';
+      }).join("");
 
-    return '<div class="sub-view"><div class="pos-grid">'+
-      '<div class="pos-panel">'+
-        '<div class="pos-panel-title"><span class="step-badge">1</span>창고 선택 및 빠른 품목 검색</div>'+
-        '<div><div class="pos-section-label" style="margin-bottom:8px">창고 선택</div><div class="pill-row">'+whPills+'</div></div>'+
-        '<div><div class="pos-section-label" style="margin-bottom:8px">품목 검색</div><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" value="'+esc(APP.receiveQ)+'" oninput="debounceSearch(\'receiveQ\', this.value, rcvSetQ)"></div></div>'+
-        '<div class="pos-hint">오른쪽 <b>+</b>/<b>−</b> 버튼으로 입고목록 수량을 1개씩 바로 늘리고 줄일 수 있습니다. 담은 뒤 오른쪽에서 입고처와 수량을 확인하고 "입고 처리"를 누르세요.</div>'+
-        '<div class="result-list">'+resultHtml+'</div>'+
+    return '<div class="sub-view"><div class="rcv-2col">'+
+      '<div class="rcv-search-panel">'+
+        '<div class="rcv-section-title">품목 검색</div>'+
+        '<div class="pill-row" style="margin-bottom:12px">'+whPills+'</div>'+
+        '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" value="'+esc(APP.receiveQ)+'" oninput="debounceSearch(\'receiveQ\', this.value, rcvSetQ)"></div>'+
+        '<div class="result-list" style="margin-top:12px">'+resultHtml+'</div>'+
       '</div>'+
-      '<div class="pos-panel">'+
-        '<div class="pos-panel-title"><span class="step-badge">2</span>입고처/담당자 및 입고목록</div>'+
-        '<div class="pos-meta-grid">'+
-          '<div class="form-field"><label>입고처</label><input type="text" id="rcvVendor" placeholder="예: 대한하드웨어"></div>'+
-          '<div class="form-field"><label>담당자</label><select id="rcvReceiver">'+ISSUERS.map(function(u){ return '<option>'+u+'</option>'; }).join("")+'</select></div>'+
-          '<div class="form-field"><label>비고</label><input type="text" id="rcvNote" placeholder="선택 입력"></div>'+
+      '<div class="rcv-form">'+
+        '<div class="rcv-form-header"><h2>입고</h2><button type="button" class="reset-link" onclick="rcvClear()">초기화</button></div>'+
+        '<div class="rcv-fieldrow" style="grid-template-columns:1fr 1fr 1fr">'+
+          '<div class="field"><label>입고처</label><input type="text" id="rcvVendor" placeholder="예: 대한하드웨어"></div>'+
+          '<div class="field"><label>담당자</label><select id="rcvReceiver">'+ISSUERS.map(function(u){ return '<option>'+u+'</option>'; }).join("")+'</select></div>'+
+          '<div class="field"><label>날짜</label><input type="date" id="rcvDate" value="'+TODAY+'"></div>'+
         '</div>'+
-        '<div><div class="pos-section-label" style="margin-bottom:8px">입고목록</div><div class="cart-wrap">'+cartHtml+'</div></div>'+
-        '<div class="pos-summary"><div class="sum-text">총 <b>'+APP.inCart.length+'</b>종 · 총 수량 <b>'+totalQty+'</b>개</div>'+
-          '<div class="pos-actions"><button class="btn btn-outline" onclick="rcvClear()">전체 비우기</button><button class="btn btn-accent" '+(APP.inCart.length===0?"disabled":"")+' onclick="rcvIssue()">입고 처리</button></div></div>'+
+        '<div class="rcv-section-title">담은 목록</div>'+
+        '<div class="rcv-product-table">'+
+          '<div class="rcv-product-head"><span style="flex:1">제품</span><span style="width:90px;text-align:center">현재고</span><span style="width:118px;text-align:center">입고 수량</span><span style="width:22px"></span></div>'+
+          productRows+
+        '</div>'+
+        '<div class="rcv-summary-row"><span>'+APP.inCart.length+'개 품목</span><span>총 수량 <b>'+totalQty+'</b></span></div>'+
+        '<div class="field" style="margin-top:18px"><label>메모</label><textarea class="rcv-memo" id="rcvNote" placeholder="메모 입력 (선택)"></textarea></div>'+
+        '<div class="rcv-actions"><button class="btn btn-accent" '+(APP.inCart.length===0?"disabled":"")+' onclick="rcvIssue()">입고 완료</button></div>'+
       '</div>'+
     '</div></div>';
   }
@@ -1950,11 +2046,12 @@
     var vendor = (document.getElementById("rcvVendor")||{}).value || "-";
     var receiver = (document.getElementById("rcvReceiver")||{}).value || ISSUERS[0];
     var note = (document.getElementById("rcvNote")||{}).value || "-";
+    var logDate = (document.getElementById("rcvDate")||{}).value || TODAY;
     var batchId = newId("IBATCH");
     var actionTime = nowTimeStr();
     APP.inCart.forEach(function(item){
       var m = byCode(item.code); if(!m) return;
-      APP.inLogs.unshift({ id:newId("INLOG"), batchId:batchId, date:TODAY, time:actionTime, wh:m.wh, code:m.code, name:m.name, qty:item.qty, unit:m.unit, vendor:vendor, receiver:receiver, memo:note });
+      APP.inLogs.unshift({ id:newId("INLOG"), batchId:batchId, date:logDate, time:actionTime, wh:m.wh, code:m.code, name:m.name, qty:item.qty, unit:m.unit, vendor:vendor, receiver:receiver, memo:note });
       m.stock += item.qty;
     });
     APP.inCart = [];
@@ -2106,6 +2203,12 @@
   window.setMaterialTab = function(t){ APP.materialTab=t; persist(); renderContent(); };
   window.goMaterialUsage = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="usage"; persist(); renderContent(); };
   window.goMaterialAlert = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="alert"; APP.materialAlertView="overview"; persist(); renderContent(); };
+  // 대시보드 창고별 카드의 "부족 N종" 배지를 누르면, 그 창고로 필터링된 재고부족알림 화면으로 바로 이동한다.
+  window.goMaterialAlertForWh = function(wh){
+    clearSearchQueries();
+    APP.cur="material"; APP.materialTab="alert"; APP.materialAlertView="list"; APP.stockWh=wh;
+    persist(); renderContent();
+  };
   window.goPurchaseManage = function(){ clearSearchQueries(); APP.cur="purchase"; APP.purchaseTab="manage"; persist(); renderContent(); };
   window.goPurchaseRequest = function(){ clearSearchQueries(); APP.cur="purchase"; APP.purchaseTab="request"; persist(); renderContent(); };
 
