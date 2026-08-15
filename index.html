@@ -708,7 +708,7 @@
         <button class="sub-item" data-sub="purchase">구매마스터</button>
         <button class="sub-item" data-sub="matmaster">자재마스터</button>
         <button class="sub-item" data-sub="history">입출고내역</button>
-        <button class="sub-item" data-sub="material">관리</button>
+        <button class="sub-item" data-sub="material">재고관리</button>
         <button class="sub-item" data-sub="admin">설정</button>
       </nav>
       <div id="content"></div>
@@ -1455,7 +1455,7 @@
     backBtn.style.display = onHome ? "none" : "flex";
     row2.style.display = onHome ? "none" : "flex";
     if(topbar) topbar.classList.toggle("has-row2", !onHome);
-    var title = APP.cur==="material" ? (MOBILE_MATERIAL_TITLES[APP.materialTab]||"관리") : (MOBILE_TITLES[APP.cur]||"PLUSDOOR");
+    var title = APP.cur==="material" ? (MOBILE_MATERIAL_TITLES[APP.materialTab]||"재고관리") : (MOBILE_TITLES[APP.cur]||"PLUSDOOR");
     titleEl.textContent = title;
   }
   window.addEventListener("resize", (function(){
