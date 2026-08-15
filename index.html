@@ -503,6 +503,9 @@
   .guide-card-name{ font-size:14px; font-weight:800; color:var(--text-900); }
   .guide-card-alias{ font-size:11.5px; color:var(--text-400); font-weight:700; }
   .guide-card-note{ font-size:12px; color:var(--text-900); background:var(--blue-050); border:1px solid var(--blue-100); border-radius:var(--radius-sm); padding:8px 10px; line-height:1.5; }
+  /* 도어 모델 제작순서: 문짝·프레임 작업이 따로 진행되므로 좌우 2단으로 나눠 보여준다. */
+  .dg-steps-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:640px){ .dg-steps-grid{ grid-template-columns:1fr; } }
   .door-model-photo{ position:relative; width:265px; height:430px; border-radius:14px; border:1px dashed var(--border-strong); background:var(--sub-bg); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:52px; color:var(--text-400); flex:none; cursor:pointer; }
   .door-model-photo img{ width:100%; height:100%; object-fit:cover; }
   .door-model-photo-del{ position:absolute; right:10px; top:10px; width:28px; height:28px; border-radius:50%; background:var(--low-text); color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
@@ -540,15 +543,18 @@
   /* ---- admin warehouse list ---- */
   .wh-row{ display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
   .wh-row:last-child{ border-bottom:none; }
-  .wh-row.draggable-row{ cursor:grab !important; }
-  .wh-row.draggable-row.dragging{ opacity:.55; cursor:grabbing !important; }
-  .wh-row.draggable-row.drag-over{ outline:2px dashed var(--blue-600); outline-offset:-2px; }
-  .wh-row.draggable-row button,
-  .wh-row.draggable-row button *,
-  .wh-row.draggable-row input,
-  .wh-row.draggable-row label{ cursor:default !important; }
-  .wh-row.draggable-row .wh-order-btns button,
-  .wh-row.draggable-row .wh-order-btns button *{ cursor:default !important; }
+  /* 드래그로 순서 바꾸기 - 창고/카테고리/자재구분 목록(.wh-row)뿐 아니라, 도어별 모델관리 목록
+     (.stock-row)처럼 항목이 많아질 수 있는 다른 목록에도 재사용할 수 있게 .wh-row로 범위를
+     한정하지 않고 .draggable-row 클래스 자체에 스타일을 준다. */
+  .draggable-row{ cursor:grab !important; }
+  .draggable-row.dragging{ opacity:.55; cursor:grabbing !important; }
+  .draggable-row.drag-over{ outline:2px dashed var(--blue-600); outline-offset:-2px; }
+  .draggable-row button,
+  .draggable-row button *,
+  .draggable-row input,
+  .draggable-row label{ cursor:default !important; }
+  .draggable-row .wh-order-btns button,
+  .draggable-row .wh-order-btns button *{ cursor:default !important; }
   .wh-row .wh-name-input{ flex:1; }
   .wh-row-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:2px 0; }
   .wh-row-main .wh-name-input{ width:100%; }
@@ -4040,9 +4046,16 @@
             '<div style="flex:1;min-width:'+(mobile?"0;width:100%":"260px")+'">'+
               '<h3 style="margin:0;font-size:20px'+(mobile?';text-align:center':'')+'">'+esc(mdl.name)+'</h3>'+
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px"><span class="pos-section-label">설명</span><button type="button" class="btn btn-outline btn-sm" onclick="openDoorGuideDescModal(\''+wh+'\',\''+mdl.id+'\')">수정</button></div>'+
-              (mdl.desc ? '<div class="guide-card-note" style="margin-top:6px">'+esc(mdl.desc).replace(/\n/g,"<br>")+'</div>' : '<div class="pos-hint" style="margin-top:6px">등록된 설명이 없습니다. 예: "리젠 시리즈의 유리 가네고 도어 모델로, 이런 자재를 사용합니다."</div>')+
+              (mdl.desc ? '<div class="guide-card-note" style="margin-top:6px">'+esc(mdl.desc).replace(/\n/g,"<br>")+'</div>' : '<div class="pos-hint" style="margin-top:6px">등록된 설명이 없습니다.</div>')+
               '<div style="margin-top:18px"><span class="pos-section-label">제작순서</span></div>'+
-              (mdl.steps ? '<div class="guide-card-note" style="margin-top:6px">'+esc(mdl.steps).replace(/\n/g,"<br>")+'</div>' : '<div class="pos-hint" style="margin-top:6px">등록된 제작순서가 없습니다. "수정"에서 입력해주세요.</div>')+
+              '<div class="dg-steps-grid" style="margin-top:6px">'+
+                '<div><div class="pos-section-label" style="margin-bottom:4px;color:var(--text-400)">문짝</div>'+
+                  (mdl.stepsDoor ? '<div class="guide-card-note">'+esc(mdl.stepsDoor).replace(/\n/g,"<br>")+'</div>' : '<div class="pos-hint">등록된 제작순서가 없습니다.</div>')+
+                '</div>'+
+                '<div><div class="pos-section-label" style="margin-bottom:4px;color:var(--text-400)">프레임</div>'+
+                  ((mdl.stepsFrame||mdl.steps) ? '<div class="guide-card-note">'+esc(mdl.stepsFrame||mdl.steps).replace(/\n/g,"<br>")+'</div>' : '<div class="pos-hint">등록된 제작순서가 없습니다.</div>')+
+                '</div>'+
+              '</div>'+
             '</div>'+
           '</div>'+
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px"><span class="pos-section-label">사용되는 자재 목록</span><button class="btn btn-outline btn-sm" onclick="openDoorGuidePickModal(\''+wh+'\',\''+mdl.id+'\')">자재 선택</button></div>'+
@@ -4058,8 +4071,15 @@
   window.selectDoorGuideModel = function(id){ APP.doorGuideModelId=id; persist(); renderContent(); };
   window.openDoorModelManageModal = function(wh){
     var models = doorGuideModels(wh);
-    var rowsHtml = models.length ? models.map(function(x){
-      return '<div class="stock-row"><div class="stock-row-main"><div class="stock-row-name">'+esc(x.name)+'</div></div>'+
+    var rowsHtml = models.length ? models.map(function(x, i){
+      // 모델이 많아지면 ▲▼를 하나씩 누르기 번거로우므로, 행을 드래그해서 원하는 위치로
+      // 바로 옮길 수 있게 한다(설정 > 창고/카테고리 관리 목록과 같은 방식).
+      return '<div class="stock-row draggable-row" draggable="true" ondragstart="dragStartModel(event,\''+wh+'\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropModelRow(event,\''+wh+'\','+i+')">'+
+        '<div class="wh-order-btns" style="flex:none">'+
+          '<button type="button" '+(i===0?"disabled":"")+' onclick="moveDoorGuideModel(\''+wh+'\','+i+',-1)">▲</button>'+
+          '<button type="button" '+(i===models.length-1?"disabled":"")+' onclick="moveDoorGuideModel(\''+wh+'\','+i+',1)">▼</button>'+
+        '</div>'+
+        '<div class="stock-row-main"><div class="stock-row-name">'+esc(x.name)+'</div></div>'+
         '<div class="row-actions">'+
           '<label class="btn btn-outline icon-only" title="사진 등록"><input type="file" accept="image/*" style="display:none" onchange="doorGuidePhotoUpload(this,\''+wh+'\',\''+x.id+'\')"><svg class="ic"><use href="#i-camera"/></svg></label>'+
           (x.photo ? '<button class="btn btn-outline icon-only" title="사진 삭제" onclick="doorGuidePhotoDelete(\''+wh+'\',\''+x.id+'\')"><svg class="ic"><use href="#i-close"/></svg></button>' : '')+
@@ -4067,14 +4087,38 @@
         '</div></div>';
     }).join("") : '<div class="stock-row" style="justify-content:center;color:var(--text-400)">등록된 모델이 없습니다.</div>';
     var html = '<div class="modal-header"><h3>'+esc(wh)+' 모델관리</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
-      '<div class="modal-body"><div class="stock-list">'+rowsHtml+'</div></div>'+
+      '<div class="modal-body">'+(models.length>1 ? '<div class="pos-hint" style="margin-bottom:10px">행을 드래그해서 순서를 바로 옮길 수 있습니다.</div>' : '')+'<div class="stock-list">'+rowsHtml+'</div></div>'+
       '<div class="modal-footer between"><span></span><button class="btn btn-primary" onclick="openDoorGuideAddModelModal(\''+wh+'\')">+ 모델 추가</button></div>';
     openModal(html);
   };
+  window.moveDoorGuideModel = function(wh, i, dir){
+    var arr = APP.doorGuides[wh] || [];
+    var j = i+dir;
+    if(j<0 || j>=arr.length) return;
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    persist(); renderContent();
+    openDoorModelManageModal(wh);
+  };
+  window.dragStartModel = function(ev, wh, index){
+    ev.dataTransfer.effectAllowed = "move";
+    ev.dataTransfer.setData("text/plain", JSON.stringify({wh:wh, index:index}));
+    ev.currentTarget.classList.add("dragging");
+  };
+  window.dropModelRow = function(ev, wh, targetIndex){
+    ev.preventDefault();
+    ev.currentTarget.classList.remove("drag-over");
+    var data;
+    try{ data = JSON.parse(ev.dataTransfer.getData("text/plain")||"{}"); }catch(e){ return; }
+    if(!data || data.wh!==wh || data.index===targetIndex) return;
+    var arr = APP.doorGuides[wh] || [];
+    moveArrayItem(arr, data.index, targetIndex);
+    persist(); renderContent();
+    openDoorModelManageModal(wh);
+  };
   window.openDoorGuideAddModelModal = function(wh){
-    var html = '<div class="modal-header"><h3>'+esc(wh)+' 모델 추가</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+    var html = '<div class="modal-header"><h3>'+esc(wh)+' 모델 추가</h3><button onclick="openDoorModelManageModal(\''+wh+'\')"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body"><div class="form-field full"><label>모델명</label><input type="text" id="dg-model-name" placeholder="예: L101"></div></div>'+
-      '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">취소</button><button class="btn btn-primary" onclick="saveDoorGuideAddModel(\''+wh+'\')">추가</button></div>';
+      '<div class="modal-footer"><button class="btn btn-outline" onclick="openDoorModelManageModal(\''+wh+'\')">취소</button><button class="btn btn-primary" onclick="saveDoorGuideAddModel(\''+wh+'\')">추가</button></div>';
     openModal(html);
   };
   window.saveDoorGuideAddModel = function(wh){
@@ -4082,9 +4126,10 @@
     if(!name){ showToast("모델명을 입력하세요."); return; }
     if(!APP.doorGuides[wh]) APP.doorGuides[wh] = [];
     var id = newId("DGM");
-    APP.doorGuides[wh].push({ id:id, name:name, photo:"", desc:"", steps:"", codes:[] });
+    APP.doorGuides[wh].push({ id:id, name:name, photo:"", desc:"", stepsDoor:"", stepsFrame:"", codes:[] });
     APP.doorGuideModelId = id;
-    persist(); renderContent(); closeModal();
+    persist(); renderContent();
+    openDoorModelManageModal(wh);
     showToast(name+" 모델이 추가되었습니다.");
   };
   window.deleteDoorGuideModel = function(wh, id){
@@ -4092,6 +4137,7 @@
       APP.doorGuides[wh] = (APP.doorGuides[wh]||[]).filter(function(x){ return x.id!==id; });
       if(APP.doorGuideModelId===id) APP.doorGuideModelId = null;
       persist(); renderContent();
+      openDoorModelManageModal(wh);
       showToast("모델이 삭제되었습니다.");
     });
   };
@@ -4101,11 +4147,16 @@
     var html = '<div class="modal-header"><h3>'+esc(mdl.name)+' 수정</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body">'+
       '<div class="form-field full"><label>모델명</label><input type="text" id="dg-name-edit" value="'+esc(mdl.name)+'"></div>'+
-      '<div class="form-field full" style="margin-top:10px"><label>모델 설명</label><textarea id="dg-desc-edit" rows="5" placeholder="예: 리젠 시리즈의 유리 가네고 도어 모델로, 통바·문지방 등을 사용합니다." style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+esc(mdl.desc||"")+'</textarea></div>'+
-      '<div class="form-field full" style="margin-top:10px"><label>제작순서</label><textarea id="dg-steps-edit" rows="5" placeholder="예: 1. 프레임 다대 재단 2. 문짝바 조립 3. 손잡이·힌지 장착 4. 유리 끼움 5. 최종 검수" style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+esc(mdl.steps||"")+'</textarea></div>'+
+      '<div class="form-field full" style="margin-top:10px"><label>모델 설명</label><textarea id="dg-desc-edit" rows="5" placeholder="스펙 및 현관문에 대해 이해하기 쉽게 설명해 주세요." style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+esc(mdl.desc||"")+'</textarea></div>'+
+      '<div style="margin-top:10px"><label class="pos-section-label">제작순서 (문짝·프레임은 작업이 따로 진행되어 나눠 입력합니다)</label>'+
+        '<div class="dg-steps-grid" style="margin-top:6px">'+
+          '<div class="form-field"><label>문짝</label><textarea id="dg-steps-door-edit" rows="14" placeholder="1. 동사로 시작, 장비·자재까지 한 문장에&#10;예: &quot;CNC로 프레임을 지정 규격대로 재단한다&quot;&#10;&#10;2. 단계마다 &quot;다음으로 넘어가도 되는 기준&quot; 짧게 덧붙이기&#10;예: &quot;유리 끼움 (틈 없이 밀착됐는지 확인 후 다음 단계)&quot;&#10;&#10;3. 순서가 헷갈리는 곳만 괄호로 이유 달기&#10;예: &quot;문짝바 조립 (프레임 재단 후에 해야 치수 오차 없음)&quot;" style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+esc(mdl.stepsDoor||"")+'</textarea></div>'+
+          '<div class="form-field"><label>프레임</label><textarea id="dg-steps-frame-edit" rows="14" placeholder="예시 (도어 제작 기준):&#10;&#10;1. CNC로 프레임 다대를 지정 규격대로 재단&#10;2. 문짝바 조립 (프레임 완성 후 진행 — 순서 바뀌면 치수 어긋남)&#10;3. 손잡이·힌지 위치 마킹 후 장착&#10;4. 유리 끼움 (틈 없이 밀착됐는지 확인)&#10;5. 전체 조립 상태 최종 검수 후 포장" style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm)">'+esc(mdl.stepsFrame||mdl.steps||"")+'</textarea></div>'+
+        '</div>'+
+      '</div>'+
       '</div>'+
       '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">취소</button><button class="btn btn-primary" onclick="saveDoorGuideDesc(\''+wh+'\',\''+id+'\')">저장</button></div>';
-    openModal(html);
+    openModal(html, true);
   };
   window.saveDoorGuideDesc = function(wh, id){
     var mdl = (APP.doorGuides[wh]||[]).filter(function(x){ return x.id===id; })[0];
@@ -4114,7 +4165,12 @@
     if(!name){ showToast("모델명을 입력하세요."); return; }
     mdl.name = name;
     mdl.desc = document.getElementById("dg-desc-edit").value.trim();
-    mdl.steps = document.getElementById("dg-steps-edit").value.trim();
+    mdl.stepsDoor = document.getElementById("dg-steps-door-edit").value.trim();
+    mdl.stepsFrame = document.getElementById("dg-steps-frame-edit").value.trim();
+    // 예전 방식(문짝/프레임 구분 없이 하나로 적던 시절)의 제작순서 값은 프레임 칸이 비어있을 때만
+    // 대신 보여주는 임시값이다. 한 번이라도 저장하고 나면 이 자리를 새 stepsFrame이 대신하므로,
+    // 옛 값을 지워서 "프레임을 비워도 옛 내용이 계속 다시 나타나는" 문제를 막는다.
+    mdl.steps = "";
     persist(); renderContent(); closeModal();
     showToast("저장되었습니다.");
   };
@@ -4125,6 +4181,7 @@
       if(!mdl) return;
       mdl.photo = dataUrl;
       persist(); renderContent();
+      openDoorModelManageModal(wh);
       showToast("모델 사진이 등록되었습니다.");
     });
   };
@@ -4133,6 +4190,7 @@
     if(!mdl || !mdl.photo) return;
     confirmAction(mdl.name+" 모델의 사진을 삭제할까요?", function(){
       mdl.photo = ""; persist(); renderContent();
+      openDoorModelManageModal(wh);
       showToast("모델 사진을 삭제했습니다.");
     });
   };
