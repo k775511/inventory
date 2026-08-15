@@ -702,7 +702,7 @@
         <button class="sub-item" data-sub="purchase">구매마스터</button>
         <button class="sub-item" data-sub="matmaster">자재마스터</button>
         <button class="sub-item" data-sub="history">입출고내역</button>
-        <button class="sub-item" data-sub="material">품목분석</button>
+        <button class="sub-item" data-sub="material">관리</button>
         <button class="sub-item" data-sub="admin">설정</button>
       </nav>
       <div id="content"></div>
@@ -1449,7 +1449,7 @@
     backBtn.style.display = onHome ? "none" : "flex";
     row2.style.display = onHome ? "none" : "flex";
     if(topbar) topbar.classList.toggle("has-row2", !onHome);
-    var title = APP.cur==="material" ? (MOBILE_MATERIAL_TITLES[APP.materialTab]||"품목분석") : (MOBILE_TITLES[APP.cur]||"PLUSDOOR");
+    var title = APP.cur==="material" ? (MOBILE_MATERIAL_TITLES[APP.materialTab]||"관리") : (MOBILE_TITLES[APP.cur]||"PLUSDOOR");
     titleEl.textContent = title;
   }
   window.addEventListener("resize", (function(){
@@ -1477,15 +1477,20 @@
     updateMobileTopbar();
     // 출고POS 등에서 +/- 버튼으로 수량을 조절할 때마다 화면 전체가 다시 그려지면서 검색결과
     // 목록의 스크롤이 맨 위로 튕겨 올라가던 문제를 막기 위해, 다시 그리기 전후로 스크롤
-    // 위치를 기억했다가 그대로 복원한다.
+    // 위치를 기억했다가 그대로 복원한다. 설정 > 창고/자재구분/카테고리 관리 목록에서 ▲▼로
+    // 순서를 바꿀 때도 같은 문제가 있어 함께 처리한다(항목이 여러 개라 인덱스로 매칭).
     var scrollList = document.querySelector(".result-list");
     var savedScrollTop = scrollList ? scrollList.scrollTop : null;
+    var savedAdminScrolls = Array.prototype.map.call(document.querySelectorAll(".admin-mgmt-list"), function(el){ return el.scrollTop; });
     var fn = SCREENS[APP.cur] || SCREENS.dashboard;
     document.getElementById("content").innerHTML = fn();
     if(savedScrollTop!=null){
       var newScrollList = document.querySelector(".result-list");
       if(newScrollList) newScrollList.scrollTop = savedScrollTop;
     }
+    document.querySelectorAll(".admin-mgmt-list").forEach(function(el, i){
+      if(savedAdminScrolls[i]!=null) el.scrollTop = savedAdminScrolls[i];
+    });
     syncPmReqPanelHeight();
     syncPosGridPanelHeight();
     syncRcvPanelHeight();
@@ -5382,15 +5387,15 @@
     return '<div class="sub-view">'+
       '<div class="grid-3 admin-mgmt-grid">'+
         '<div class="panel"><div class="panel-header"><h3>창고 관리</h3></div><div class="panel-body pad">'+
-          '<div class="field" style="margin-bottom:10px"><label>신규 창고 추가</label><div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="new-wh-name" placeholder="창고명 입력" style="flex:1"><button class="btn btn-primary" onclick="whAdd()">추가</button></div></div>'+
+          '<div class="field" style="margin-bottom:10px"><label>신규 창고 추가</label><div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="new-wh-name" placeholder="창고명 입력" style="flex:1" onkeydown="if(event.key===\'Enter\'){ event.preventDefault(); whAdd(); }"><button class="btn btn-primary" onclick="whAdd()">추가</button></div></div>'+
           '<div class="admin-mgmt-list" style="max-height:320px;overflow-y:auto">'+whRows+'</div>'+
         '</div></div>'+
         '<div class="panel"><div class="panel-header"><h3>자재 구분 관리</h3></div><div class="panel-body pad">'+
-          '<div class="field" style="margin-bottom:10px"><label>신규 자재 구분 추가</label><div style="display:flex;gap:8px;margin-top:6px;align-items:center"><input type="text" id="new-type-name" placeholder="예: 반제품" style="flex:1"><label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" id="new-type-purchasable">자재요청 표시</label><button class="btn btn-primary" onclick="typeAdd()">추가</button></div></div>'+
+          '<div class="field" style="margin-bottom:10px"><label>신규 자재 구분 추가</label><div style="display:flex;gap:8px;margin-top:6px;align-items:center"><input type="text" id="new-type-name" placeholder="예: 반제품" style="flex:1" onkeydown="if(event.key===\'Enter\'){ event.preventDefault(); typeAdd(); }"><label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" id="new-type-purchasable">자재요청 표시</label><button class="btn btn-primary" onclick="typeAdd()">추가</button></div></div>'+
           '<div class="admin-mgmt-list" style="max-height:320px;overflow-y:auto">'+typeRows+'</div>'+
         '</div></div>'+
         '<div class="panel"><div class="panel-header"><h3>카테고리 관리</h3></div><div class="panel-body pad">'+
-          '<div class="field" style="margin-bottom:10px"><label>신규 카테고리 추가</label><div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="new-cat-name" placeholder="예: 실리콘" style="flex:1"><button class="btn btn-primary" onclick="catAdd()">추가</button></div></div>'+
+          '<div class="field" style="margin-bottom:10px"><label>신규 카테고리 추가</label><div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="new-cat-name" placeholder="예: 실리콘" style="flex:1" onkeydown="if(event.key===\'Enter\'){ event.preventDefault(); catAdd(); }"><button class="btn btn-primary" onclick="catAdd()">추가</button></div></div>'+
           '<div class="admin-mgmt-list" style="max-height:320px;overflow-y:auto">'+catRows+'</div>'+
         '</div></div>'+
       '</div>'+
