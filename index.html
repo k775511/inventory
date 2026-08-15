@@ -444,6 +444,10 @@
   .result-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); }
   .result-row:last-child{ border-bottom:none; }
   .result-row:hover{ background:#f7f9fc; }
+  /* 입고/출고(PC) 품목검색 목록: 행 전체를 누르면 1개 담긴다(+/- 버튼 없이 탭 방식). */
+  .result-row-tap{ cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; }
+  .result-row-tap:hover{ background:var(--blue-050); }
+  .result-row-tap:active{ background:var(--blue-100); }
   .result-main{ flex:1; min-width:0; }
   .result-name{ font-size:13px; font-weight:700; color:var(--text-900); }
   .result-meta{ font-size:11.5px; color:var(--text-400); margin-top:2px; }
@@ -1866,13 +1870,9 @@
     var rows = catalogForWh(APP.posWh, APP.posQ);
     var resultHtml = rows.length===0 ? '<div class="result-empty">검색 결과가 없습니다.</div>' : rows.map(function(m){
       var low = m.stock < activeSafe(m);
-      return '<div class="result-row">'+photoCell(m,false)+
+      return '<div class="result-row result-row-tap" onclick="posAdd(\''+m.code+'\')" title="누르면 1개 담깁니다">'+photoCell(m,false)+
         '<div class="result-main"><div class="result-name">'+esc(m.name)+' <span style="color:var(--low-text)">['+esc(m.wh)+(m.loc?'/'+esc(m.loc):'')+']</span>'+'</div><div class="result-meta">'+esc(m.code)+'</div></div>'+
         '<div class="result-stock'+(low?' low':'')+'">재고 '+m.stock+'</div>'+
-        '<div style="display:flex;gap:6px">'+
-          '<button class="btn-minus" onclick="posQty(\''+m.code+'\',-1)" aria-label="빼기"><svg class="ic" style="width:15px;height:15px"><use href="#i-minus"/></svg></button>'+
-          '<button class="btn-add" onclick="posAdd(\''+m.code+'\')" aria-label="담기"><svg class="ic" style="width:15px;height:15px"><use href="#i-plus"/></svg></button>'+
-        '</div>'+
         '</div>';
     }).join("");
     var whPills = ['<button class="pill'+(APP.posWh==="all"?" active":"")+'" onclick="posSetWh(\'all\')">전체</button>']
@@ -2019,13 +2019,9 @@
     if(isMobileView()) return mobileTxnFormHtml("receive");
     var rows = catalogForWh(APP.receiveWh, APP.receiveQ);
     var resultHtml = rows.length===0 ? '<div class="result-empty">검색 결과가 없습니다.</div>' : rows.map(function(m){
-      return '<div class="result-row">'+photoCell(m,false)+
+      return '<div class="result-row result-row-tap" onclick="rcvAdd(\''+m.code+'\')" title="누르면 1개 담깁니다">'+photoCell(m,false)+
         '<div class="result-main"><div class="result-name">'+esc(m.name)+' <span style="color:var(--low-text)">['+esc(m.wh)+(m.loc?'/'+esc(m.loc):'')+']</span>'+'</div><div class="result-meta">'+esc(m.code)+'</div></div>'+
         '<div class="result-stock">재고 '+m.stock+'</div>'+
-        '<div style="display:flex;gap:6px">'+
-          '<button class="btn-minus" onclick="rcvQty(\''+m.code+'\',-1)" aria-label="빼기"><svg class="ic" style="width:15px;height:15px"><use href="#i-minus"/></svg></button>'+
-          '<button class="btn-add" onclick="rcvAdd(\''+m.code+'\')" aria-label="담기"><svg class="ic" style="width:15px;height:15px"><use href="#i-plus"/></svg></button>'+
-        '</div>'+
         '</div>';
     }).join("");
     var whPills = ['<button class="pill'+(APP.receiveWh==="all"?" active":"")+'" onclick="rcvSetWh(\'all\')">전체</button>']
@@ -3099,6 +3095,15 @@
     persist(); renderContent();
   };
   window.backToStocktakeList = function(){
+    // 실사수량을 입력하던 중이었다면(임시저장 전) 목록으로 돌아가기 전에 한 번 더 확인한다 —
+    // 그냥 나가면 입력한 내용이 그대로 사라지기 때문이다.
+    if(collectStocktakeEntries().length){
+      confirmAction("임시저장을 하지 않은 경우 입력한 내용이 사라질 수 있습니다.\n\n재고조사 목록으로 돌아갈까요?", function(){
+        APP.stocktakeView = "list";
+        persist(); renderContent();
+      });
+      return;
+    }
     APP.stocktakeView = "list";
     persist(); renderContent();
   };
