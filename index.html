@@ -72,13 +72,16 @@
     --radius:8px; --radius-sm:6px;
     font-variant-numeric: tabular-nums;
   }
+  /* 화면마다 세로 스크롤바가 생겼다 없어졌다 하면서(예: 구매마스터↔자재마스터 이동) 그만큼
+     본문 가로 폭이 줄었다 늘었다 하는 게 눈에 거슬려서, 스크롤바 자리를 항상 미리 확보해둔다. */
+  html{ scrollbar-gutter: stable; }
   *{box-sizing:border-box}
   .pd-app{
     font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",-apple-system,"Segoe UI",sans-serif;
     background:var(--page-bg); color:var(--text-900);
     border-radius:12px; overflow:hidden; border:1px solid var(--border-strong);
     box-shadow:0 1px 3px rgba(20,29,52,.08), 0 12px 32px -18px rgba(20,29,52,.35);
-    max-width:1560px; margin:0 auto; min-width:0;
+    max-width:1800px; margin:0 auto; min-width:0;
   }
   .pd-app, .pd-app *{ line-height:1.4; }
   button{ font-family:inherit; cursor:pointer; }
@@ -158,6 +161,12 @@
 
   .grid-2{ display:grid; grid-template-columns:1.1fr 1.4fr; gap:14px; align-items:start; }
   .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; align-items:start; }
+  /* 설정 > 창고/자재구분/카테고리 관리 흰색 박스 3개 높이를 동일하게 맞춘다
+     (JS syncAdminMgmtGridHeight가 셋 중 제일 큰 자연 높이로 .panel 높이를 통일하고,
+     안의 목록이 flex로 늘어나 남는 높이를 채운다). */
+  .admin-mgmt-grid .panel{ display:flex; flex-direction:column; }
+  .admin-mgmt-grid .panel-body{ flex:1; display:flex; flex-direction:column; min-height:0; }
+  .admin-mgmt-list{ flex:1; }
   .panel{ background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
   .panel-header{ display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid var(--border); gap:10px; flex-wrap:wrap; }
   .panel-header h3{ margin:0; font-size:13.5px; font-weight:800; }
@@ -171,7 +180,7 @@
   .alert-item svg{ color:var(--low-text); flex:none; }
   .alert-item .ai-name{ font-weight:700; color:var(--text-900); flex:1; min-width:0; }
   .alert-item .ai-cat{ color:var(--text-400); font-size:11.5px; }
-  .alert-item .ai-qty{ color:var(--low-text); font-weight:700; white-space:nowrap; }
+  .alert-item .ai-qty{ color:var(--text-900); font-weight:700; white-space:nowrap; }
 
   .table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:#fff; }
   table{ width:100%; border-collapse:collapse; font-size:12.6px; min-width:640px; }
@@ -196,6 +205,9 @@
   /* ---- 재고현황: 부족/임박/과재고 그룹 리스트 ---- */
   .stock-group{ display:flex; flex-direction:column; gap:10px; }
   .stock-group-head{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; color:var(--text-900); }
+  .stock-group-head-toggle{ width:100%; text-align:left; background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; cursor:pointer; }
+  .stock-group-head-toggle:hover{ background:var(--sub-bg); }
+  .stock-group-head-toggle .chev{ color:var(--text-400); transition:transform .18s ease; flex:none; }
   .stock-dot{ width:8px; height:8px; border-radius:50%; flex:none; }
   .stock-dot.low{ background:var(--low-text); }
   .stock-dot.warn{ background:var(--warn-text); }
@@ -232,6 +244,20 @@
   .force-desktop-grid .pos-grid{ grid-template-columns:1fr 1.15fr !important; }
   .stock-list{ border:1px solid var(--border); border-radius:var(--radius); background:#fff; overflow:hidden; }
   .pmreq-left .stock-list{ max-height:200px; overflow-y:auto; }
+  /* 화면 높이에 맞춰 왼쪽 "상태별 현황" 박스가 늘어날 때(JS에서 .pmreq-left에 높이를 준다),
+     발주필요/보류/발주완료 3개를 억지로 똑같은 높이로 나누지 않는다 — 대신 각 그룹을 접고 펼
+     수 있게 하고, 전체 내용이 박스 높이를 넘으면 이 영역 전체가 하나로 스크롤된다. */
+  .pmreq-left{ display:flex; flex-direction:column; }
+  .pmreq-left .panel{ height:100%; display:flex; flex-direction:column; }
+  .pmreq-left .panel-body{ flex:1; min-height:0; overflow-y:auto; }
+  /* 품목관리/재고실사/재고현황/입출고내역/재고부족알림 데스크탑 화면: 목록이 길어져도 브라우저
+     전체가 스크롤되는 게 아니라, 위쪽 툴바·안내문은 고정된 채 목록(표) 안에서만 스크롤되게 한다.
+     (JS syncListFillHeight가 .sub-view.fill-scroll에 남은 화면 높이만큼 height를 지정한다) */
+  .sub-view.fill-scroll{ overflow:hidden; }
+  .sub-view.fill-scroll .panel{ flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .sub-view.fill-scroll .table-wrap{ flex:1; max-height:none; overflow-y:auto; min-height:120px; }
+  .sub-view.fill-scroll .stock-group{ flex:1; min-height:0; }
+  .sub-view.fill-scroll .stock-list{ flex:1; max-height:none; overflow-y:auto; min-height:80px; }
   .pmreq-right-col{ display:flex; flex-direction:column; min-height:0; }
   .pmreq-right-col .panel{ flex:1; display:flex; flex-direction:column; min-height:0; }
   .pmreq-right-col .panel-body{ flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
@@ -295,9 +321,52 @@
   .radio-opt input{ accent-color:var(--blue-600); }
   .radio-opt.checked-in{ border-color:var(--blue-600); background:var(--in-bg); color:var(--in-text); }
   .radio-opt.checked-out{ border-color:var(--border-strong); background:var(--out-bg); color:var(--out-text); }
+  /* 재고실사 "실사 방식" 토글처럼 라벨이 짧은 곳에서 더 슬림하게 쓰기 위한 변형 */
+  .radio-row-sm .radio-opt{ padding:7px 10px; font-size:12.5px; white-space:nowrap; }
+  .stocktake-back-btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:99px; border:1px solid var(--border-strong); background:#fff; font-size:13px; font-weight:700; color:var(--text-600); }
+  .stocktake-back-btn:hover{ background:var(--sub-bg); color:var(--text-900); border-color:var(--text-400); }
+  .stocktake-back-btn .ic{ flex:none; }
   .check-row{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-900); }
   .modal-footer{ display:flex; justify-content:flex-end; gap:8px; padding:14px 20px; border-top:1px solid var(--border); flex-wrap:wrap; }
   .modal-footer.between{ justify-content:space-between; }
+
+  /* 자재 상세 페이지(박스히어로 참고, 자재수정 폼과는 별개의 읽기 중심 화면) */
+  .matdetail-grid{ display:grid; grid-template-columns:1.05fr 1fr; }
+  .matdetail-left{ padding:22px; border-right:1px solid var(--border); }
+  .matdetail-photo{ width:96px; height:96px; margin:0 auto 14px; border-radius:14px; background:var(--sub-bg); display:flex; align-items:center; justify-content:center; font-size:34px; overflow:hidden; }
+  .matdetail-photo img{ width:100%; height:100%; object-fit:cover; }
+  .matdetail-name{ font-size:16.5px; font-weight:800; color:var(--text-900); text-align:center; line-height:1.35; }
+  .matdetail-code{ font-size:12px; color:var(--text-400); text-align:center; margin-top:3px; }
+  .matdetail-badges{ display:flex; justify-content:center; gap:6px; margin-top:10px; }
+  .matdetail-rows{ margin-top:16px; border-top:1px solid var(--border); }
+  .matdetail-row{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:9px 2px; border-bottom:1px solid var(--border); font-size:13px; }
+  .matdetail-row-label{ color:var(--text-400); font-weight:600; flex:none; }
+  .matdetail-row-val{ color:var(--text-900); font-weight:700; text-align:right; }
+  .matdetail-note{ margin-top:14px; padding:11px 12px; background:var(--sub-bg); border-radius:var(--radius-sm); font-size:12.5px; color:var(--text-600); line-height:1.55; }
+  .matdetail-right{ padding:22px; display:flex; flex-direction:column; gap:16px; background:var(--page-bg); }
+  .matdetail-stock-card{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; }
+  .matdetail-stock-card.low{ background:var(--low-bg); border-color:transparent; }
+  .matdetail-stock-label{ font-size:12px; font-weight:700; color:var(--text-600); }
+  .matdetail-stock-val{ font-size:34px; font-weight:800; color:var(--text-900); margin:4px 0 10px; line-height:1; }
+  .matdetail-stock-val span{ font-size:14px; font-weight:700; color:var(--text-400); margin-left:2px; }
+  .matdetail-safe-mini{ display:flex; gap:8px; }
+  .matdetail-safe-mini > div{ flex:1; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 6px; text-align:center; }
+  .matdetail-safe-mini .lbl{ font-size:10.5px; color:var(--text-400); font-weight:700; }
+  .matdetail-safe-mini .val{ font-size:14px; font-weight:800; color:var(--text-900); margin-top:3px; }
+  .matdetail-actions{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .matdetail-actions button{ padding:11px 6px; border-radius:var(--radius-sm); border:1px solid var(--border-strong); background:#fff; font-size:12px; font-weight:700; color:var(--text-600); display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .matdetail-actions button svg{ width:16px; height:16px; }
+  .matdetail-actions button:hover{ background:var(--sub-bg); color:var(--text-900); border-color:var(--text-400); }
+  .matdetail-recent{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; flex:1; min-height:0; }
+  .matdetail-recent-title{ font-size:12px; font-weight:800; color:var(--text-600); margin-bottom:8px; }
+  .matdetail-log-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12.5px; }
+  .matdetail-log-row:last-child{ border-bottom:none; }
+  .matdetail-log-date{ color:var(--text-400); flex:none; width:64px; }
+  .matdetail-log-qty{ margin-left:auto; font-weight:800; }
+  @media (max-width:900px){
+    .matdetail-grid{ grid-template-columns:1fr; }
+    .matdetail-left{ border-right:none; border-bottom:1px solid var(--border); }
+  }
 
   .toast{ position:fixed; left:50%; bottom:26px; transform:translate(-50%,12px); background:var(--navy-900); color:#fff; padding:11px 20px; border-radius:99px; font-size:13px; font-weight:600; box-shadow:0 10px 30px -8px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease; z-index:200; max-width:90vw; text-align:center; }
   .toast.show{ opacity:1; transform:translate(-50%,0); }
@@ -315,6 +384,10 @@
   .search-wrap{ position:relative; }
   .search-wrap svg{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-400); }
   .result-list{ border:1px solid var(--border); border-radius:10px; max-height:280px; overflow-y:auto; }
+  /* 출고/입고 화면: 패널 높이를 화면 크기에 맞춰 늘릴 때(JS), 안의 목록도 같이 늘어나서
+     빈 여백 없이 꽉 차게 한다. */
+  .pos-panel .result-list{ flex:1; max-height:none; min-height:100px; }
+  .pos-panel .cart-wrap{ flex:1; min-height:100px; overflow-y:auto; }
   .result-empty, .cart-empty{ padding:30px 16px; text-align:center; color:var(--text-400); font-size:12.5px; }
   .result-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); }
   .result-row:last-child{ border-bottom:none; }
@@ -388,7 +461,9 @@
   .sheet-backdrop.show .sheet-box{ transform:translateY(0); }
   .sheet-handle{ width:36px; height:4px; border-radius:99px; background:var(--border-strong); margin:6px auto 8px; }
   .sheet-title{ font-size:13px; font-weight:800; color:var(--text-400); padding:6px 18px 8px; }
-  .sheet-option{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; background:none; border:none; padding:14px 18px; font-size:15px; font-weight:700; color:var(--text-900); text-align:left; }
+  .sheet-option{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; background:none; border:none; border-bottom:1px solid var(--border); padding:14px 18px; font-size:15px; font-weight:700; color:var(--text-900); text-align:left; }
+  .sheet-option:last-child{ border-bottom:none; }
+  .sheet-option:hover{ background:var(--sub-bg); }
   .sheet-option.active{ color:var(--blue-600); }
   .sheet-option .ic{ width:17px; height:17px; color:var(--blue-600); flex:none; }
   .photo-lightbox{ position:fixed; inset:0; background:rgba(10,15,25,.78); display:flex; align-items:center; justify-content:center; z-index:150; padding:24px; }
@@ -415,11 +490,42 @@
   .wh-row.draggable-row .wh-order-btns button,
   .wh-row.draggable-row .wh-order-btns button *{ cursor:default !important; }
   .wh-row .wh-name-input{ flex:1; }
+  .wh-row-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:2px 0; }
+  .wh-row-main .wh-name-input{ width:100%; }
   .wh-order-btns{ display:flex; flex-direction:column; gap:2px; }
   .wh-order-btns button{ width:20px; height:16px; border:1px solid var(--border-strong); background:#fff; font-size:9px; padding:0; line-height:1; border-radius:3px; }
 
   .req-box{ background:var(--sub-bg); border:1px solid var(--border); border-radius:10px; padding:14px; font-size:12.5px; line-height:1.7; white-space:pre-wrap; font-family: ui-monospace, "SF Mono", Consolas, monospace; min-height:160px; }
-  .backup-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .backup-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+
+  /* 입출고내역 날짜 범위 선택기(박스히어로 스타일) */
+  .hrange-wrap{ position:relative; }
+  .hrange-btn{ display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:#fff; font-size:13px; font-weight:700; color:var(--text-900); cursor:pointer; }
+  .hrange-btn .hrange-arrow{ display:flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px; color:var(--text-400); flex:none; border:none; background:none; }
+  .hrange-btn .hrange-arrow:hover{ background:var(--sub-bg); color:var(--text-900); }
+  .hrange-pop{ position:absolute; top:calc(100% + 6px); left:0; z-index:120; background:#fff; border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 16px 40px -12px rgba(20,29,52,.22); width:400px; max-width:90vw; overflow:hidden; }
+  .hrange-pop-body{ display:flex; gap:0; }
+  .hrange-cal{ flex:1; padding:10px 12px; border-right:1px solid var(--border); }
+  .hrange-cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:12px; font-weight:800; }
+  .hrange-cal-head button{ width:20px; height:20px; border-radius:6px; color:var(--text-600); display:flex; align-items:center; justify-content:center; border:none; background:none; }
+  .hrange-cal-head button:hover{ background:var(--sub-bg); }
+  .hrange-cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:10px; color:var(--text-400); font-weight:700; margin-bottom:2px; }
+  .hrange-cal-row{ display:grid; grid-template-columns:repeat(7,1fr); }
+  .hrange-day{ height:24px; font-size:11px; font-weight:600; color:var(--text-900); background:none; border:none; border-radius:0; position:relative; }
+  .hrange-day.dim{ color:var(--text-400); opacity:.55; }
+  .hrange-day.today:not(.in-range){ color:var(--blue-600); font-weight:800; }
+  .hrange-day.in-range{ background:var(--blue-100); }
+  .hrange-day.range-start,.hrange-day.range-end{ background:var(--blue-600); color:#fff; font-weight:800; }
+  .hrange-day.range-start{ border-radius:6px 0 0 6px; }
+  .hrange-day.range-end{ border-radius:0 6px 6px 0; }
+  .hrange-day.range-start.range-end{ border-radius:6px; }
+  .hrange-presets{ width:96px; display:flex; flex-direction:column; padding:6px; gap:1px; }
+  .hrange-presets button{ text-align:left; padding:6px 8px; border-radius:7px; font-size:11px; font-weight:700; color:var(--text-600); border:none; background:none; }
+  .hrange-presets button:hover{ background:var(--sub-bg); color:var(--text-900); }
+  .hrange-pop-footer{ display:flex; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--border); background:var(--sub-bg); }
+  .hrange-pop-footer .field{ flex:1; }
+  .hrange-pop-footer .field label{ font-size:11px; }
+  .hrange-pop-footer .field input{ font-size:12px; padding:6px 8px; }
 
   @media (max-width: 1000px){
     .stat-cards{ grid-template-columns:repeat(2,1fr); }
@@ -533,10 +639,10 @@
         <button class="sub-item" data-sub="pos">출고</button>
         <button class="sub-item" data-sub="receive">입고</button>
         <button class="sub-item" data-sub="stock">재고현황</button>
-        <button class="sub-item" data-sub="material">자재관리</button>
         <button class="sub-item" data-sub="purchase">구매마스터</button>
         <button class="sub-item" data-sub="matmaster">자재마스터</button>
         <button class="sub-item" data-sub="history">입출고내역</button>
+        <button class="sub-item" data-sub="material">자재관리</button>
         <button class="sub-item" data-sub="admin">설정</button>
       </nav>
       <div id="content"></div>
@@ -653,8 +759,9 @@
       cur:"dashboard", materialTab:"register", materialQ:"", materialSortKey:"code", materialSortDir:"asc",
       stockTab:"status", stockWh:"all", stockSortKey:"wh", stockSortDir:"asc",
       posWh:"all", posQ:"", receiveWh:"all", receiveQ:"", stocktakeWh:"all", stocktakeMode:"wh", stocktakeQ:"", stocktakeSortKey:"wh", stocktakeSortDir:"asc",
+      stocktakeSessions:[], stocktakeSingleCodes:[], stocktakeView:"list",
       stockAsOf: TODAY, stockFrom: usageDefaultFrom(), stockTo: TODAY,
-      historyFrom: addDays(TODAY,-29), historyTo: TODAY,
+      historyFrom: addMonths(TODAY,-1), historyTo: TODAY,
       usageFrom: usageDefaultFrom(), usageTo: TODAY, usageWhs: null, usageType: "all", usageQuery: "", usageSortKey: "code", usageSortDir: "asc", usageFormulas: [],
       usageBuiltinFormulas: cloneUsageBuiltinFormulas(),
       monthlyYear: parseInt(TODAY.slice(0,4),10), monthlyWh: "all", monthlyType: "all", monthlyQ: "",
@@ -683,7 +790,7 @@
       s.stockAsOf = TODAY;
       s.stockFrom = usageDefaultFrom();
       s.stockTo = TODAY;
-      s.historyFrom = addDays(TODAY,-29);
+      s.historyFrom = addMonths(TODAY,-1);
       s.historyTo = TODAY;
       s.stockWh = s.stockWh || "all";
       s.stockSortKey = s.stockSortKey || "wh";
@@ -694,6 +801,9 @@
       s.stocktakeSortKey = s.stocktakeSortKey || "wh";
       s.stocktakeSortDir = s.stocktakeSortDir || "asc";
       s.stocktakeLogs = s.stocktakeLogs || [];
+      s.stocktakeSessions = s.stocktakeSessions || [];
+      s.stocktakeSingleCodes = []; // 진행 중이던 단일품목 선택은 새로고침 시 초기화(출고목록과 동일한 취급)
+      s.stocktakeView = "list";
       s.adjLogs = s.adjLogs || [];
       s.materialAlertView = s.materialAlertView || "overview";
       s.usageType = s.usageType || "all";
@@ -742,7 +852,7 @@
     // 출고목록(cart)·입고목록(inCart)은 지금 화면에서만 의미있는 "작업 중" 임시 목록이라
     // 로컬저장소·Firestore(다른 기기와 공유되는 DB)에는 남기지 않는다. 그대로 저장하면
     // 새로고침·화면 이동 후에도 안 사라지고, 심지어 다른 기기에서도 보이게 된다.
-    var snapshot = Object.assign({}, APP, { cart:[], inCart:[] });
+    var snapshot = Object.assign({}, APP, { cart:[], inCart:[], stocktakeSingleCodes:[] });
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(snapshot)); }catch(e){}
     if(firebaseSyncReady && window.firebaseSetDoc && window.stateDocRef){
       window.firebaseSetDoc(window.stateDocRef, { app: snapshot }).catch(function(err){
@@ -762,7 +872,7 @@
     s.stockAsOf = TODAY;
     s.stockFrom = usageDefaultFrom();
     s.stockTo = TODAY;
-    s.historyFrom = addDays(TODAY,-29);
+    s.historyFrom = addMonths(TODAY,-1);
     s.historyTo = TODAY;
     s.stockWh = s.stockWh || "all";
     s.stockSortKey = s.stockSortKey || "wh";
@@ -773,6 +883,9 @@
     s.stocktakeSortKey = s.stocktakeSortKey || "wh";
     s.stocktakeSortDir = s.stocktakeSortDir || "asc";
     s.stocktakeLogs = s.stocktakeLogs || [];
+    s.stocktakeSessions = s.stocktakeSessions || [];
+    s.stocktakeSingleCodes = [];
+    s.stocktakeView = "list";
     s.adjLogs = s.adjLogs || [];
     s.materialAlertView = s.materialAlertView || "overview";
     s.materialQ = s.materialQ || "";
@@ -824,11 +937,20 @@
           // 지금 보고 있는 화면은 이 기기만의 로컬 상태다. 다른 기기·다른 세션이 마지막으로
           // 저장한 화면 값으로 갑자기 덮어써져 화면이 순간 바뀌어 보이는 일이 없도록,
           // 서버 데이터를 받아온 뒤에도 이 기기가 보고 있던 화면/탭 상태는 그대로 유지한다.
+          // (출고·입고 등에서 선택해둔 창고 필터도 같은 이유로 유지한다 — 안 그러면 다른 기기가
+          // 마지막으로 선택했던 창고로 화면이 순간 깜빡이며 바뀌어 보인다.)
           var localCur = APP.cur, localMaterialTab = APP.materialTab, localPurchaseTab = APP.purchaseTab,
-            localStockTab = APP.stockTab, localMatMasterTab = APP.matMasterTab;
+            localStockTab = APP.stockTab, localMatMasterTab = APP.matMasterTab,
+            localPosWh = APP.posWh, localReceiveWh = APP.receiveWh, localStocktakeWh = APP.stocktakeWh,
+            localStockWh = APP.stockWh,
+            localStocktakeView = APP.stocktakeView, localStocktakeSingleCodes = APP.stocktakeSingleCodes;
           APP = normalizeState(serverState);
           APP.cur = localCur; APP.materialTab = localMaterialTab; APP.purchaseTab = localPurchaseTab;
           APP.stockTab = localStockTab; APP.matMasterTab = localMatMasterTab;
+          APP.posWh = localPosWh; APP.receiveWh = localReceiveWh; APP.stocktakeWh = localStocktakeWh;
+          APP.stockWh = localStockWh;
+          // 재고조사를 진행하던 중이었다면(품목 고르는 중 등) 서버 동기화로 그 작업이 날아가지 않게 유지한다.
+          APP.stocktakeView = localStocktakeView; APP.stocktakeSingleCodes = localStocktakeSingleCodes;
           firebaseSyncReady = true; // 서버 데이터를 반영한 뒤에야 저장을 허용한다.
           renderContent();
         }
@@ -1108,9 +1230,16 @@
     dt.setUTCDate(dt.getUTCDate()+n);
     return dt.getUTCFullYear()+"-"+String(dt.getUTCMonth()+1).padStart(2,"0")+"-"+String(dt.getUTCDate()).padStart(2,"0");
   }
+  // 달을 더하거나 뺄 때, 그 달에 없는 날짜(예: 3/31의 한 달 전은 2/31이 없음)가 되면
+  // JS Date가 자동으로 다음 달로 넘어가버리는 문제가 있어서, 그 달의 마지막 날로 고정(clamp)한다.
+  // 예: 3/31 - 1개월 → 2/28(평년) 또는 2/29(윤년). 8/31 - 1개월 → 7/31(그대로, 31일까지 있음).
   function addMonths(d, n){
     var p = d.split("-").map(Number);
-    var dt = new Date(Date.UTC(p[0], p[1]-1+n, p[2]));
+    var y = p[0], m0 = p[1]-1+n, day = p[2];
+    var targetY = y + Math.floor(m0/12);
+    var targetM = ((m0%12)+12)%12;
+    var lastDayOfTargetMonth = new Date(Date.UTC(targetY, targetM+1, 0)).getUTCDate();
+    var dt = new Date(Date.UTC(targetY, targetM, Math.min(day, lastDayOfTargetMonth)));
     return dt.getUTCFullYear()+"-"+String(dt.getUTCMonth()+1).padStart(2,"0")+"-"+String(dt.getUTCDate()).padStart(2,"0");
   }
   // "최근 3개월"은 오늘로부터 정확히 90일 전이 아니라, 이번 달을 포함해 달력상 3개월치를
@@ -1236,7 +1365,7 @@
   // 삭제 등 위험한 동작 앞에서 이 커스텀 확인 모달을 대신 사용합니다.
   window.confirmAction = function(message, onYes){
     var html = '<div class="modal-header"><h3>확인</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
-      '<div class="modal-body"><div style="font-size:13.5px;color:var(--text-900);line-height:1.6">'+esc(message)+'</div></div>'+
+      '<div class="modal-body"><div style="font-size:13.5px;color:var(--text-900);line-height:1.6;white-space:pre-line">'+esc(message)+'</div></div>'+
       '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">취소</button><button class="btn btn-primary" id="confirm-action-yes">확인</button></div>';
     openModal(html);
     document.getElementById("confirm-action-yes").onclick = function(){ closeModal(); onYes(); };
@@ -1298,6 +1427,38 @@
       if(newScrollList) newScrollList.scrollTop = savedScrollTop;
     }
     syncPmReqPanelHeight();
+    syncPosGridPanelHeight();
+    syncListFillHeight();
+    syncAdminMgmtGridHeight();
+  }
+  // 설정 > 창고/자재구분/카테고리 관리 흰색 박스 3개의 높이를 서로 동일하게 맞춘다.
+  // 먼저 높이를 풀어서(auto) 각자 자연스러운 높이를 잰 뒤, 셋 중 가장 큰 값으로 통일하고
+  // 안의 목록(.admin-mgmt-list)이 flex로 늘어나 남는 공간을 채우게 한다.
+  function syncAdminMgmtGridHeight(){
+    var panels = document.querySelectorAll(".admin-mgmt-grid .panel");
+    if(!panels.length) return;
+    panels.forEach(function(p){ p.style.height = ""; });
+    var max = 0;
+    panels.forEach(function(p){ max = Math.max(max, p.offsetHeight); });
+    panels.forEach(function(p){ p.style.height = max + "px"; });
+  }
+  // 품목관리/재고실사/재고현황/입출고내역/재고부족알림 등, .sub-view에 fill-scroll 표시가 붙은
+  // 화면에서 남은 화면 높이만큼만 sub-view 높이를 지정해서 그 안(표/목록)에서만 스크롤되게 한다.
+  function syncListFillHeight(){
+    var el = document.querySelector(".sub-view.fill-scroll");
+    if(!el) return;
+    var top = el.getBoundingClientRect().top;
+    var h = Math.max(320, window.innerHeight - top - 20);
+    el.style.height = h + "px";
+  }
+  // 출고/입고 화면(데스크탑)에서, 좌우 두 패널을 화면 아래쪽 끝까지 꽉 채운다(전체화면모드에서는
+  // fitFullscreenPosScale이 자체적으로 크기를 계산하므로 건드리지 않는다).
+  function syncPosGridPanelHeight(){
+    var panels = document.querySelectorAll(".pos-panel");
+    if(!panels.length || fsMode) return;
+    var top = panels[0].getBoundingClientRect().top;
+    var fillHeight = Math.max(420, window.innerHeight - top - 24);
+    panels.forEach(function(p){ p.style.height = fillHeight + "px"; });
   }
   // 구매마스터 > 자재요청 화면(데스크탑)에서, 오른쪽 검색결과 목록 높이를 왼쪽 "상태별 현황"
   // 패널의 실제 렌더링 높이에 딱 맞춰서, 그 안에서만 스크롤되게 한다. 렌더링 직후 한 번만
@@ -1308,13 +1469,19 @@
     if(pmReqHeightObserver){ pmReqHeightObserver.disconnect(); pmReqHeightObserver = null; }
     var left = document.querySelector(".pmreq-left");
     var right = document.querySelector(".pmreq-right-col");
-    if(!left || !right) return;
+    if(!left || !right){ left && (left.style.height=""); return; }
+    // 모니터 해상도에 따라 하단에 빈 공간이 남지 않도록, 왼쪽 패널 높이를 뷰포트
+    // 아래쪽 끝까지 꽉 채우는 높이로 맞춘다(너무 작은 화면에서는 최소 높이 아래로는 안 줄임).
+    var top = left.getBoundingClientRect().top;
+    var fillHeight = Math.max(360, window.innerHeight - top - 24);
+    left.style.height = fillHeight + "px";
     right.style.height = (left.offsetHeight - 18) + "px";
     if(window.ResizeObserver){
       pmReqHeightObserver = new ResizeObserver(function(){ right.style.height = (left.offsetHeight - 18) + "px"; });
       pmReqHeightObserver.observe(left);
     }
   }
+  window.addEventListener("resize", function(){ syncPmReqPanelHeight(); syncPosGridPanelHeight(); syncListFillHeight(); syncAdminMgmtGridHeight(); });
 
   /* ---------------- 대시보드 ---------------- */
   function screenDashboard(){
@@ -1371,7 +1538,7 @@
 
       '<div class="grid-2">'+
         '<div class="panel"><div class="panel-header"><h3>재고부족 알림</h3><span class="count">'+low.length+'건</span><span class="btn btn-ghost btn-sm" onclick="goMaterialAlert()">전체보기</span></div><div class="panel-body"><ul class="alert-list">'+
-          (low.length ? low.map(function(m){ return '<li class="alert-item"><svg class="ic"><use href="#i-alert"/></svg><span class="ai-name">'+esc(m.name)+'</span><span class="ai-cat">'+esc(m.cat)+'</span><span class="ai-qty">'+m.stock+' / '+activeSafe(m)+' '+m.unit+'</span></li>'; }).join("") : '<li class="alert-item" style="color:var(--text-400)">부족 품목이 없습니다.</li>')+
+          (low.length ? low.map(function(m){ return '<li class="alert-item"><svg class="ic"><use href="#i-alert"/></svg><span class="ai-name">'+esc(m.name)+'</span><span class="ai-cat">'+esc(m.cat)+'</span><span class="ai-qty"><span style="color:var(--low-text)">'+m.stock+'</span> / <span style="color:'+(isCurrentlyPeak()?"var(--low-text)":"var(--blue-600)")+'">'+activeSafe(m)+'</span> '+m.unit+'</span></li>'; }).join("") : '<li class="alert-item" style="color:var(--text-400)">부족 품목이 없습니다.</li>')+
         '</ul></div></div>'+
         '<div class="panel"><div class="panel-header"><h3>최근 출고 내역</h3><span class="btn btn-ghost btn-sm" onclick="go(\'history\')">전체보기</span></div><div class="panel-body" style="padding:0"><div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>일자</th><th>구분</th><th>자재명/규격</th><th class="num">수량</th><th>창고</th></tr></thead><tbody>'+recentRows+'</tbody></table></div></div></div>'+
       '</div>'+
@@ -1551,8 +1718,8 @@
     var cnt = (type==="pos" ? APP.cart : APP.inCart).length;
     var html = '<div class="modal-header"><h3>제품 선택</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body" style="padding:0">'+
-        '<div style="padding:14px 16px"><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="제품 이름, 코드 검색" oninput="mobileProductPickerSearch(\''+type+'\', this.value)"></div></div>'+
-        '<div id="mobileProductPickerList" style="max-height:48vh;overflow-y:auto;border-top:1px solid var(--border)">'+itemsHtml+'</div>'+
+        '<div style="padding:14px 16px"><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" oninput="mobileProductPickerSearch(\''+type+'\', this.value)"></div></div>'+
+        '<div id="mobileProductPickerList" style="height:48vh;overflow-y:auto;border-top:1px solid var(--border)">'+itemsHtml+'</div>'+
       '</div>'+
       '<div class="modal-footer between"><div style="font-size:12.5px;color:var(--text-400)" id="mobileProductPickerCount">'+cnt+'개 품목</div><button class="btn btn-primary" onclick="closeModal()">선택 완료</button></div>';
     openModal(html, true);
@@ -1640,7 +1807,7 @@
       '<div class="pos-panel">'+
         '<div class="pos-panel-title"><span class="step-badge">1</span>창고 선택 및 빠른 품목 검색</div>'+
         '<div><div class="pos-section-label" style="margin-bottom:8px">창고 선택</div><div class="pill-row">'+whPills+'</div></div>'+
-        '<div><div class="pos-section-label" style="margin-bottom:8px">품목 검색</div><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명, 코드 검색 후 Enter" value="'+esc(APP.posQ)+'" oninput="debounceSearch(\'posQ\', this.value, posSetQ)"></div></div>'+
+        '<div><div class="pos-section-label" style="margin-bottom:8px">품목 검색</div><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" value="'+esc(APP.posQ)+'" oninput="debounceSearch(\'posQ\', this.value, posSetQ)"></div></div>'+
         '<div class="pos-hint">오른쪽 <b>+</b>/<b>−</b> 버튼으로 출고목록 수량을 1개씩 바로 늘리고 줄일 수 있습니다.</div>'+
         '<div class="result-list">'+resultHtml+'</div>'+
       '</div>'+
@@ -1738,7 +1905,7 @@
       '<div class="pos-panel">'+
         '<div class="pos-panel-title"><span class="step-badge">1</span>창고 선택 및 빠른 품목 검색</div>'+
         '<div><div class="pos-section-label" style="margin-bottom:8px">창고 선택</div><div class="pill-row">'+whPills+'</div></div>'+
-        '<div><div class="pos-section-label" style="margin-bottom:8px">품목 검색</div><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명, 코드 검색" value="'+esc(APP.receiveQ)+'" oninput="debounceSearch(\'receiveQ\', this.value, rcvSetQ)"></div></div>'+
+        '<div><div class="pos-section-label" style="margin-bottom:8px">품목 검색</div><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" value="'+esc(APP.receiveQ)+'" oninput="debounceSearch(\'receiveQ\', this.value, rcvSetQ)"></div></div>'+
         '<div class="pos-hint">오른쪽 <b>+</b>/<b>−</b> 버튼으로 입고목록 수량을 1개씩 바로 늘리고 줄일 수 있습니다. 담은 뒤 오른쪽에서 입고처와 수량을 확인하고 "입고 처리"를 누르세요.</div>'+
         '<div class="result-list">'+resultHtml+'</div>'+
       '</div>'+
@@ -1801,20 +1968,21 @@
       '<button class="pill'+(APP.stockTab==="status"?" active":"")+'" onclick="setStockTab(\'status\')">현재 재고 현황</button>'+
       '<button class="pill'+(APP.stockTab==="shortage"?" active":"")+'" onclick="setStockTab(\'shortage\')">안전재고 미달 이력</button>'+
       '</div>';
+    var fillCls = isMobileView() ? "" : " fill-scroll";
 
     if(APP.stockTab==="shortage"){
       var start = APP.stockFrom || usageDefaultFrom(), end = APP.stockTo || TODAY;
       if(start > end){ var t0=start; start=end; end=t0; }
       var rangeBar = '<div class="toolbar">'+
-          '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="setStockFrom(this.value)"></div></div>'+
-          '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+end+'" onchange="setStockTo(this.value)"></div></div>'+
+          '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="debounceSearch(\'stockFrom\', this.value, setStockFrom)"></div></div>'+
+          '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+end+'" onchange="debounceSearch(\'stockTo\', this.value, setStockTo)"></div></div>'+
           '<div class="btn-row"><button class="btn btn-outline" onclick="resetStockRange()">이번달 초기화</button></div>'+
         '</div>';
       var alertsInRange = APP.alerts.filter(function(a){ return a.date>=start && a.date<=end; });
       var rows = alertsInRange.map(function(a){
         return '<tr><td>'+a.date+'</td><td>'+esc(a.wh)+'</td><td>'+esc(a.name)+'</td><td>'+esc(a.code)+'</td><td class="num">'+fmt(a.stock)+'</td><td class="num">'+fmt(a.safe)+'</td><td class="num" style="color:var(--low-text);font-weight:800">'+fmt(a.lack)+'</td></tr>';
       }).join("");
-      return '<div class="sub-view">'+tabs+rangeBar+
+      return '<div class="sub-view'+fillCls+'">'+tabs+rangeBar+
         '<div class="panel"><div class="panel-header"><h3>안전재고 미달 이력 ('+start+' ~ '+end+')</h3><span class="count">'+alertsInRange.length+'건</span></div>'+
         '<div class="table-wrap" style="border:none;border-radius:0"><table><thead><tr><th>발생일</th><th>창고</th><th>품목명</th><th>코드</th><th class="num">발생 당시 재고</th><th class="num">적용 안전재고</th><th class="num">부족수량</th></tr></thead><tbody>'+
         (rows || '<tr><td colspan="7" style="text-align:center;color:var(--text-400)">해당 기간에 이력이 없습니다.</td></tr>')+
@@ -1835,16 +2003,16 @@
       var pastQty = stockAsOfQty(m, asOf);
       var pastSafe = activeSafe(m, asOf);
       if(pastQty < pastSafe) lowCnt++; else okCnt++;
-      return '<tr><td class="ctr">'+esc(m.wh)+'</td><td class="ctr">'+esc(m.code)+'</td><td>'+esc(m.name)+'</td>'+
+      return '<tr><td class="ctr">'+esc(m.wh)+'</td><td class="ctr">'+esc(m.code)+'</td><td><a href="#" onclick="event.preventDefault();openMatDetailModal(\''+m.code+'\')" style="color:inherit;text-decoration:underline;text-underline-offset:2px">'+esc(m.name)+'</a></td>'+
         '<td class="num ctr" style="'+(isPast?'color:var(--text-400)':'font-weight:800;color:var(--blue-700)')+'">'+fmt(m.stock)+'</td>'+
         '<td class="num ctr" style="color:'+safeColorAsOf+';font-weight:700">'+fmt(pastSafe)+'</td><td class="ctr">'+esc(m.loc)+'</td><td class="ctr">'+badgeForStock(pastQty, pastSafe)+'</td></tr>';
     }).join("");
     var whOptions = ['<option value="all"'+(stockWh==="all"?" selected":"")+'>전체</option>']
       .concat(APP.whs.map(function(w){ return '<option'+(stockWh===w?" selected":"")+'>'+esc(w)+'</option>'; })).join("");
-    return '<div class="sub-view">'+tabs+
+    return '<div class="sub-view'+fillCls+'">'+tabs+
       '<div class="toolbar">'+
         '<div class="field"><label>창고</label><div class="select-wrap" style="position:relative"><select onchange="setStockWh(this.value)">'+whOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
-        '<div class="field"><label>기준일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+asOf+'" max="'+TODAY+'" onchange="setStockAsOf(this.value)"></div></div>'+
+        '<div class="field"><label>기준일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+asOf+'" max="'+TODAY+'" onchange="debounceSearch(\'stockAsOf\', this.value, setStockAsOf)"></div></div>'+
         '<div class="field" style="flex:1;min-width:220px"><label>안전재고 적용 기준</label><div style="padding-top:6px;font-size:13px;font-weight:700;color:var(--blue-700)">'+
           (APP.safety.mode==="auto" ? "자동판정 · "+asOf.slice(0,7).replace("-","년 ")+"월은 " + (APP.safety.peakMonths.indexOf(asOfMonth)>-1 ? "성수기" : "비수기") : APP.safety.mode==="peak" ? "성수기 고정 적용" : "비수기 고정 적용")+
           ' <span class="btn btn-ghost btn-sm" onclick="go(\'admin\')">정책 변경 →</span></div></div>'+
@@ -1868,7 +2036,7 @@
         var diffText = (x.diff>0?"+":"")+fmt(x.diff);
         var tags = [m.code, m.cat, m.wh, m.loc, m.unit].filter(Boolean).map(function(t){ return '<span class="mat-card-tag">'+esc(t)+'</span>'; }).join("");
         return '<div class="mat-card">'+
-          '<div class="mat-card-name">'+esc(m.name)+'</div>'+
+          '<div class="mat-card-name" onclick="openMatDetailModal(\''+m.code+'\')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px">'+esc(m.name)+'</div>'+
           '<div class="mat-card-tags">'+tags+'</div>'+
           '<div class="mat-card-nums">'+
             '<div class="mat-card-num"><div class="mat-card-num-val" style="color:var(--ok-text)">'+fmt(x.safe)+'</div><div class="mat-card-num-label">안전재고</div></div>'+
@@ -1886,7 +2054,7 @@
       var m = x.m;
       var diffText = (x.diff>0?"+":"")+fmt(x.diff);
       return '<div class="stock-row">'+
-        '<div class="stock-row-main"><div class="stock-row-name">'+esc(m.name)+'</div>'+
+        '<div class="stock-row-main"><div class="stock-row-name" onclick="openMatDetailModal(\''+m.code+'\')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px">'+esc(m.name)+'</div>'+
         '<div class="stock-row-meta"><span class="stock-code">'+esc(m.code)+'</span> · '+esc(m.cat)+' · '+esc(m.wh)+' · '+esc(m.loc)+' · '+esc(m.unit)+'</div></div>'+
         '<div class="stock-row-nums">'+
           '<div class="stock-num"><div class="stock-num-val" style="color:var(--ok-text)">'+fmt(x.safe)+'</div><div class="stock-num-label">안전재고</div></div>'+
@@ -1894,11 +2062,18 @@
           '<div class="stock-num"><div class="stock-num-val" style="color:'+colorVar+'">'+diffText+'</div><div class="stock-num-label">'+diffLabel+'</div></div>'+
         '</div></div>';
     }).join("") : '<div class="stock-row" style="justify-content:center;color:var(--text-400)">해당 품목이 없습니다.</div>';
+    var expanded = alertGroupExpanded[kind]!==false;
     return '<div class="stock-group">'+
-      '<div class="stock-group-head"><span class="stock-dot '+kind+'"></span>'+label+' <span class="stock-group-count">('+list.length+')</span><span class="stock-info-ic" title="'+esc(tip)+'"><svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg></span></div>'+
-      '<div class="stock-list">'+rowsHtml+'</div>'+
+      '<button type="button" class="stock-group-head stock-group-head-toggle" onclick="toggleAlertGroup(\''+kind+'\')">'+
+        '<span class="stock-dot '+kind+'"></span>'+label+' <span class="stock-group-count">('+list.length+')</span>'+
+        '<span class="stock-info-ic" title="'+esc(tip)+'" onclick="event.stopPropagation()"><svg class="ic" style="width:13px;height:13px"><use href="#i-alert"/></svg></span>'+
+        '<svg class="ic chev" style="width:16px;height:16px;margin-left:auto;transform:rotate('+(expanded?"0":"-90")+'deg)"><use href="#i-chevron"/></svg>'+
+      '</button>'+
+      (expanded ? '<div class="stock-list">'+rowsHtml+'</div>' : '')+
     '</div>';
   }
+  var alertGroupExpanded = { low:true, warn:true, over:true };
+  window.toggleAlertGroup = function(kind){ alertGroupExpanded[kind] = !(alertGroupExpanded[kind]!==false); renderContent(); };
   window.setStockTab = function(t){ APP.stockTab=t; persist(); renderContent(); };
   window.setStockWh = function(v){ APP.stockWh = v || "all"; persist(); renderContent(); };
   window.setStockSort = function(key){ toggleSort("stockSortKey","stockSortDir",key); persist(); renderContent(); };
@@ -1917,12 +2092,16 @@
       '<button class="pill'+(APP.materialTab==="monthly"?" active":"")+'" onclick="setMaterialTab(\'monthly\')">월별 사용량비교</button>'+
       '<button class="pill'+(APP.materialTab==="yearly"?" active":"")+'" onclick="setMaterialTab(\'yearly\')">연도별 동일월비교</button>'+
       '</div>';
+    // 품목관리/재고부족알림/재고실사는 목록이 길어지기 쉬워서, 데스크탑에서는 화면 전체가
+    // 스크롤되지 않고 목록 안에서만 스크롤되게 한다(fill-scroll). 사용량분석/월별·연도별 비교는
+    // 차트·여러 표가 섞인 리포트형 화면이라 이 방식이 안 맞아서 그대로 둔다.
+    var fillCls = isMobileView() ? "" : " fill-scroll";
     if(APP.materialTab==="usage") return '<div class="sub-view">'+tabs+materialUsageHtml()+'</div>';
     if(APP.materialTab==="alert") return '<div class="sub-view">'+tabs+materialShortageAlertHtml()+'</div>';
-    if(APP.materialTab==="stocktake") return '<div class="sub-view">'+tabs+materialStocktakeHtml()+'</div>';
+    if(APP.materialTab==="stocktake") return '<div class="sub-view'+fillCls+'">'+tabs+materialStocktakeHtml()+'</div>';
     if(APP.materialTab==="monthly") return '<div class="sub-view">'+tabs+materialMonthlyHtml()+'</div>';
     if(APP.materialTab==="yearly") return '<div class="sub-view">'+tabs+materialYearlyHtml()+'</div>';
-    return '<div class="sub-view">'+tabs+materialRegisterHtml()+'</div>';
+    return '<div class="sub-view'+fillCls+'">'+tabs+materialRegisterHtml()+'</div>';
   }
   window.setMaterialTab = function(t){ APP.materialTab=t; persist(); renderContent(); };
   window.goMaterialUsage = function(){ clearSearchQueries(); APP.cur="material"; APP.materialTab="usage"; persist(); renderContent(); };
@@ -1986,7 +2165,7 @@
     return (isMobileView() ? '<button type="button" class="btn btn-ghost btn-sm" onclick="backToAlertOverview()">‹ 창고별로 보기</button>' : '')+
       '<div class="toolbar">'+
         '<div class="field"><label>창고</label><div class="select-wrap" style="position:relative"><select onchange="setStockWh(this.value)">'+whOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
-        '<div class="field"><label>기준일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+asOf+'" max="'+TODAY+'" onchange="setStockAsOf(this.value)"></div></div>'+
+        '<div class="field"><label>기준일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+asOf+'" max="'+TODAY+'" onchange="debounceSearch(\'stockAsOf\', this.value, setStockAsOf)"></div></div>'+
       '</div>'+
       (isPast ? '<div class="pos-hint">기준일(<b>'+asOf+'</b>) 이후의 입출고·실사 기록을 역산하여 그 시점의 재고를 재구성한 값입니다.</div>' : '')+
       stockGroupHtml("low", "재고 부족", groups.low, "부족수량", "var(--low-text)", "안전재고 미달 — 즉시 발주가 필요합니다.")+
@@ -2221,15 +2400,15 @@
 
       '<div class="panel"><div class="panel-header"><h3>재고 분석</h3></div><div class="panel-body pad">'+
       '<div class="toolbar">'+
-        '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+A.start+'" onchange="setUsageFrom(this.value)"></div></div>'+
-        '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+A.end+'" onchange="setUsageTo(this.value)"></div></div>'+
+        '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+A.start+'" onchange="debounceSearch(\'usageFrom\', this.value, setUsageFrom)"></div></div>'+
+        '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+A.end+'" onchange="debounceSearch(\'usageTo\', this.value, setUsageTo)"></div></div>'+
         '<div class="field"><label>&nbsp;</label><button type="button" class="btn btn-outline" onclick="setUsageFullRange()" title="입출고 이력이 있는 전체 기간으로 조회">전체 기간</button></div>'+
         '<div class="field"><label>창고</label><button type="button" class="btn btn-outline" onclick="openUsageWhModal()" style="justify-content:space-between;min-width:130px"><svg class="ic" style="width:13px;height:13px"><use href="#i-box"/></svg>'+esc(usageWhLabel())+'</button></div>'+
         '<div class="field"><label>자재구분</label><div class="select-wrap" style="position:relative"><select onchange="setUsageType(this.value)">'+
           '<option value="all"'+((APP.usageType||"all")==="all"?" selected":"")+'>전체</option>'+
           APP.matTypes.filter(function(t){ return !t.purchasable; }).map(function(t){ return '<option'+(APP.usageType===t.name?" selected":"")+'>'+esc(t.name)+'</option>'; }).join("")+
         '</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
-        '<div class="field" style="flex:1;min-width:180px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.usageQuery||"")+'" placeholder="이름, 코드, 카테고리, 위치 검색" oninput="debounceSearch(\'usageQ\', this.value, setUsageQuery)"></div></div>'+
+        '<div class="field" style="flex:1;min-width:180px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.usageQuery||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'usageQ\', this.value, setUsageQuery)"></div></div>'+
         '<div class="btn-row"><button class="btn btn-outline" onclick="usageCsvExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 내보내기</button>'+
         '<button class="btn btn-primary" onclick="openUsageFormulaModal()">수식 추가 및 설정</button></div>'+
       '</div>'+
@@ -2266,7 +2445,7 @@
     persist(); renderContent();
     showToast("전체 이력 기간("+r.min+" ~ "+end+")으로 조회합니다.");
   };
-  window.setUsageQuery = function(v){ APP.usageQuery = v; persist(); renderContent(); var el=document.querySelector('#content .toolbar input[placeholder="이름, 코드, 카테고리, 위치 검색"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
+  window.setUsageQuery = function(v){ APP.usageQuery = v; persist(); renderContent(); var el=document.querySelector('#content .toolbar input[placeholder="품목명을 입력해 주세요"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.setUsageType = function(v){ APP.usageType = v; persist(); renderContent(); };
   window.setUsageSort = function(key){
     if(APP.usageSortKey===key){ APP.usageSortDir = APP.usageSortDir==="asc" ? "desc" : "asc"; }
@@ -2411,7 +2590,7 @@
         '<div class="field"><label>&nbsp;</label><button type="button" class="btn btn-outline" onclick="setMonthlyYearToBestData()" title="입출고 이력이 가장 많은 연도로 이동">데이터 많은 연도</button></div>'+
         '<div class="field"><label>창고</label><div class="select-wrap" style="position:relative"><select onchange="setMonthlyWh(this.value)">'+whOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
         '<div class="field"><label>자재구분</label><div class="select-wrap" style="position:relative"><select onchange="setMonthlyType(this.value)">'+typeOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
-        '<div class="field" style="flex:1;min-width:180px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.monthlyQ||"")+'" placeholder="이름, 코드, 카테고리, 위치 검색" oninput="debounceSearch(\'monthlyQ\', this.value, setMonthlyQuery)"></div></div>'+
+        '<div class="field" style="flex:1;min-width:180px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.monthlyQ||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'monthlyQ\', this.value, setMonthlyQuery)"></div></div>'+
         '<div class="btn-row"><button class="btn btn-outline" onclick="monthlyCsvExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 내보내기</button></div>'+
       '</div>'+
       '<div class="pos-hint" style="margin-top:12px">'+(year<curYear
@@ -2449,7 +2628,7 @@
   };
   window.setMonthlyWh = function(v){ APP.monthlyWh=v; persist(); renderContent(); };
   window.setMonthlyType = function(v){ APP.monthlyType=v; persist(); renderContent(); };
-  window.setMonthlyQuery = function(v){ APP.monthlyQ=v; persist(); renderContent(); var el=document.querySelector('#content .toolbar input[placeholder="이름, 코드, 카테고리, 위치 검색"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
+  window.setMonthlyQuery = function(v){ APP.monthlyQ=v; persist(); renderContent(); var el=document.querySelector('#content .toolbar input[placeholder="품목명을 입력해 주세요"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.monthlyCsvExport = function(){
     var rows = computeMonthlyMatrix();
     var monthCols = []; for(var i=1;i<=12;i++){ monthCols.push(i+"월"); }
@@ -2537,7 +2716,7 @@
         '<div class="field"><label>월</label><div class="select-wrap" style="position:relative"><select onchange="setYoyMonth(this.value)">'+monthOptions.join("")+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
         '<div class="field"><label>창고</label><div class="select-wrap" style="position:relative"><select onchange="setYoyWh(this.value)">'+whOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
         '<div class="field"><label>자재구분</label><div class="select-wrap" style="position:relative"><select onchange="setYoyType(this.value)">'+typeOptions+'</select><svg class="ic"><use href="#i-chevron"/></svg></div></div>'+
-        '<div class="field" style="flex:1;min-width:180px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.yoyQ||"")+'" placeholder="이름, 코드, 카테고리, 위치 검색" oninput="debounceSearch(\'yoyQ\', this.value, setYoyQuery)"></div></div>'+
+        '<div class="field" style="flex:1;min-width:180px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.yoyQ||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'yoyQ\', this.value, setYoyQuery)"></div></div>'+
         '<div class="btn-row"><button class="btn btn-outline" onclick="yoyCsvExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 내보내기</button></div>'+
       '</div>'+
       '<div class="pos-hint" style="margin-top:12px">같은 '+A.month+'월을 연도별로 나란히 비교합니다. '+(A.month>curMonth?'올해('+curYear+'년)는 아직 '+A.month+'월이 지나지 않아 형식 확인용 예시 수치입니다. ':'올해('+curYear+'년) '+A.month+'월은 '+TODAY+'까지의 실제 출고 합계입니다. ')+'지난 연도는 실제 입출고내역 집계이며, 자재별로 가장 많이 사용된 연도는 진하게 강조 표시됩니다. "전년대비" 열은 '+curYear+'년과 '+(curYear-1)+'년의 증감입니다.</div>'+
@@ -2552,7 +2731,7 @@
   window.setYoyMonth = function(v){ APP.yoyMonth=parseInt(v,10); persist(); renderContent(); };
   window.setYoyWh = function(v){ APP.yoyWh=v; persist(); renderContent(); };
   window.setYoyType = function(v){ APP.yoyType=v; persist(); renderContent(); };
-  window.setYoyQuery = function(v){ APP.yoyQ=v; persist(); renderContent(); var el=document.querySelector('#content .toolbar input[placeholder="이름, 코드, 카테고리, 위치 검색"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
+  window.setYoyQuery = function(v){ APP.yoyQ=v; persist(); renderContent(); var el=document.querySelector('#content .toolbar input[placeholder="품목명을 입력해 주세요"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.yoyCsvExport = function(){
     var A = computeYearlySameMonthMatrix();
     var yearCols = A.years.map(function(y){ return y+"년"; });
@@ -2598,7 +2777,7 @@
       '</div>';
     }).join("");
     return '<div class="toolbar">'+
-        '<div class="field" style="flex:1;min-width:0"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.materialQ||"")+'" placeholder="자재명, 코드, 카테고리 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
+        '<div class="field" style="flex:1;min-width:0"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.materialQ||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
         '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openMatModal()"><svg class="ic"><use href="#i-plus"/></svg>신규등록</button>'+
       '</div>'+
       '<div class="pos-hint">'+(q?'검색결과 '+visible.length+'건 / 전체 '+totalActive+'건':'등록된 자재 '+visible.length+'건')+' · 카드를 탭하면 수정, 사진을 탭하면 사진을 바꿀 수 있어요.</div>'+
@@ -2625,7 +2804,7 @@
       return '<tr class="pm-row" style="cursor:pointer" onclick="openMatModal(\''+m.code+'\')" title="클릭하면 수정할 수 있습니다"><td class="ctr" onclick="event.stopPropagation()"><input type="checkbox" class="mat-sel" value="'+m.code+'" onchange="onMatSelChange()"></td><td class="ctr" onclick="event.stopPropagation();openMatPhotoModal(\''+m.code+'\')"><div class="photo-box" style="margin:0 auto" title="사진 등록/변경/삭제">'+(m.photo?'<img src="'+m.photo+'" alt="">':'📦')+'</div></td><td class="ctr">'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td class="ctr">'+esc(m.matType||"-")+'</td><td class="ctr">'+esc(m.cat)+'</td><td class="ctr">'+esc(m.wh)+'</td><td class="ctr">'+esc(m.loc)+'</td><td class="ctr">'+esc(m.unit)+'</td><td class="num ctr">'+fmt(m.stock)+'</td><td class="num ctr" style="color:'+safeColor+';font-weight:700">'+fmt(activeSafe(m))+'</td><td class="ctr">'+stockBadge(m)+'</td></tr>';
     }).join("");
     return '<div class="toolbar">'+
-        '<div class="field" style="flex:1;min-width:220px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.materialQ||"")+'" placeholder="자재명/규격, 코드, 카테고리, 자재구분, 창고, 위치로 검색" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
+        '<div class="field" style="flex:1;min-width:220px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.materialQ||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'materialQ\', this.value, setMaterialQ)"></div></div>'+
       '</div>'+
       '<div class="toolbar-actions">'+
         '<div style="font-size:13px;font-weight:700;color:var(--text-600)">'+(q?'검색결과 '+visible.length+'건 / 전체 '+totalActive+'건':'등록된 자재 '+visible.length+'건')+'</div>'+
@@ -2660,7 +2839,7 @@
   }
   window.setMaterialQ = function(v){
     APP.materialQ = v; persist(); renderContent();
-    var el = document.querySelector('#content .toolbar input[placeholder="자재명/규격, 코드, 카테고리, 자재구분, 창고, 위치로 검색"]');
+    var el = document.querySelector('#content .toolbar input[placeholder="품목명을 입력해 주세요"]');
     if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
   };
   window.setMaterialSort = function(key){
@@ -2733,48 +2912,120 @@
   };
 
   function materialStocktakeHtml(){
+    if((APP.stocktakeView||"list")!=="new") return stocktakeSessionListHtml();
+    return stocktakeNewSessionHtml();
+  }
+  function stocktakeTitleFromDate(d){
+    var p = d.split("-");
+    return parseInt(p[0],10)+"년 "+parseInt(p[1],10)+"월 "+parseInt(p[2],10)+"일 재고조사";
+  }
+  function stocktakeSessionListHtml(){
+    var sessions = APP.stocktakeSessions || [];
+    var rows = sessions.length ? sessions.map(function(s){
+      var isWaiting = s.status==="대기";
+      var badge = isWaiting ? '<span class="badge badge-warn">대기</span>' : '<span class="badge badge-ok">마감</span>';
+      var title = esc(stocktakeTitleFromDate(s.date));
+      var titleCell = isWaiting
+        ? '<a href="#" onclick="event.preventDefault();resumeStocktakeSession(\''+s.id+'\')" style="color:inherit;text-decoration:underline;text-underline-offset:2px" title="눌러서 이어서 진행">'+title+'</a>'
+        : '<a href="#" onclick="event.preventDefault();openStocktakeReportModal(\''+s.id+'\')" style="color:inherit;text-decoration:underline;text-underline-offset:2px" title="눌러서 실사 내역 보기">'+title+'</a>';
+      return '<tr><td>'+titleCell+'</td>'+
+        '<td class="ctr">'+esc(s.wh)+'</td>'+
+        '<td class="ctr">'+badge+'</td>'+
+        '<td class="ctr">'+fmt(s.itemCount)+'개 품목</td>'+
+        '<td class="ctr">'+s.date+'</td></tr>';
+    }).join("") : '<tr><td colspan="5" style="text-align:center;color:var(--text-400)">아직 진행한 재고조사가 없습니다.</td></tr>';
+    return '<div class="toolbar-actions">'+
+        '<div style="font-size:15px;font-weight:800;display:flex;align-items:center;gap:6px">재고 조사<span class="stock-info-ic" title="창고별 또는 단일 품목으로 실사한 뒤 전산재고에 반영한 기록입니다."><svg class="ic" style="width:14px;height:14px"><use href="#i-alert"/></svg></span></div>'+
+        '<button class="btn btn-primary" onclick="startNewStocktake()"><svg class="ic"><use href="#i-plus"/></svg>재고조사 시작</button>'+
+      '</div>'+
+      '<div class="table-wrap"><table><thead><tr><th>제목</th><th class="ctr">위치</th><th class="ctr">상태</th><th class="ctr">제품</th><th class="ctr">시작일</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  window.startNewStocktake = function(){
+    APP.stocktakeView = "new";
+    APP.stocktakeSingleCodes = [];
+    persist(); renderContent();
+  };
+  window.backToStocktakeList = function(){
+    APP.stocktakeView = "list";
+    persist(); renderContent();
+  };
+  // 실사 대상이 될 수 있는 품목(구매마스터 대상·사용중지 제외) 공통 검색 필터
+  function stocktakeEligibleMats(q){
+    q = (q||"").trim().toLowerCase();
+    return APP.mats.filter(function(m){
+      if(isPurchasableType(m.matType)) return false;
+      if(m.discontinued) return false;
+      if(!q) return true;
+      return m.name.toLowerCase().indexOf(q)>-1 || m.code.toLowerCase().indexOf(q)>-1 ||
+        (m.cat||"").toLowerCase().indexOf(q)>-1 || (m.matType||"").toLowerCase().indexOf(q)>-1 ||
+        (m.wh||"").toLowerCase().indexOf(q)>-1 || (m.loc||"").toLowerCase().indexOf(q)>-1;
+    });
+  }
+  function stocktakePickerItemsHtml(q){
+    var rows = stocktakeEligibleMats(q);
+    var selCodes = APP.stocktakeSingleCodes || [];
+    return rows.length ? rows.map(function(m){
+      var checked = selCodes.indexOf(m.code)>-1;
+      return '<label class="mform-product-row"><input type="checkbox" '+(checked?"checked":"")+' onchange="toggleStocktakePick(\''+m.code+'\',this.checked)">'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px">'+esc(m.name)+'</div><div style="font-size:11.5px;color:var(--text-400)">'+esc(m.code)+' · '+esc(m.wh)+(m.loc?'/'+esc(m.loc):'')+'</div></div>'+
+        '<div style="font-size:12.5px;color:var(--text-400);flex:none">현재고 '+fmt(m.stock)+'</div>'+
+      '</label>';
+    }).join("") : '<div class="result-empty">검색 결과가 없습니다.</div>';
+  }
+  window.openStocktakePickerModal = function(){
+    var itemsHtml = stocktakePickerItemsHtml(APP.stocktakeQ||"");
+    var cnt = (APP.stocktakeSingleCodes||[]).length;
+    var html = '<div class="modal-header"><h3>실사할 품목 선택</h3><button onclick="closeModal();renderContent()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body" style="padding:0">'+
+        '<div style="padding:14px 16px"><div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" value="'+esc(APP.stocktakeQ||"")+'" oninput="stocktakePickerSearch(this.value)"></div></div>'+
+        '<div id="stocktakePickerList" style="height:48vh;overflow-y:auto;border-top:1px solid var(--border)">'+itemsHtml+'</div>'+
+      '</div>'+
+      '<div class="modal-footer between"><div style="font-size:12.5px;color:var(--text-400)" id="stocktakePickerCount">'+cnt+'개 선택됨</div><button class="btn btn-primary" onclick="closeModal();renderContent()">선택 완료</button></div>';
+    openModal(html, true);
+  };
+  window.stocktakePickerSearch = function(v){
+    APP.stocktakeQ = v;
+    var listEl = document.getElementById("stocktakePickerList");
+    if(listEl) listEl.innerHTML = stocktakePickerItemsHtml(v);
+  };
+  window.toggleStocktakePick = function(code, checked){
+    var arr = APP.stocktakeSingleCodes || (APP.stocktakeSingleCodes=[]);
+    var idx = arr.indexOf(code);
+    if(checked && idx===-1) arr.push(code);
+    else if(!checked && idx>-1) arr.splice(idx,1);
+    var cnt = document.getElementById("stocktakePickerCount");
+    if(cnt) cnt.textContent = arr.length+"개 선택됨";
+  };
+  function stocktakeNewSessionHtml(){
     var mode = APP.stocktakeMode || "wh";
-    var modeSelect = '<div class="field" style="max-width:220px">'+
+    var modeToggle = '<div class="field" style="max-width:280px">'+
         '<label>실사 방식</label>'+
-        '<div class="select-wrap" style="position:relative">'+
-          '<select onchange="setStocktakeMode(this.value)">'+
-            '<option value="wh"'+(mode==="wh"?" selected":"")+'>창고별 실사</option>'+
-            '<option value="single"'+(mode==="single"?" selected":"")+'>단일품목 실사</option>'+
-          '</select>'+
-          '<svg class="ic"><use href="#i-chevron"/></svg>'+
+        '<div class="radio-row radio-row-sm" style="margin-top:6px">'+
+          ['wh','single'].map(function(mo){
+            var label = mo==="wh" ? "창고별 실사" : "단일품목 실사";
+            return '<label class="radio-opt'+(mode===mo?" checked-in":"")+'"><input type="radio" name="stocktake-mode" '+(mode===mo?"checked":"")+' onchange="setStocktakeMode(\''+mo+'\')" style="display:none">'+label+'</label>';
+          }).join("")+
         '</div>'+
       '</div>';
 
     var items, pickerHtml, hintText, emptyText, scopeLabel;
     if(mode==="single"){
-      var q = (APP.stocktakeQ||"").trim().toLowerCase();
-      items = APP.mats.filter(function(m){
-        if(isPurchasableType(m.matType)) return false;
-        if(m.discontinued) return false;
-        if(!q) return true;
-        return m.name.toLowerCase().indexOf(q)>-1 ||
-          m.code.toLowerCase().indexOf(q)>-1 ||
-          (m.cat||"").toLowerCase().indexOf(q)>-1 ||
-          (m.matType||"").toLowerCase().indexOf(q)>-1 ||
-          (m.wh||"").toLowerCase().indexOf(q)>-1 ||
-          (m.loc||"").toLowerCase().indexOf(q)>-1;
-      });
-      pickerHtml = '<div style="flex:1;min-width:240px"><div class="pos-section-label" style="margin-bottom:8px">품목 검색</div>'+
-        '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명, 코드, 카테고리, 자재구분, 창고, 위치로 검색" value="'+esc(APP.stocktakeQ||"")+'" oninput="debounceSearch(\'stocktakeQ\', this.value, setStocktakeQ)"></div></div>';
-      hintText = "전체 품목이 실사 대상으로 표시되며, 검색으로 범위를 좁힐 수 있습니다. 전산재고와 실사수량을 비교하여 차이를 확인한 뒤 \"실사 반영\"을 누르면 현재고에 반영되고 실사 이력에 기록됩니다.";
-      emptyText = q ? "검색 결과가 없습니다." : "등록된 자재가 없습니다.";
-      scopeLabel = q ? "\""+q+"\" 검색결과" : "전체 품목";
+      var selCodes = APP.stocktakeSingleCodes || [];
+      var selSet = {}; selCodes.forEach(function(c){ selSet[c]=true; });
+      items = APP.mats.filter(function(m){ return selSet[m.code]; });
+      pickerHtml = '<div class="field" style="max-width:260px">'+
+          '<label>실사 품목</label>'+
+          '<button type="button" class="btn btn-outline" style="height:38px;justify-content:space-between;width:100%" onclick="openStocktakePickerModal()"><span>'+(selCodes.length ? selCodes.length+"개 선택됨" : "품목 선택")+'</span><svg class="ic" style="width:14px;height:14px"><use href="#i-plus"/></svg></button>'+
+        '</div>';
+      hintText = "위 \"품목 선택\" 버튼을 눌러 실사할 품목을 고르세요. 전산재고와 실사수량을 비교하여 차이를 확인한 뒤 \"실사 반영\"을 누르면 현재고에 반영되고 실사 이력에 기록됩니다.";
+      emptyText = "선택된 품목이 없습니다. \"품목 선택\" 버튼으로 실사할 품목을 골라주세요.";
+      scopeLabel = "단일품목 선택";
     } else {
       var wh = APP.stocktakeWh || "all";
       items = APP.mats.filter(function(m){ return !isPurchasableType(m.matType) && !m.discontinued && (wh==="all" || m.wh===wh); });
-      var whSelectOptions = '<option value="all"'+(wh==="all"?" selected":"")+'>전체</option>'+
-        APP.whs.map(function(w){ return '<option value="'+esc(w)+'"'+(wh===w?" selected":"")+'>'+esc(w)+'</option>'; }).join("");
       pickerHtml = '<div class="field" style="max-width:220px">'+
-          '<label>실사할 창고 선택</label>'+
-          '<div class="select-wrap" style="position:relative">'+
-            '<select onchange="setStocktakeWh(this.value)">'+whSelectOptions+'</select>'+
-            '<svg class="ic"><use href="#i-chevron"/></svg>'+
-          '</div>'+
+          '<label>실사 창고</label>'+
+          '<button type="button" class="btn btn-outline" style="height:38px;justify-content:space-between;width:100%" onclick="openStocktakeWhModal()"><span>'+(wh==="all"?"전체":esc(wh))+'</span><svg class="ic" style="width:14px;height:14px"><use href="#i-chevron"/></svg></button>'+
         '</div>';
       hintText = "선택한 창고의 자재만 실사 대상으로 표시됩니다. 전산재고와 실사수량을 비교하여 차이를 확인한 뒤 \"실사 반영\"을 누르면 현재고에 반영되고 실사 이력에 기록됩니다.";
       emptyText = "해당 창고에 등록된 자재가 없습니다.";
@@ -2784,10 +3035,10 @@
     var stkSortGetters = { wh:function(m){return m.wh||"";}, name:function(m){return m.name;}, code:function(m){return m.code;} };
     items.sort(byStringKey(stkSortGetters[APP.stocktakeSortKey]||stkSortGetters.wh, APP.stocktakeSortDir));
     var isSingle = mode==="single";
+    var backBtn = '<div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button type="button" class="stocktake-back-btn" onclick="backToStocktakeList()"><svg class="ic" style="width:14px;height:14px;transform:rotate(90deg)"><use href="#i-chevron"/></svg>재고조사 목록으로</button></div>';
     if(isMobileView()){
       var cards = items.length ? items.map(function(m){
         return '<div class="mat-card">'+
-          (isSingle ? '<label class="check-row" style="margin-bottom:8px;font-size:12.5px;font-weight:700"><input type="checkbox" id="stkchk-'+m.code+'" onchange="stocktakeToggle(\''+m.code+'\')"> 실사 대상으로 포함</label>' : '')+
           '<div class="mat-card-name">'+esc(m.name)+'</div>'+
           '<div class="mat-card-tags"><span class="mat-card-tag">'+esc(m.code)+'</span><span class="mat-card-tag">'+esc(m.wh)+'</span></div>'+
           '<div class="mat-card-nums">'+
@@ -2795,48 +3046,53 @@
             '<div class="mat-card-num"><div class="mat-card-num-val" id="stkdiff-'+m.code+'">-</div><div class="mat-card-num-label">차이</div></div>'+
           '</div>'+
           '<div style="display:flex;gap:8px;margin-top:10px">'+
-            '<input type="number" placeholder="실사수량" style="flex:1;min-width:0" id="stk-'+m.code+'" '+(isSingle?"disabled":"")+' oninput="stocktakeDiff(\''+m.code+'\')">'+
-            '<input type="text" placeholder="비고" style="flex:1;min-width:0" id="stknote-'+m.code+'" '+(isSingle?"disabled":"")+'>'+
+            '<input type="number" placeholder="실사수량" style="flex:1;min-width:0" id="stk-'+m.code+'" oninput="stocktakeDiff(\''+m.code+'\')">'+
+            '<input type="text" placeholder="비고" style="flex:1;min-width:0" id="stknote-'+m.code+'">'+
           '</div>'+
         '</div>';
       }).join("") : '<div class="result-empty">'+emptyText+'</div>';
-      return '<div class="toolbar">'+modeSelect+pickerHtml+'</div>'+
+      return backBtn+'<div class="toolbar">'+modeToggle+pickerHtml+'</div>'+
         '<div class="mat-card-list">'+cards+'</div>'+
         '<div class="toolbar-actions"><div class="muted" style="font-size:12px;color:var(--text-400)">'+esc(scopeLabel)+' 실사 대상 '+items.length+'건</div>'+
-        '<button class="btn btn-primary" style="width:100%;justify-content:center" '+(items.length===0?"disabled":"")+' onclick="applyStocktake()">실사 반영</button></div>';
+        '<div class="btn-row" style="width:100%"><button class="btn btn-outline" style="flex:1;justify-content:center" '+(items.length===0?"disabled":"")+' onclick="saveStocktakeDraft()">임시저장</button><button class="btn btn-primary" style="flex:1;justify-content:center" '+(items.length===0?"disabled":"")+' onclick="applyStocktake()">마감</button></div></div>';
     }
     var rows = items.map(function(m){
       return '<tr>'+
-        (isSingle ? '<td class="ctr"><input type="checkbox" id="stkchk-'+m.code+'" onchange="stocktakeToggle(\''+m.code+'\')"></td>' : '')+
         '<td class="ctr">'+esc(m.wh)+'</td><td class="ctr">'+esc(m.loc||"-")+'</td><td class="ctr">'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td class="num ctr">'+fmt(m.stock)+'</td>'+
-        '<td class="ctr"><input type="number" style="width:90px;text-align:center" id="stk-'+m.code+'" placeholder="실사수량" '+(isSingle?"disabled":"")+' oninput="stocktakeDiff(\''+m.code+'\')"></td>'+
+        '<td class="ctr"><input type="number" style="width:90px;text-align:center" id="stk-'+m.code+'" placeholder="실사수량" oninput="stocktakeDiff(\''+m.code+'\')"></td>'+
         '<td class="num ctr" id="stkdiff-'+m.code+'">-</td>'+
-        '<td class="ctr"><input type="text" style="width:120px;text-align:center" id="stknote-'+m.code+'" placeholder="비고" '+(isSingle?"disabled":"")+'></td></tr>';
+        '<td class="ctr"><input type="text" style="width:120px;text-align:center" id="stknote-'+m.code+'" placeholder="비고"></td></tr>';
     }).join("");
 
-    return '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">'+modeSelect+pickerHtml+'</div>'+
-      '<div class="pos-hint">'+hintText+(isSingle?' 검색 결과에서 실사할 품목만 체크하면 실사수량 입력칸이 활성화됩니다.':'')+'</div>'+
-      '<div class="table-wrap"><table><thead><tr>'+(isSingle?'<th class="ctr"></th>':'')+
+    return backBtn+
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">'+modeToggle+pickerHtml+
+        '<button class="btn btn-outline" style="margin-left:auto" '+(items.length===0?"disabled":"")+' onclick="printStocktake()"><svg class="ic"><use href="#i-download"/></svg>출력</button>'+
+      '</div>'+
+      '<div class="pos-hint">'+hintText+'</div>'+
+      '<div class="table-wrap"><table><thead><tr>'+
       sortTh("창고","wh","stocktakeSortKey","stocktakeSortDir","setStocktakeSort","ctr")+
       '<th class="ctr">위치</th>'+
       sortTh("코드","code","stocktakeSortKey","stocktakeSortDir","setStocktakeSort","ctr")+
       sortTh("품목명/규격","name","stocktakeSortKey","stocktakeSortDir","setStocktakeSort")+
       '<th class="num ctr">전산재고</th><th class="ctr">실사수량</th><th class="num ctr">차이</th><th class="ctr">비고</th></tr></thead><tbody>'+
-      (rows || '<tr><td colspan="'+(isSingle?9:8)+'" style="text-align:center;color:var(--text-400)">'+emptyText+'</td></tr>')+
-      '</tbody></table></div>'+ 
-      '<div class="toolbar-actions"><div class="muted" style="font-size:12px;color:var(--text-400)">'+esc(scopeLabel)+' 실사 대상 '+items.length+'건 · 최근 실사 이력 '+APP.stocktakeLogs.length+'건</div><div class="btn-row"><button class="btn btn-primary" '+(items.length===0?"disabled":"")+' onclick="applyStocktake()">실사 반영</button><button class="btn btn-outline" '+(items.length===0?"disabled":"")+' onclick="printStocktake()"><svg class="ic"><use href="#i-download"/></svg>출력</button></div></div>';
+      (rows || '<tr><td colspan="8" style="text-align:center;color:var(--text-400)">'+emptyText+'</td></tr>')+
+      '</tbody></table></div>'+
+      '<div class="toolbar-actions"><div class="muted" style="font-size:12px;color:var(--text-400)">'+esc(scopeLabel)+' 실사 대상 '+items.length+'건 · 지난 재고조사 '+(APP.stocktakeSessions||[]).length+'건</div><div class="btn-row"><button class="btn btn-outline" '+(items.length===0?"disabled":"")+' onclick="saveStocktakeDraft()">임시저장</button><button class="btn btn-primary" '+(items.length===0?"disabled":"")+' onclick="applyStocktake()">마감</button></div></div>';
   }
-  window.stocktakeToggle = function(code){
-    var chk = document.getElementById("stkchk-"+code);
-    var qtyEl = document.getElementById("stk-"+code);
-    var noteEl = document.getElementById("stknote-"+code);
-    if(qtyEl) qtyEl.disabled = !chk.checked;
-    if(noteEl) noteEl.disabled = !chk.checked;
-    if(!chk.checked && qtyEl){ qtyEl.value = ""; stocktakeDiff(code); }
-  };
   window.setStocktakeMode = function(v){ APP.stocktakeMode = v; persist(); renderContent(); };
   window.setStocktakeSort = function(key){ toggleSort("stocktakeSortKey","stocktakeSortDir",key); persist(); renderContent(); };
   window.setStocktakeWh = function(w){ APP.stocktakeWh = w; persist(); renderContent(); };
+  // 창고 개수가 많아질 걸 감안해 드롭다운 대신 모달에서 하나 골라 바로 닫히게 한다.
+  window.openStocktakeWhModal = function(){
+    var cur = APP.stocktakeWh || "all";
+    var options = [["all","전체"]].concat(APP.whs.map(function(w){ return [w,w]; }));
+    var rows = options.map(function(o){
+      return '<button type="button" class="sheet-option'+(cur===o[0]?" active":"")+'" onclick="setStocktakeWh(\''+o[0]+'\');closeModal()">'+esc(o[1])+(cur===o[0]?'<svg class="ic"><use href="#i-check"/></svg>':'')+'</button>';
+    }).join("");
+    var html = '<div class="modal-header"><h3>실사할 창고 선택</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body" style="padding:4px 0;gap:0">'+rows+'</div>';
+    openModal(html);
+  };
   window.setStocktakeQ = function(v){ APP.stocktakeQ = v; renderContent(); var el=document.querySelector('.search-input-lg'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.stocktakeDiff = function(code){
     var m = byCode(code); var el = document.getElementById("stk-"+code); var out = document.getElementById("stkdiff-"+code);
@@ -2847,33 +3103,127 @@
     out.style.color = diff===0 ? "" : diff>0 ? "var(--ok-text)" : "var(--low-text)";
     out.style.fontWeight = "800";
   };
-  window.applyStocktake = function(){
-    var applied = 0;
-    var beforeLow = lowCodesSnapshot();
-    var batchId = newId("ADJBATCH");
-    var actionTime = nowTimeStr();
+  function collectStocktakeEntries(){
+    var entries = [];
     APP.mats.forEach(function(m){
       var el = document.getElementById("stk-"+m.code);
       if(!el || el.value==="") return;
       var actual = parseInt(el.value,10); if(isNaN(actual)) return;
       var note = (document.getElementById("stknote-"+m.code)||{}).value || "-";
-      var diff = actual - m.stock;
-      APP.stocktakeLogs.unshift({ date:TODAY, time:"now", wh:m.wh, code:m.code, name:m.name, before:m.stock, actual:actual, diff:diff, memo:note });
+      entries.push({ m:m, before:m.stock, actual:actual, diff:actual-m.stock, note:note });
+    });
+    return entries;
+  }
+  // 전산재고 대비 실사수량 차이가 큰 편인지(입력 실수 가능성) 판단한다.
+  // 절대량이 10개 이상 차이나거나, 전산재고의 30% 이상 차이나면 "크다"고 본다.
+  function isBigStocktakeDiff(before, diff){
+    return Math.abs(diff) >= Math.max(10, Math.abs(before)*0.3);
+  }
+  window.applyStocktake = function(){
+    var entries = collectStocktakeEntries();
+    if(!entries.length){ showToast("입력된 실사수량이 없습니다."); return; }
+    var bigOnes = entries.filter(function(e){ return isBigStocktakeDiff(e.before, e.diff); });
+    if(bigOnes.length){
+      var listText = bigOnes.slice(0,8).map(function(e){
+        return e.m.name+": "+fmt(e.before)+" → "+fmt(e.actual)+" ("+(e.diff>0?"+":"")+fmt(e.diff)+")";
+      }).join("\n");
+      if(bigOnes.length>8) listText += "\n외 "+(bigOnes.length-8)+"건";
+      confirmAction(
+        "전산재고와 실사수량 차이가 큰 품목이 "+bigOnes.length+"건 있습니다. 입력을 잘못하지 않았는지 한 번 더 확인해주세요.\n\n"+listText+"\n\n그대로 반영할까요?",
+        function(){ commitStocktake(entries); }
+      );
+      return;
+    }
+    commitStocktake(entries);
+  };
+  function commitStocktake(entries){
+    var applied = 0;
+    var beforeLow = lowCodesSnapshot();
+    var batchId = newId("ADJBATCH");
+    var actionTime = nowTimeStr();
+    entries.forEach(function(e){
+      var m = e.m;
+      APP.stocktakeLogs.unshift({ date:TODAY, time:actionTime, batchId:batchId, wh:m.wh, loc:m.loc, code:m.code, name:m.name, before:e.before, actual:e.actual, diff:e.diff, memo:e.note });
       // 재고실사로 수량이 실제로 바뀐 품목만, 입출고내역에서 "조정"으로 함께 볼 수 있도록 남겨둔다.
-      if(diff !== 0){
+      if(e.diff !== 0){
         APP.adjLogs.unshift({
           id:newId("ADJLOG"), batchId:batchId, date:TODAY, time:actionTime,
-          wh:m.wh, code:m.code, name:m.name, qty:diff, unit:m.unit, worker:"재고실사", memo:note,
-          beforeQty:m.stock, afterQty:actual
+          wh:m.wh, code:m.code, name:m.name, qty:e.diff, unit:m.unit, worker:"재고실사", memo:e.note,
+          beforeQty:e.before, afterQty:e.actual
         });
       }
-      m.stock = actual;
+      m.stock = e.actual;
       applied++;
     });
-    if(applied===0){ showToast("입력된 실사수량이 없습니다."); return; }
     logNewlyLow(beforeLow);
+    // 재고조사 목록 화면에 표시할 세션 기록(마감 상태로 저장 — 전산재고에 실제로 반영됨)
+    var mode = APP.stocktakeMode || "wh";
+    var whLabel = mode==="single" ? "단일품목" : ((APP.stocktakeWh||"all")==="all" ? "전체" : APP.stocktakeWh);
+    APP.stocktakeSessions.unshift({ id:batchId, date:TODAY, wh:whLabel, mode:mode, itemCount:applied, status:"마감" });
+    APP.stocktakeSingleCodes = [];
+    APP.stocktakeView = "list";
     persist(); renderContent();
     showToast(applied+"건의 실사 결과가 재고에 반영되었습니다.");
+  }
+  // "임시저장"은 전산재고를 건드리지 않고, 지금까지 입력한 실사수량을 재고조사 목록에
+  // "대기" 상태로 남겨둔다(마감 전까지는 실제 재고에 영향 없음). 목록에서 그 제목을 다시
+  // 누르면 입력해둔 값 그대로 이어서 진행할 수 있다.
+  window.saveStocktakeDraft = function(){
+    var entries = collectStocktakeEntries();
+    if(!entries.length){ showToast("저장할 입력값이 없습니다."); return; }
+    var mode = APP.stocktakeMode || "wh";
+    var wh = APP.stocktakeWh || "all";
+    var whLabel = mode==="single" ? "단일품목" : (wh==="all" ? "전체" : wh);
+    APP.stocktakeSessions.unshift({
+      id:newId("ADJBATCH"), date:TODAY, wh:whLabel, whRaw:wh, mode:mode, itemCount:entries.length, status:"대기",
+      codes: mode==="single" ? entries.map(function(e){ return e.m.code; }) : null,
+      draftEntries: entries.map(function(e){ return { code:e.m.code, actual:e.actual, note:e.note }; })
+    });
+    APP.stocktakeSingleCodes = [];
+    APP.stocktakeView = "list";
+    persist(); renderContent();
+    showToast("대기 상태로 저장했습니다. 목록에서 제목을 누르면 이어서 진행할 수 있습니다.");
+  };
+  window.resumeStocktakeSession = function(id){
+    var session = null, idx = -1;
+    (APP.stocktakeSessions||[]).forEach(function(s,i){ if(s.id===id){ session=s; idx=i; } });
+    if(!session){ showToast("해당 재고조사를 찾을 수 없습니다."); return; }
+    // 이어서 진행하는 동안은 목록에서 빼둔다 — 다시 임시저장하거나 마감하면 새 기록으로 남는다.
+    APP.stocktakeSessions.splice(idx,1);
+    APP.stocktakeMode = session.mode;
+    if(session.mode==="single") APP.stocktakeSingleCodes = (session.codes||[]).slice();
+    else APP.stocktakeWh = session.whRaw || "all";
+    APP.stocktakeView = "new";
+    var draftEntries = session.draftEntries || [];
+    persist(); renderContent();
+    draftEntries.forEach(function(e){
+      var qtyEl = document.getElementById("stk-"+e.code);
+      var noteEl = document.getElementById("stknote-"+e.code);
+      if(qtyEl){ qtyEl.value = e.actual; stocktakeDiff(e.code); }
+      if(noteEl && e.note && e.note!=="-"){ noteEl.value = e.note; }
+    });
+    showToast("대기 중이던 재고조사를 이어서 진행합니다.");
+  };
+  // 마감된 재고조사를 눌렀을 때, 그때 실사한 수량을 보고서 형식(읽기 전용)으로 보여준다.
+  window.openStocktakeReportModal = function(id){
+    var session = null;
+    (APP.stocktakeSessions||[]).forEach(function(s){ if(s.id===id) session=s; });
+    if(!session){ showToast("해당 재고조사를 찾을 수 없습니다."); return; }
+    var logRows = APP.stocktakeLogs.filter(function(l){ return l.batchId===id; });
+    var rowsHtml = logRows.length ? logRows.map(function(l){
+      var diffColor = l.diff>0 ? "var(--ok-text)" : l.diff<0 ? "var(--low-text)" : "var(--text-400)";
+      return '<tr><td class="ctr">'+esc(l.wh)+'</td><td class="ctr">'+esc(l.loc||"-")+'</td><td class="ctr">'+esc(l.code)+'</td><td>'+esc(l.name)+'</td>'+
+        '<td class="num ctr">'+fmt(l.before)+'</td><td class="num ctr" style="font-weight:800">'+fmt(l.actual)+'</td>'+
+        '<td class="num ctr" style="color:'+diffColor+';font-weight:800">'+(l.diff>0?"+":"")+fmt(l.diff)+'</td>'+
+        '<td class="ctr">'+esc(l.memo&&l.memo!=="-"?l.memo:"-")+'</td></tr>';
+    }).join("") : '<tr><td colspan="8" style="text-align:center;color:var(--text-400)">이 재고조사의 세부 내역을 찾을 수 없습니다.</td></tr>';
+    var html = '<div class="modal-header"><h3>'+esc(stocktakeTitleFromDate(session.date))+'</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body">'+
+        '<div class="pos-hint">위치 '+esc(session.wh)+' · '+fmt(logRows.length)+'개 품목 · '+session.date+' 실사 · 전산재고에 반영 완료</div>'+
+        '<div class="table-wrap"><table><thead><tr><th class="ctr">창고</th><th class="ctr">위치</th><th class="ctr">코드</th><th>품목명/규격</th><th class="num ctr">전산재고(당시)</th><th class="num ctr">실사수량</th><th class="num ctr">차이</th><th class="ctr">비고</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>'+
+      '</div>'+
+      '<div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal()">닫기</button><button type="button" class="btn btn-primary" onclick="printStocktakeReport(\''+id+'\')"><svg class="ic"><use href="#i-download"/></svg>출력</button></div>';
+    openModal(html, true);
   };
   window.printStocktake = function(){
     var mode = APP.stocktakeMode || "wh";
@@ -2886,17 +3236,42 @@
     var dateLabel = mode === "single" ? "검색어: " + esc(APP.stocktakeQ||"") : "창고: " + (wh==="all"?"전체":esc(wh));
     var rows = items.map(function(m){
       return '<tr>'+
-        '<td>'+esc(m.wh)+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.code)+'</td><td class="num">'+fmt(m.stock)+'</td>'+ 
-        '<td style="width:100px"></td><td class="num"></td><td></td>'+ 
+        '<td class="ctr">'+esc(m.wh)+'</td><td class="ctr">'+esc(m.loc||"-")+'</td><td class="ctr">'+esc(m.code)+'</td><td>'+esc(m.name)+'</td><td class="ctr">'+fmt(m.stock)+'</td>'+
+        '<td class="ctr" style="width:100px"></td><td class="ctr"></td><td class="ctr"></td>'+
       '</tr>';
     }).join("");
-    var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+headerTitle+'</title>'+ 
-      '<style>body{font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;color:#1a2033;padding:20px;text-align:center;}h1{font-size:18px;margin-bottom:8px;}p{margin:0 auto 8px;font-size:13px;color:#4c5568;display:inline-block;}table{width:100%;max-width:900px;margin:0 auto;border-collapse:collapse;font-size:13px;}colgroup col{vertical-align:top;}thead th{border-bottom:1px solid #ccd4e2;text-align:left;padding:8px 6px;background:#f7f9fc;}thead th.num, td.num{text-align:right;}tbody td{padding:8px 6px;border-bottom:1px solid #e2e7f0;}@media print{button{display:none;}}</style>'+ 
-      '</head><body><h1>'+headerTitle+'</h1><p>출력일: '+TODAY+' · '+dateLabel+'</p>'+ 
-      '<table><colgroup><col style="width:12%"><col style="width:28%"><col style="width:14%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup><thead><tr><th>창고</th><th>품목명</th><th>코드</th><th class="num">전산재고</th><th>실사수량</th><th class="num">차이</th><th>비고</th></tr></thead><tbody>' + 
-      (rows || '<tr><td colspan="7" style="text-align:center;color:#909aad;padding:20px 0">출력할 실사 대상이 없습니다.</td></tr>') + 
+    var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+headerTitle+'</title>'+
+      '<style>body{font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;color:#1a2033;padding:20px;text-align:center;}h1{font-size:18px;margin-bottom:8px;}p{margin:0 auto 8px;font-size:13px;color:#4c5568;display:inline-block;}table{width:100%;max-width:900px;margin:0 auto;border-collapse:collapse;font-size:13px;}colgroup col{vertical-align:top;}thead th{border-bottom:1px solid #ccd4e2;text-align:left;padding:8px 6px;background:#f7f9fc;}thead th.ctr{text-align:center;}tbody td{padding:8px 6px;border-bottom:1px solid #e2e7f0;text-align:left;}tbody td.ctr{text-align:center;}@media print{button{display:none;}}</style>'+
+      '</head><body><h1>'+headerTitle+'</h1><p>출력일: '+TODAY+' · '+dateLabel+'</p>'+
+      '<table><colgroup><col style="width:11%"><col style="width:11%"><col style="width:12%"><col style="width:24%"><col style="width:11%"><col style="width:11%"><col style="width:8%"><col style="width:12%"></colgroup><thead><tr><th class="ctr">창고</th><th class="ctr">위치</th><th class="ctr">코드</th><th>품목명/규격</th><th class="ctr">전산재고</th><th class="ctr">실사수량</th><th class="ctr">차이</th><th class="ctr">비고</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="8" style="text-align:center;color:#909aad;padding:20px 0">출력할 실사 대상이 없습니다.</td></tr>') +
       '</tbody></table><div style="margin-top:20px;font-size:12px;color:#909aad;">출력 후 실사 수량을 손으로 기입하여 실사 반영 버튼을 눌러주세요.</div></body></html>';
     var printWindow = window.open('about:blank','printStocktake');
+    if(!printWindow) return showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.');
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(function(){ printWindow.print(); }, 300);
+  };
+  // 마감된 재고조사 보고서를 그대로 출력한다(실사수량이 이미 채워진 결과표).
+  window.printStocktakeReport = function(id){
+    var session = null;
+    (APP.stocktakeSessions||[]).forEach(function(s){ if(s.id===id) session=s; });
+    if(!session){ showToast("해당 재고조사를 찾을 수 없습니다."); return; }
+    var logRows = APP.stocktakeLogs.filter(function(l){ return l.batchId===id; });
+    var headerTitle = stocktakeTitleFromDate(session.date);
+    var rows = logRows.map(function(l){
+      var diffText = (l.diff>0?"+":"")+fmt(l.diff);
+      return '<tr><td class="ctr">'+esc(l.wh)+'</td><td class="ctr">'+esc(l.loc||"-")+'</td><td class="ctr">'+esc(l.code)+'</td><td>'+esc(l.name)+'</td><td class="ctr">'+fmt(l.before)+'</td>'+
+        '<td class="ctr">'+fmt(l.actual)+'</td><td class="ctr">'+diffText+'</td><td class="ctr">'+esc(l.memo&&l.memo!=="-"?l.memo:"")+'</td></tr>';
+    }).join("");
+    var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+headerTitle+'</title>'+
+      '<style>body{font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;color:#1a2033;padding:20px;text-align:center;}h1{font-size:18px;margin-bottom:8px;}p{margin:0 auto 8px;font-size:13px;color:#4c5568;display:inline-block;}table{width:100%;max-width:900px;margin:0 auto;border-collapse:collapse;font-size:13px;}thead th{border-bottom:1px solid #ccd4e2;text-align:left;padding:8px 6px;background:#f7f9fc;}thead th.ctr{text-align:center;}tbody td{padding:8px 6px;border-bottom:1px solid #e2e7f0;text-align:left;}tbody td.ctr{text-align:center;}@media print{button{display:none;}}</style>'+
+      '</head><body><h1>'+headerTitle+'</h1><p>위치: '+esc(session.wh)+' · 실사일: '+session.date+'</p>'+
+      '<table><thead><tr><th class="ctr">창고</th><th class="ctr">위치</th><th class="ctr">코드</th><th>품목명/규격</th><th class="ctr">전산재고</th><th class="ctr">실사수량</th><th class="ctr">차이</th><th class="ctr">비고</th></tr></thead><tbody>'+
+      (rows || '<tr><td colspan="8" style="text-align:center;color:#909aad;padding:20px 0">내역이 없습니다.</td></tr>')+
+      '</tbody></table></body></html>';
+    var printWindow = window.open('about:blank','printStocktakeReport');
     if(!printWindow) return showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.');
     printWindow.document.write(html);
     printWindow.document.close();
@@ -3138,6 +3513,117 @@
     if((m = expr.match(/^current-(\d+(?:\.\d+)?)$/))) return { op:"-", num:m[1], floor:false };
     return null;
   }
+  // 자재 상세 페이지(박스히어로 참고) — "자재 수정" 폼과는 별개로, 한눈에 정보를 보고
+  // 바로 출고/입고/재고실사로 넘어가거나 최근 이력을 확인하는 용도의 읽기 중심 화면이다.
+  // 실제 값 수정은 하단 "정보 수정" 버튼으로 기존 자재수정 모달을 연다.
+  function matRecentLogsHtml(code){
+    var rows = APP.logs.filter(function(l){ return l.code===code; }).map(function(l){ return {type:"out", l:l}; })
+      .concat(APP.inLogs.filter(function(l){ return l.code===code; }).map(function(l){ return {type:"in", l:l}; }));
+    rows.sort(function(a,b){
+      if(a.l.date!==b.l.date) return a.l.date<b.l.date?1:-1;
+      return (a.l.time<b.l.time)?1:(a.l.time>b.l.time?-1:0);
+    });
+    rows = rows.slice(0,5);
+    if(!rows.length) return '<div class="result-empty" style="padding:16px 0">입출고 이력이 없습니다.</div>';
+    return rows.map(function(r){
+      var badge = r.type==="in" ? '<span class="badge badge-in">입고</span>' : '<span class="badge badge-out">출고</span>';
+      return '<div class="matdetail-log-row"><span class="matdetail-log-date">'+r.l.date.slice(5)+'</span>'+badge+
+        '<span class="matdetail-log-qty" style="color:'+(r.type==="in"?"var(--ok-text)":"var(--low-text)")+'">'+(r.type==="in"?"+":"-")+fmt(r.l.qty)+' '+esc(r.l.unit||"")+'</span></div>';
+    }).join("");
+  }
+  window.goMatQuickAction = function(code, target){
+    var m = byCode(code); if(!m) return;
+    closeModal();
+    if(target==="pos"){ APP.cur="pos"; APP.posWh=m.wh; APP.posQ=m.name; }
+    else if(target==="receive"){ APP.cur="receive"; APP.receiveWh=m.wh; APP.receiveQ=m.name; }
+    else if(target==="stocktake"){ APP.cur="material"; APP.materialTab="stocktake"; APP.stocktakeView="new"; APP.stocktakeMode="single"; APP.stocktakeSingleCodes=[m.code]; }
+    persist(); renderContent();
+  };
+  window.openMatDetailModal = function(code){
+    var m = byCode(code);
+    if(!m){ showToast("자재 정보를 찾을 수 없습니다."); return; }
+    var low = isLow(m);
+    function row(label, val){ return '<div class="matdetail-row"><span class="matdetail-row-label">'+esc(label)+'</span><span class="matdetail-row-val">'+val+'</span></div>'; }
+    var html = '<div class="modal-header"><h3>제품 상세 정보</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body" style="padding:0">'+
+        '<div class="matdetail-grid">'+
+          '<div class="matdetail-left">'+
+            (m.photo
+              ? '<div class="matdetail-photo" onclick="openLightbox(\''+m.code+'\')" style="cursor:pointer"><img src="'+m.photo+'" alt=""></div>'
+              : '<div class="matdetail-photo">📦</div>')+
+            '<div class="matdetail-name">'+esc(m.name)+'</div>'+
+            '<div class="matdetail-code">'+esc(m.code)+'</div>'+
+            '<div class="matdetail-badges">'+stockBadge(m)+(m.discontinued?'<span class="badge badge-sub">사용중지</span>':'')+'</div>'+
+            '<div class="matdetail-rows">'+
+              row("자재구분", esc(m.matType||"-"))+
+              row("카테고리", esc(m.cat||"-"))+
+              row("창고", esc(m.wh||"-"))+
+              row("위치", esc(m.loc||"-"))+
+              row("단위", esc(m.unit||"-"))+
+              row("구매처", esc(m.vendor||"-"))+
+              row("최소발주수량", fmt(m.moq||0))+
+              row("단가", fmt(m.price||0)+"원")+
+              row("리드타임", (m.leadtime||0)+"일")+
+            '</div>'+
+            (m.note ? '<div class="matdetail-note">'+esc(m.note)+'</div>' : '')+
+          '</div>'+
+          '<div class="matdetail-right">'+
+            '<div class="matdetail-stock-card'+(low?" low":"")+'">'+
+              '<div class="matdetail-stock-label">현재고</div>'+
+              '<div class="matdetail-stock-val">'+fmt(m.stock)+'<span>'+esc(m.unit||"")+'</span></div>'+
+            '</div>'+
+            '<div class="matdetail-safe-mini">'+
+              '<div><div class="lbl">비수기 안전재고</div><div class="val">'+fmt(m.safeOff||0)+'</div></div>'+
+              '<div><div class="lbl">성수기 안전재고</div><div class="val">'+fmt(m.safePeak||0)+'</div></div>'+
+            '</div>'+
+            '<div class="matdetail-actions">'+
+              '<button type="button" onclick="goMatQuickAction(\''+m.code+'\',\'pos\')"><svg class="ic"><use href="#i-out"/></svg>출고</button>'+
+              '<button type="button" onclick="goMatQuickAction(\''+m.code+'\',\'receive\')"><svg class="ic"><use href="#i-in"/></svg>입고</button>'+
+              '<button type="button" onclick="openStockAdjustModal(\''+m.code+'\')"><svg class="ic"><use href="#i-edit"/></svg>조정</button>'+
+            '</div>'+
+            '<div class="matdetail-recent">'+
+              '<div class="matdetail-recent-title">최근 입출고 내역</div>'+
+              matRecentLogsHtml(m.code)+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="modal-footer" style="justify-content:space-between"><button type="button" class="btn btn-primary" onclick="closeModal();openMatModal(\''+m.code+'\')"><svg class="ic"><use href="#i-edit"/></svg>정보 수정</button><button type="button" class="btn btn-outline" onclick="closeModal()">닫기</button></div>';
+    openModal(html, true);
+  };
+  // 제품 상세 정보의 "조정" 버튼: 출고/입고 화면으로 이동하지 않고, 그 자리에서 바로
+  // 현재고 수량만 간단히 고쳐 반영한다(재고실사와 별개의 가벼운 수량 조정).
+  window.openStockAdjustModal = function(code){
+    var m = byCode(code); if(!m){ showToast("자재 정보를 찾을 수 없습니다."); return; }
+    var html = '<div class="modal-header"><h3>재고 조정</h3><button onclick="closeModal();openMatDetailModal(\''+code+'\')"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body">'+
+        '<div class="pos-hint">'+esc(m.name)+' · 현재고 <b>'+fmt(m.stock)+' '+esc(m.unit||"")+'</b></div>'+
+        '<div class="form-field"><label>변경할 수량</label><input type="number" id="adj-qty" value="'+m.stock+'" min="0" autofocus></div>'+
+        '<div class="form-field"><label>사유 (선택)</label><input type="text" id="adj-note" placeholder="예: 실사 오차 수정"></div>'+
+      '</div>'+
+      '<div class="modal-footer"><button type="button" class="btn btn-outline" onclick="closeModal();openMatDetailModal(\''+code+'\')">취소</button><button type="button" class="btn btn-primary" onclick="applyStockAdjust(\''+code+'\')">저장</button></div>';
+    openModal(html);
+  };
+  window.applyStockAdjust = function(code){
+    var m = byCode(code); if(!m) return;
+    var el = document.getElementById("adj-qty");
+    var newQty = parseInt(el.value, 10);
+    if(isNaN(newQty) || newQty<0){ showToast("올바른 수량을 입력하세요."); return; }
+    var note = (document.getElementById("adj-note")||{}).value || "-";
+    var oldQty = m.stock;
+    var diff = newQty - oldQty;
+    if(diff===0){ showToast("변경된 수량이 없습니다."); return; }
+    m.stock = newQty;
+    APP.adjLogs.unshift({
+      id:newId("ADJLOG"), batchId:newId("ADJBATCH"), date:TODAY, time:nowTimeStr(),
+      wh:m.wh, code:m.code, name:m.name, qty:diff, unit:m.unit, worker:"재고조정", memo:note,
+      beforeQty:oldQty, afterQty:newQty
+    });
+    persist();
+    closeModal();
+    showToast(m.name+"의 재고를 "+fmt(oldQty)+" → "+fmt(newQty)+"(으)로 조정했습니다.");
+    renderContent();
+  };
   window.openMatModal = function(code){
     var m = code ? byCode(code) : null;
     var simple = m ? parseSimpleProdFormula(m.prodFormula||"") : { op:"", num:"", floor:false };
@@ -3525,7 +4011,7 @@
     var rows = buildDoorPickRows(DOOR_PICK_GROUPBY, mdl.codes||[]);
     var html = '<div class="modal-header"><h3>'+esc(mdl.name)+' 사용 자재 선택</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body">'+
-      '<div class="field" style="max-width:260px"><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" id="dg-pick-q" style="width:100%" placeholder="자재명, 코드, 카테고리, 자재구분, 창고 검색" oninput="filterDoorGuidePick(this.value)"></div></div>'+
+      '<div class="field" style="max-width:260px"><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" id="dg-pick-q" style="width:100%" placeholder="품목명을 입력해 주세요" oninput="filterDoorGuidePick(this.value)"></div></div>'+
       '<div class="pill-row" id="dg-pick-groupby" style="margin-top:8px">'+
         '<button type="button" class="pill'+(DOOR_PICK_GROUPBY!=="wh"?" active":"")+'" onclick="setDoorPickGroupBy(\'cat\')">카테고리별</button>'+
         '<button type="button" class="pill'+(DOOR_PICK_GROUPBY==="wh"?" active":"")+'" onclick="setDoorPickGroupBy(\'wh\')">창고별</button>'+
@@ -3601,7 +4087,7 @@
       '</div>';
     }).join("") : '<div class="result-empty">검색 결과가 없습니다.</div>';
     return pmStatusGroupsHtml()+
-      '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품명, 코드 검색" value="'+esc(q)+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
+      '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" value="'+esc(q)+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
       '<div class="mat-card-list" style="margin-top:12px">'+cards+'</div>';
   }
   function purchaseRequestSearchHtml(){
@@ -3626,7 +4112,7 @@
       '<div class="pmreq-right-col">'+
         '<div class="panel"><div class="panel-header"><h3>검색 결과</h3></div>'+
           '<div class="panel-body pad">'+
-            '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품명, 코드 검색" value="'+esc(APP.pmReqQuery||"")+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
+            '<div class="search-wrap"><svg class="ic"><use href="#i-search"/></svg><input type="text" class="search-input-lg" placeholder="품목명을 입력해 주세요" value="'+esc(APP.pmReqQuery||"")+'" oninput="debounceSearch(\'pmReqQ\', this.value, setPmReqQuery)"></div>'+
             '<div class="result-list" style="margin-top:12px">'+rowsHtml+'</div>'+
           '</div>'+
         '</div>'+
@@ -3671,6 +4157,11 @@
   // 밀려버리므로, 건수만 보여주는 버튼으로 압축하고 탭하면 그 아래에 목록이 펼쳐지게 한다.
   // 이 펼침 상태는 화면 UI 상태일 뿐이라 APP(저장 대상)에는 넣지 않는다.
   var pmStatusExpandedMobile = {};
+  var pmStatusExpandedDesktop = {};
+  window.togglePmStatusGroupDesktop = function(label){
+    pmStatusExpandedDesktop[label] = !(pmStatusExpandedDesktop[label]!==false);
+    renderContent();
+  };
   window.togglePmStatusGroup = function(label){
     pmStatusExpandedMobile[label] = !pmStatusExpandedMobile[label];
     renderContent();
@@ -3690,7 +4181,14 @@
           (expanded ? '<div class="stock-list" style="border:none;border-radius:0;border-top:1px solid var(--border)">'+pmStatusRowsHtml(list, showDate)+'</div>' : '')+
         '</div>';
       }
-      return '<div class="stock-group"><div class="stock-group-head"><span class="stock-dot '+kind+'"></span>'+label+' <span class="stock-group-count">('+list.length+')</span></div><div class="stock-list">'+pmStatusRowsHtml(list, showDate)+'</div></div>';
+      var expandedD = pmStatusExpandedDesktop[label]!==false;
+      return '<div class="stock-group">'+
+        '<button type="button" class="stock-group-head stock-group-head-toggle" onclick="togglePmStatusGroupDesktop(\''+label+'\')">'+
+          '<span class="stock-dot '+kind+'"></span>'+label+' <span class="stock-group-count">('+list.length+')</span>'+
+          '<svg class="ic chev" style="width:16px;height:16px;margin-left:auto;transform:rotate('+(expandedD?"0":"-90")+'deg)"><use href="#i-chevron"/></svg>'+
+        '</button>'+
+        (expandedD ? '<div class="stock-list">'+pmStatusRowsHtml(list, showDate)+'</div>' : '')+
+      '</div>';
     }
     return '<div class="panel" style="margin-bottom:16px"><div class="panel-header"><h3>상태별 현황</h3>'+
       (showLink ? '<span class="btn btn-ghost btn-sm" onclick="goPurchaseManage()">전체보기</span>' : '<span style="font-size:12px;color:var(--text-400)">이미 요청된 품목을 확인해 중복 요청을 방지하세요</span>')+
@@ -3746,7 +4244,7 @@
       var sc = matOrderStatusColorVars(m.orderStatus);
       return '<div class="result-row"><div style="flex:none">'+photoCell(m,false)+'</div>'+
         '<div class="result-main"><div class="result-name"><a href="#" onclick="event.preventDefault();openMatModal(\''+m.code+'\')" style="color:inherit;text-decoration:underline;text-underline-offset:2px">'+esc(m.name)+'</a></div>'+
-        '<div class="result-meta">'+esc(m.code)+' · '+esc(m.vendor||"-")+' · 최소발주 '+fmt(m.moq||0)+' · 단가 '+fmt(m.price||0)+'원</div></div>'+
+        '<div class="result-meta">'+esc(m.code)+' · 구매처 '+esc(m.vendor||"-")+' · 최소발주 '+fmt(m.moq||0)+' · 단가 '+fmt(m.price||0)+'원</div></div>'+
         '<span class="badge" style="background:var(--warn-bg);color:var(--warn-text);flex:none">리드타임 '+(m.leadtime||0)+'일</span>'+
         '<select style="flex:none;font-size:11.5px;font-weight:800;padding:5px 10px;height:28px;border-radius:99px;text-align:center;text-align-last:center;background:'+sc.bg+';color:'+sc.fg+';border-color:'+sc.bg+'" onchange="setMatOrderStatusInline(\''+m.code+'\', this.value)">'+
           ["", "발주필요", "보류", "발주완료"].map(function(s){ return '<option value="'+s+'"'+(m.orderStatus===s?" selected":"")+'>'+(s||"일반")+'</option>'; }).join("")+
@@ -3840,7 +4338,7 @@
       '<div class="panel"><div class="panel-header"><h3>선택된 카테고리 품목 · '+esc(selLabel)+'</h3><span class="count" style="color:var(--text-400)">'+selItems.length+'건</span></div>'+
         '<div class="panel-body pad">'+
           '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;justify-content:space-between">'+
-            '<div class="field" style="max-width:240px"><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.pmGuideQuery||"")+'" placeholder="품명, 코드, 거래처로 검색" oninput="debounceSearch(\'pmGuideQ\', this.value, setPmGuideQuery)"></div></div>'+
+            '<div class="field" style="max-width:240px"><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" style="width:100%" value="'+esc(APP.pmGuideQuery||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'pmGuideQ\', this.value, setPmGuideQuery)"></div></div>'+
             (mobile ? '' : '<button class="btn btn-outline" onclick="guideAbcExport()"><svg class="ic"><use href="#i-download"/></svg>엑셀 다운로드 (ABC 등급표)</button>')+
           '</div>'+
           '<div style="margin-top:12px">'+selHtml+'</div>'+
@@ -3880,7 +4378,7 @@
     showToast("설명이 저장되었습니다.");
     openGuideDetailModal(code);
   };
-  window.setPmGuideQuery = function(v){ APP.pmGuideQuery=v; persist(); renderContent(); var el=document.querySelector('input[placeholder="품명, 코드, 거래처로 검색"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
+  window.setPmGuideQuery = function(v){ APP.pmGuideQuery=v; persist(); renderContent(); var el=document.querySelector('input[placeholder="품목명을 입력해 주세요"]'); if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } };
   window.selectPmGuide = function(kind, value){ APP.pmGuideSelKind=kind; APP.pmGuideSelValue=value; persist(); renderContent(); };
   window.guideAbcExport = function(){
     try{
@@ -4094,7 +4592,7 @@
       return (a.time<b.time)?1:(a.time>b.time?-1:0);
     });
   }
-  function historyMobileCards(groups){
+  function historyMobileCards(groups, emptyText){
     return groups.length ? groups.map(function(g){
       var first = g.items[0];
       var label = esc(first.name)+(g.items.length>1 ? ' 외 '+(g.items.length-1)+'건' : '');
@@ -4118,27 +4616,156 @@
         '<div class="mat-card-tags" style="margin-top:8px"><span class="mat-card-tag">'+esc(g.wh)+'</span><span class="mat-card-tag">'+esc(g.person)+'</span></div>'+
         (g.memo && g.memo!=="-" ? '<div class="mat-card-code" style="margin-top:6px">'+esc(g.memo)+'</div>' : '')+
       '</div>';
-    }).join("") : '<div class="result-empty">해당 기간에 내역이 없습니다.</div>';
+    }).join("") : '<div class="result-empty">'+(emptyText||"해당 기간에 내역이 없습니다.")+'</div>';
+  }
+  /* 입출고내역 날짜 범위 선택기(박스히어로 스타일 팝오버) */
+  var historyRangeOpen = false;
+  var historyCalMonth = null; // "YYYY-MM", 팝오버 안 달력이 보여주는 달(선택된 범위와는 별개)
+  var historyRangeAnchor = null; // 달력에서 범위를 새로 선택 중일 때 첫 클릭 날짜
+  function pad2(n){ return (n<10?"0":"")+n; }
+  window.toggleHistoryRangePop = function(ev){
+    if(ev) ev.stopPropagation();
+    historyRangeOpen = !historyRangeOpen;
+    if(historyRangeOpen){ historyCalMonth = (APP.historyTo || TODAY).slice(0,7); historyRangeAnchor = null; }
+    renderContent();
+  };
+  window.closeHistoryRangePop = function(){ if(historyRangeOpen){ historyRangeOpen = false; renderContent(); } };
+  document.addEventListener("click", function(e){
+    if(!historyRangeOpen) return;
+    if(e.target.closest(".hrange-wrap")) return;
+    historyRangeOpen = false;
+    renderContent();
+  });
+  // 범위 버튼 양옆 화살표: 현재 선택된 기간 길이만큼 통째로 앞/뒤로 민다(예: 최근 30일 보던 중 ›를 누르면 다음 30일).
+  window.pageHistoryRange = function(dir){
+    var start = APP.historyFrom || addMonths(TODAY,-1), end = APP.historyTo || TODAY;
+    var span = daysBetweenInclusive(start, end);
+    APP.historyFrom = addDays(start, dir*span);
+    APP.historyTo = addDays(end, dir*span);
+    persist(); renderContent();
+  };
+  window.navHistoryCalMonth = function(dir){
+    historyCalMonth = addMonths(historyCalMonth+"-01", dir).slice(0,7);
+    renderContent();
+  };
+  window.pickHistoryCalDay = function(dateStr){
+    if(historyRangeAnchor==null){
+      historyRangeAnchor = dateStr;
+      APP.historyFrom = dateStr; APP.historyTo = dateStr;
+    } else {
+      APP.historyFrom = historyRangeAnchor < dateStr ? historyRangeAnchor : dateStr;
+      APP.historyTo = historyRangeAnchor < dateStr ? dateStr : historyRangeAnchor;
+      historyRangeAnchor = null;
+    }
+    persist(); renderContent();
+  };
+  window.setHistoryPreset = function(preset){
+    var from, to = TODAY;
+    if(preset==="today") from = TODAY;
+    else if(preset==="7d") from = addDays(TODAY,-6);
+    else if(preset==="30d") from = addDays(TODAY,-29);
+    else if(preset==="month") from = TODAY.slice(0,7)+"-01";
+    else if(preset==="lastweek"){
+      var wd = new Date(TODAY+"T00:00:00Z").getUTCDay(); // 0=일요일
+      var thisMon = addDays(TODAY, -(wd===0?6:wd-1));
+      from = addDays(thisMon,-7); to = addDays(thisMon,-1);
+    } else if(preset==="lastmonth"){
+      from = addMonths(TODAY.slice(0,7)+"-01", -1);
+      to = addDays(TODAY.slice(0,7)+"-01", -1);
+    } else { from = addMonths(TODAY,-1); }
+    APP.historyFrom = from; APP.historyTo = to;
+    historyRangeOpen = false;
+    persist(); renderContent();
+  };
+  function historyCalGridHtml(monthStr, start, end){
+    var p = monthStr.split("-").map(Number), y=p[0], m=p[1];
+    var startWeekday = new Date(Date.UTC(y, m-1, 1)).getUTCDay();
+    var daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    var daysInPrevMonth = new Date(Date.UTC(y, m-1, 0)).getUTCDate();
+    var cells = [];
+    for(var i=startWeekday-1;i>=0;i--){
+      var pm = m-1<1?12:m-1, py = m-1<1?y-1:y;
+      cells.push({ date: py+"-"+pad2(pm)+"-"+pad2(daysInPrevMonth-i), inMonth:false, day:daysInPrevMonth-i });
+    }
+    for(var d=1; d<=daysInMonth; d++) cells.push({ date: y+"-"+pad2(m)+"-"+pad2(d), inMonth:true, day:d });
+    var rem = cells.length % 7;
+    if(rem>0){
+      var nm = m+1>12?1:m+1, ny = m+1>12?y+1:y;
+      for(var d2=1; d2<=7-rem; d2++) cells.push({ date: ny+"-"+pad2(nm)+"-"+pad2(d2), inMonth:false, day:d2 });
+    }
+    var rows = "";
+    for(var w=0; w<cells.length/7; w++){
+      rows += '<div class="hrange-cal-row">';
+      for(var c=0;c<7;c++){
+        var cell = cells[w*7+c];
+        var inRange = start && end && cell.date>=start && cell.date<=end;
+        var isStart = cell.date===start, isEnd = cell.date===end;
+        var isToday = cell.date===TODAY;
+        var cls = "hrange-day"+(cell.inMonth?"":" dim")+(inRange?" in-range":"")+(isStart?" range-start":"")+(isEnd?" range-end":"")+(isToday?" today":"");
+        rows += '<button type="button" class="'+cls+'" onclick="pickHistoryCalDay(\''+cell.date+'\')">'+cell.day+'</button>';
+      }
+      rows += '</div>';
+    }
+    return rows;
+  }
+  function historyRangeBarHtml(start, end){
+    var monthStr = historyCalMonth || end.slice(0,7);
+    var monthLabel = parseInt(monthStr.slice(5,7),10)+"월 "+monthStr.slice(0,4);
+    var popHtml = !historyRangeOpen ? "" :
+      '<div class="hrange-pop" onclick="event.stopPropagation()">'+
+        '<div class="hrange-pop-body">'+
+          '<div class="hrange-cal">'+
+            '<div class="hrange-cal-head"><button type="button" onclick="navHistoryCalMonth(-1)">‹</button><b>'+monthLabel+'</b><button type="button" onclick="navHistoryCalMonth(1)">›</button></div>'+
+            '<div class="hrange-cal-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>'+
+            historyCalGridHtml(monthStr, start, end)+
+          '</div>'+
+          '<div class="hrange-presets">'+
+            '<button type="button" onclick="setHistoryPreset(\'today\')">오늘</button>'+
+            '<button type="button" onclick="setHistoryPreset(\'7d\')">최근 7일</button>'+
+            '<button type="button" onclick="setHistoryPreset(\'30d\')">최근 30일</button>'+
+            '<button type="button" onclick="setHistoryPreset(\'month\')">이번 달</button>'+
+            '<button type="button" onclick="setHistoryPreset(\'lastweek\')">지난주</button>'+
+            '<button type="button" onclick="setHistoryPreset(\'lastmonth\')">지난달</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="hrange-pop-footer">'+
+          '<div class="field"><label>시작일</label><input type="date" value="'+start+'" onclick="event.stopPropagation()" onchange="event.stopPropagation();debounceSearch(\'historyFrom\', this.value, setHistoryFrom)"></div>'+
+          '<div class="field"><label>종료일</label><input type="date" value="'+end+'" onclick="event.stopPropagation()" onchange="event.stopPropagation();debounceSearch(\'historyTo\', this.value, setHistoryTo)"></div>'+
+        '</div>'+
+      '</div>';
+    return '<div class="hrange-wrap">'+
+      '<button type="button" class="hrange-btn" onclick="toggleHistoryRangePop(event)">'+
+        '<span class="hrange-arrow" onclick="event.stopPropagation();pageHistoryRange(-1)"><svg class="ic" style="width:14px;height:14px"><use href="#i-chevron"/></svg></span>'+
+        '<svg class="ic" style="width:14px;height:14px"><use href="#i-calendar"/></svg><span>'+start+' ~ '+end+'</span>'+
+        '<span class="hrange-arrow" onclick="event.stopPropagation();pageHistoryRange(1)"><svg class="ic" style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-chevron"/></svg></span>'+
+      '</button>'+
+      popHtml+
+    '</div>';
   }
   function screenHistory(){
-    var start = APP.historyFrom || addDays(TODAY,-29), end = APP.historyTo || TODAY;
+    var start = APP.historyFrom || addMonths(TODAY,-1), end = APP.historyTo || TODAY;
     if(start > end){ var t0=start; start=end; end=t0; }
-    var groups = historyGroups(start, end);
+    var q = (APP.historyQ||"").trim().toLowerCase();
+    var groups = historyGroups(start, end).filter(function(g){
+      if(!q) return true;
+      return g.items.some(function(it){ return (it.name||"").toLowerCase().indexOf(q)>-1 || (it.code||"").toLowerCase().indexOf(q)>-1; });
+    });
     if(isMobileView()){
       return '<div class="sub-view">'+
         '<div class="toolbar">'+
-          '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="setHistoryFrom(this.value)"></div></div>'+
-          '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+end+'" onchange="setHistoryTo(this.value)"></div></div>'+
+          '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="debounceSearch(\'historyFrom\', this.value, setHistoryFrom)"></div></div>'+
+          '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+end+'" onchange="debounceSearch(\'historyTo\', this.value, setHistoryTo)"></div></div>'+
           '<button class="btn btn-outline" style="width:100%;justify-content:center" onclick="resetHistoryRange()">최근 1개월</button>'+
         '</div>'+
+        '<div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.historyQ||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'historyQ\', this.value, setHistoryQuery)"></div>'+
         '<div class="pos-hint">'+start+' ~ '+end+' · 총 '+groups.length+'건</div>'+
-        '<div class="mat-card-list">'+historyMobileCards(groups)+'</div>'+
+        '<div class="mat-card-list">'+historyMobileCards(groups, q?"검색 결과가 없습니다.":undefined)+'</div>'+
       '</div>';
     }
     var rangeBar = '<div class="toolbar">'+
-        '<div class="field"><label>시작일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+start+'" onchange="setHistoryFrom(this.value)"></div></div>'+
-        '<div class="field"><label>종료일</label><div class="input-icon"><svg class="ic"><use href="#i-calendar"/></svg><input type="date" value="'+end+'" onchange="setHistoryTo(this.value)"></div></div>'+
-        '<div class="btn-row"><button class="btn btn-outline" onclick="resetHistoryRange()">최근 1개월</button><button class="btn btn-outline" onclick="historyCsvExport()"><svg class="ic"><use href="#i-download"/></svg>CSV 다운로드</button></div>'+
+        '<div class="field"><label>기간</label>'+historyRangeBarHtml(start,end)+'</div>'+
+        '<div class="field" style="flex:1;min-width:200px"><label>검색</label><div class="input-icon"><svg class="ic"><use href="#i-search"/></svg><input type="text" value="'+esc(APP.historyQ||"")+'" placeholder="품목명을 입력해 주세요" oninput="debounceSearch(\'historyQ\', this.value, setHistoryQuery)"></div></div>'+
+        '<div class="btn-row"><button class="btn btn-outline" onclick="historyCsvExport()"><svg class="ic"><use href="#i-download"/></svg>CSV 다운로드</button></div>'+
       '</div>';
     var rows = groups.map(function(g){
       var first = g.items[0];
@@ -4152,21 +4779,23 @@
     var outCnt = groups.filter(function(g){ return g.type==="out"; }).reduce(function(s,g){ return s+g.items.length; },0);
     var inCnt = groups.filter(function(g){ return g.type==="in"; }).reduce(function(s,g){ return s+g.items.length; },0);
     var adjCnt = groups.filter(function(g){ return g.type==="adj"; }).reduce(function(s,g){ return s+g.items.length; },0);
-    return '<div class="sub-view">'+
-      (isMobileView() ? '' : '<div class="pos-hint">이전 프로그램의 입출고 내역을 CSV로 업로드하면 조회용 이력으로 추가됩니다(현재 재고에는 영향 없음).<br>CSV 형식: 일자, 구분(입고/출고), 자재명/규격, 자재구분, 수량, 변동전, 변동후, 창고, 담당자, 비고 — 변동전·변동후를 함께 입력하면 그 차이를 수량으로 자동 계산합니다.<br>자재명/규격이 자재관리에 없는 품목은 "사용중지" 자재로 자동 등록됩니다(자재구분을 안 적으면 부자재로 등록).</div>')+
+    return '<div class="sub-view fill-scroll">'+
       rangeBar+
       '<div class="toolbar-actions"><div style="font-size:13px;font-weight:700;color:var(--text-600)">'+start+' ~ '+end+' · 총 '+groups.length+'건 (품목 '+itemCount+'개) · 출고 '+outCnt+' · 입고 '+inCnt+'</div>'+
       '<div class="btn-row">'+
         '<button class="btn btn-outline" onclick="downloadHistoryTemplate()">양식 다운로드</button>'+
         '<label class="btn btn-outline"><input type="file" accept=".csv" style="display:none" onchange="historyCsvImport(this)"><svg class="ic"><use href="#i-upload"/></svg>이전 내역 업로드</label>'+
       '</div></div>'+
-      '<div class="table-wrap"><table><thead><tr><th>일자</th><th>구분</th><th>내역</th><th>창고</th><th>담당자</th><th>비고</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--text-400)">해당 기간에 내역이 없습니다.</td></tr>')+'</tbody></table></div>'+
+      '<div class="table-wrap"><table><thead><tr><th>일자</th><th>구분</th><th>내역</th><th>창고</th><th>담당자</th><th>비고</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--text-400)">'+(q?"검색 결과가 없습니다.":"해당 기간에 내역이 없습니다.")+'</td></tr>')+'</tbody></table></div>'+
     '</div>';
   }
-  window.setHistoryFrom = function(v){ APP.historyFrom = v || addDays(TODAY,-29); persist(); renderContent(); };
+  window.setHistoryFrom = function(v){ APP.historyFrom = v || addMonths(TODAY,-1); persist(); renderContent(); };
   window.setHistoryTo = function(v){ APP.historyTo = v || TODAY; persist(); renderContent(); };
-  window.resetHistoryRange = function(){ APP.historyFrom = addDays(TODAY,-29); APP.historyTo = TODAY; persist(); renderContent(); };
+  window.resetHistoryRange = function(){ APP.historyFrom = addMonths(TODAY,-1); APP.historyTo = TODAY; persist(); renderContent(); };
   window.openBatchModal = function(type, batchId){
+    // "조정"(재고실사·재고조정)은 출고/입고와 데이터가 다른 별도 로그(adjLogs)에 있어서
+    // 여기서 갈라 별도의 읽기 전용 상세보기로 보여준다.
+    if(type==="adj") return openAdjBatchModal(batchId);
     var arr = type==="in" ? APP.inLogs : APP.logs;
     var items = arr.filter(function(l){ return (l.batchId||l.id)===batchId; });
     if(!items.length){ closeModal(); return; }
@@ -4184,18 +4813,43 @@
       }
       return '<div class="stock-row">'+
         '<div class="stock-row-main"><div class="stock-row-name">'+esc(l.name)+'<span class="stock-code">'+esc(l.code||"-")+'</span></div>'+
-        '<div class="stock-row-meta" id="batch-stock-'+esc(l.id)+'">'+stockText+'<span style="display:block;color:'+ (type==='in' ? '#0f766e' : '#dc2626') +';font-weight:700;margin-top:4px">'+qtyChange+'</span></div></div>'+ 
+        '<div class="stock-row-meta" id="batch-stock-'+esc(l.id)+'">'+stockText+' <span style="color:'+ (type==='in' ? '#0f766e' : '#dc2626') +';font-weight:700">('+qtyChange+')</span></div></div>'+
         '<div class="stock-row-nums" style="align-items:center">'+
           '<input type="number" id="batch-qty-'+esc(l.id)+'" value="'+l.qty+'" min="1" style="width:80px" onclick="event.stopPropagation()" oninput="event.stopPropagation();updateBatchPreview(\''+type+'\',\''+esc(l.id)+'\')">'+
           '<span style="color:var(--text-400);font-size:12px">'+esc(l.unit||"")+'</span>'+
-          '<button class="btn btn-outline icon-only" title="수량 저장" onclick="event.stopPropagation();saveBatchItem(\''+type+'\',\''+esc(l.id)+'\')"><svg class="ic"><use href="#i-edit"/></svg></button>'+
-          '<button class="btn btn-outline icon-only" title="이 항목 삭제" onclick="event.stopPropagation();deleteBatchItem(\''+type+'\',\''+esc(l.id)+'\',\''+esc(batchId)+'\')"><svg class="ic"><use href="#i-trash"/></svg></button>'+
+          '<button class="btn btn-outline btn-sm" style="color:var(--low-text);border-color:var(--low-text)" onclick="event.stopPropagation();deleteBatchItem(\''+type+'\',\''+esc(l.id)+'\',\''+esc(batchId)+'\')"><svg class="ic" style="width:13px;height:13px"><use href="#i-trash"/></svg>삭제</button>'+
         '</div></div>';
     }).join("");
     var timeDisplay = (first.time && first.time!=="-") ? " "+first.time.slice(0,5) : "";
     var html = '<div class="modal-header"><h3>'+(type==="in"?"입고":"출고")+' 내역 상세 · '+first.date+timeDisplay+'</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
       '<div class="modal-body">'+
-      '<div class="pos-hint">창고 '+esc(first.wh)+' · 담당자 '+esc(type==="in"?first.receiver:first.worker)+' · 총 '+items.length+'건. 항목별로 수량을 고쳐 저장하거나, 잘못 선택한 품목은 삭제하세요. 변경 사항은 현재고에도 자동 반영됩니다.</div>'+
+      '<div class="pos-hint">창고 '+esc(first.wh)+' · 담당자 '+esc(type==="in"?first.receiver:first.worker)+' · 총 '+items.length+'건. 수량을 고친 뒤 아래 확인 버튼을 누르면 저장되고, 잘못 선택한 품목은 삭제 버튼으로 바로 제거할 수 있습니다. 변경 사항은 현재고에도 자동 반영됩니다.</div>'+
+      '<div class="stock-list">'+rowsHtml+'</div>'+
+      '</div>'+
+      '<div class="modal-footer"><button class="btn btn-primary" onclick="confirmBatchModal(\''+type+'\',\''+esc(batchId)+'\')">확인</button></div>';
+    openModal(html);
+  };
+  // 재고실사·재고조정으로 생긴 "조정" 내역은 수량을 다시 고치는 개념이 아니라 그 당시 무엇이
+  // 어떻게 바뀌었는지 확인하는 용도라서, 입출고와 달리 읽기 전용으로 보여준다.
+  window.openAdjBatchModal = function(batchId){
+    var items = APP.adjLogs.filter(function(l){ return (l.batchId||l.id)===batchId; });
+    if(!items.length){ closeModal(); return; }
+    var first = items[0];
+    var rowsHtml = items.map(function(l){
+      var diffText = (l.qty>0?"+":"")+fmt(l.qty);
+      var diffColor = l.qty>0 ? "var(--ok-text)" : l.qty<0 ? "var(--low-text)" : "var(--text-400)";
+      return '<div class="stock-row">'+
+        '<div class="stock-row-main"><div class="stock-row-name">'+esc(l.name)+'<span class="stock-code">'+esc(l.code||"-")+'</span></div>'+
+        '<div class="stock-row-meta">재고 변동 <span style="font-weight:700;color:#111">'+fmt(l.beforeQty)+'</span> → <span style="font-weight:700;color:#1d4ed8">'+fmt(l.afterQty)+'</span>'+
+          ' <span style="color:'+diffColor+';font-weight:700">('+diffText+')</span>'+
+          (l.memo && l.memo!=="-" ? '<span style="display:block;margin-top:4px;color:var(--text-400)">비고: '+esc(l.memo)+'</span>' : '')+
+        '</div></div>'+
+      '</div>';
+    }).join("");
+    var timeDisplay = (first.time && first.time!=="-") ? " "+first.time.slice(0,5) : "";
+    var html = '<div class="modal-header"><h3>조정 내역 상세 · '+first.date+timeDisplay+'</h3><button onclick="closeModal()"><svg class="ic" style="width:18px;height:18px"><use href="#i-close"/></svg></button></div>'+
+      '<div class="modal-body">'+
+      '<div class="pos-hint">창고 '+esc(first.wh)+' · 담당 '+esc(first.worker||"-")+' · 총 '+items.length+'건</div>'+
       '<div class="stock-list">'+rowsHtml+'</div>'+
       '</div>'+
       '<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">닫기</button></div>';
@@ -4222,27 +4876,41 @@
     target.style.color = '';
   };
 
-  window.saveBatchItem = function(type, id){
+  // 모달 안 각 항목의 수량 입력은 미리보기만 하고, 실제 저장은 하단 "확인" 버튼을 눌렀을 때
+  // 한 번에 일괄 반영한다(항목별 개별 저장 버튼은 두지 않음).
+  window.confirmBatchModal = function(type, batchId){
     var arr = type==="in" ? APP.inLogs : APP.logs;
-    var l = arr.filter(function(x){ return x.id===id; })[0]; if(!l) return;
-    var newQty = parseInt((document.getElementById("batch-qty-"+id)||{}).value, 10);
-    if(!newQty || newQty<=0){ showToast("올바른 수량을 입력하세요."); return; }
-    var oldQty = l.qty;
-    var m = byCode(l.code);
-    if(m){
-      var delta = type==="in" ? (newQty - oldQty) : (oldQty - newQty);
-      m.stock = Math.max(0, m.stock + delta);
+    var items = arr.filter(function(l){ return (l.batchId||l.id)===batchId; });
+    if(!items.length){ closeModal(); return; }
+    var changes = [];
+    for(var i=0;i<items.length;i++){
+      var l = items[i];
+      var el = document.getElementById("batch-qty-"+l.id);
+      var newQty = el ? parseInt(el.value, 10) : l.qty;
+      if(!newQty || newQty<=0){
+        showToast('"'+l.name+'"의 수량을 올바르게 입력해주세요.');
+        return;
+      }
+      if(newQty !== l.qty) changes.push({ l:l, oldQty:l.qty, newQty:newQty });
     }
-    l.qty = newQty;
+    if(!changes.length){ closeModal(); return; }
+    changes.forEach(function(c){
+      var m = byCode(c.l.code);
+      if(m){
+        var delta = type==="in" ? (c.newQty - c.oldQty) : (c.oldQty - c.newQty);
+        m.stock = Math.max(0, m.stock + delta);
+      }
+      c.l.qty = c.newQty;
+    });
     persist();
-    showToast("수량이 "+fmt(oldQty)+" → "+fmt(newQty)+"(으)로 수정되었습니다."+(m?" 재고에도 반영했습니다.":""));
-    openBatchModal(type, l.batchId||l.id);
+    showToast(changes.length+"건의 수량이 수정되었습니다. 재고에도 반영했습니다.");
+    closeModal();
     renderContent();
   };
   window.deleteBatchItem = function(type, id, batchId){
     var arr = type==="in" ? APP.inLogs : APP.logs;
     var l = arr.filter(function(x){ return x.id===id; })[0]; if(!l) return;
-    confirmAction((type==="in"?"입고":"출고")+" 내역 \""+l.name+" "+fmt(l.qty)+"\"을(를) 삭제할까요? 품목을 잘못 선택한 경우처럼 이 내역 자체가 잘못된 경우에만 사용하세요.", function(){
+    confirmAction((type==="in"?"입고":"출고")+" 내역 \""+l.name+" 수량: "+fmt(l.qty)+"\"을(를) 삭제할까요?\n\n품목을 잘못 선택한 경우처럼 이 내역 자체가 잘못된 경우에만 사용하세요.", function(){
       var m = byCode(l.code);
       if(m){
         m.stock = Math.max(0, m.stock + (type==="in" ? -l.qty : l.qty));
@@ -4262,7 +4930,15 @@
       ["2026-05-14","입고","스텐 경첩 4인치","원자재","150","400","550","1공장창고","강준상","이전 프로그램 이관 데이터"],
       ["2026-05-15","출고","스텐 경첩 4인치","원자재","30","550","520","1공장창고","김서인","이전 프로그램 이관 데이터"]
     ];
-    var csv = "﻿"+[header.join(",")].concat(sample.map(function(r){ return r.join(","); })).join("\r\n");
+    // 업로드 안내 문구는 "#"으로 시작하는 주석 줄로 맨 위에 남겨둔다. historyCsvImport()가
+    // "#"로 시작하는 줄은 항상 건너뛰므로, 지우지 않고 그대로 올려도 데이터로 섞여 들어가지 않는다.
+    var guideLines = [
+      '"#이전 프로그램의 입출고 내역을 CSV로 업로드하면 조회용 이력으로 추가됩니다(현재 재고에는 영향 없음)."',
+      '"#CSV 형식: 일자, 구분(입고/출고), 자재명/규격, 자재구분, 수량, 변동전, 변동후, 창고, 담당자, 비고 — 변동전·변동후를 함께 입력하면 그 차이를 수량으로 자동 계산합니다."',
+      '"#자재명/규격이 자재관리에 없는 품목은 사용중지 자재로 자동 등록됩니다(자재구분을 안 적으면 부자재로 등록)."',
+      '"#아래 안내 줄(#으로 시작)은 업로드 시 자동으로 무시되니 지우지 않아도 됩니다."'
+    ];
+    var csv = "﻿"+guideLines.concat([header.join(",")]).concat(sample.map(function(r){ return r.join(","); })).join("\r\n");
     try{
       var blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
       var url = URL.createObjectURL(blob);
@@ -4273,7 +4949,7 @@
     }catch(e){ showToast("이 환경에서는 다운로드가 제한됩니다. (프로토타입)"); }
   };
   window.historyCsvExport = function(){
-    var start = APP.historyFrom || addDays(TODAY,-29), end = APP.historyTo || TODAY;
+    var start = APP.historyFrom || addMonths(TODAY,-1), end = APP.historyTo || TODAY;
     if(start > end){ var t0=start; start=end; end=t0; }
     var header = ["일자","구분","자재명/규격","자재구분","수량","변동전","변동후","창고","담당자","비고"];
     var lines = [header.join(",")].concat(historyRows().filter(function(r){ return r.d.date>=start && r.d.date<=end; }).map(function(r){
@@ -4319,7 +4995,11 @@
     var reader = new FileReader();
     reader.onload = function(e){
       var text = String(e.target.result).replace(/^﻿/,'');
-      var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+      // "#"로 시작하는 줄(양식 맨 위의 업로드 안내 줄)은 데이터로 취급하지 않고 건너뛴다.
+      var lines = text.split(/\r?\n/).filter(function(l){
+        var t = l.trim();
+        return t && t[0] !== "#" && t.slice(0,2) !== '"#';
+      });
       if(lines.length<2){ showToast("가져올 데이터가 없습니다."); return; }
       var headerCols = parseCsvLine(lines[0]).map(function(c){ return String(c||"").trim(); });
       var headerMap = { date:-1, type:-1, name:-1, matType:-1, qty:-1, before:-1, after:-1, wh:-1, worker:-1, memo:-1 };
@@ -4511,8 +5191,8 @@
       var cnt = APP.mats.filter(function(m){ return m.wh===w; }).length;
       return '<div class="wh-row draggable-row" draggable="true" ondragstart="dragStart(event,\'wh\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'wh\','+i+')">'
         +'<div class="wh-order-btns"><button type="button">▲</button><button type="button">▼</button></div>'
-        +'<input class="input wh-name-input" type="text" value="'+esc(w)+'" onchange="whRename('+i+', this.value)">'
-        +'<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'
+        +'<div class="wh-row-main"><input class="input wh-name-input" type="text" value="'+esc(w)+'" onchange="whRename('+i+', this.value)">'
+        +'<span class="muted" style="font-size:12px;color:var(--text-400)">등록 품목 '+cnt+'건</span></div>'
         +'<button class="btn btn-outline icon-only" onclick="whDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
     }).join("");
 
@@ -4520,18 +5200,18 @@
       var cnt = APP.mats.filter(function(m){ return m.cat===c; }).length;
       return '<div class="wh-row draggable-row" draggable="true" ondragstart="dragStart(event,\'cat\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'cat\','+i+')">'
         +'<div class="wh-order-btns"><button type="button">▲</button><button type="button">▼</button></div>'
-        +'<input class="input wh-name-input" type="text" value="'+esc(c)+'" onchange="catRename('+i+', this.value)">'
-        +'<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'
+        +'<div class="wh-row-main"><input class="input wh-name-input" type="text" value="'+esc(c)+'" onchange="catRename('+i+', this.value)">'
+        +'<span class="muted" style="font-size:12px;color:var(--text-400)">등록 품목 '+cnt+'건</span></div>'
         +'<button class="btn btn-outline icon-only" onclick="catDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
     }).join("");
 
     var typeRows = APP.matTypes.map(function(t,i){
       var cnt = APP.mats.filter(function(m){ return m.matType===t.name; }).length;
-      return '<div class="wh-row draggable-row" style="flex-wrap:wrap" draggable="true" ondragstart="dragStart(event,\'type\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'type\','+i+')">'
+      return '<div class="wh-row draggable-row" draggable="true" ondragstart="dragStart(event,\'type\','+i+')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,\'type\','+i+')">'
         +'<div class="wh-order-btns"><button type="button">▲</button><button type="button">▼</button></div>'
-        +'<input class="input wh-name-input" type="text" value="'+esc(t.name)+'" onchange="typeRename('+i+', this.value)">'
-        +'<label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" '+(t.purchasable?"checked":"")+' onchange="typeTogglePurchasable('+i+', this.checked)">자재요청 표시</label>'
-        +'<span class="muted" style="font-size:12px;color:var(--text-400);white-space:nowrap">등록 품목 '+cnt+'건</span>'
+        +'<div class="wh-row-main"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><input class="input wh-name-input" type="text" style="flex:1;min-width:120px" value="'+esc(t.name)+'" onchange="typeRename('+i+', this.value)">'
+        +'<label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" '+(t.purchasable?"checked":"")+' onchange="typeTogglePurchasable('+i+', this.checked)">자재요청 표시</label></div>'
+        +'<span class="muted" style="font-size:12px;color:var(--text-400)">등록 품목 '+cnt+'건</span></div>'
         +'<button class="btn btn-outline icon-only" onclick="typeDelete('+i+')"><svg class="ic" style="width:14px;height:14px"><use href="#i-trash"/></svg></button></div>';
     }).join("");
     var months = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -4542,20 +5222,18 @@
     }).join("");
 
     return '<div class="sub-view">'+
-      '<div class="grid-3">'+
+      '<div class="grid-3 admin-mgmt-grid">'+
         '<div class="panel"><div class="panel-header"><h3>창고 관리</h3></div><div class="panel-body pad">'+
           '<div class="field" style="margin-bottom:10px"><label>신규 창고 추가</label><div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="new-wh-name" placeholder="창고명 입력" style="flex:1"><button class="btn btn-primary" onclick="whAdd()">추가</button></div></div>'+
-          '<div style="max-height:320px;overflow-y:auto">'+whRows+'</div>'+
+          '<div class="admin-mgmt-list" style="max-height:320px;overflow-y:auto">'+whRows+'</div>'+
         '</div></div>'+
         '<div class="panel"><div class="panel-header"><h3>자재 구분 관리</h3></div><div class="panel-body pad">'+
           '<div class="field" style="margin-bottom:10px"><label>신규 자재 구분 추가</label><div style="display:flex;gap:8px;margin-top:6px;align-items:center"><input type="text" id="new-type-name" placeholder="예: 반제품" style="flex:1"><label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-600);white-space:nowrap;cursor:pointer" title="체크하면 이 자재구분의 품목이 구매마스터(자재 요청·발주진행도)에 표시됩니다"><input type="checkbox" id="new-type-purchasable">자재요청 표시</label><button class="btn btn-primary" onclick="typeAdd()">추가</button></div></div>'+
-          '<div style="max-height:320px;overflow-y:auto">'+typeRows+'</div>'+
-          '<div class="pos-hint" style="margin-top:10px">여기서 추가·수정한 항목이 자재 신규등록/수정 모달의 "자재 구분" 목록에 바로 반영됩니다.</div>'+
+          '<div class="admin-mgmt-list" style="max-height:320px;overflow-y:auto">'+typeRows+'</div>'+
         '</div></div>'+
         '<div class="panel"><div class="panel-header"><h3>카테고리 관리</h3></div><div class="panel-body pad">'+
           '<div class="field" style="margin-bottom:10px"><label>신규 카테고리 추가</label><div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="new-cat-name" placeholder="예: 실리콘" style="flex:1"><button class="btn btn-primary" onclick="catAdd()">추가</button></div></div>'+
-          '<div style="max-height:320px;overflow-y:auto">'+catRows+'</div>'+
-          '<div class="pos-hint" style="margin-top:10px">여기서 추가·수정한 항목이 자재 신규등록/수정 모달의 "카테고리" 목록에 바로 반영됩니다.</div>'+
+          '<div class="admin-mgmt-list" style="max-height:320px;overflow-y:auto">'+catRows+'</div>'+
         '</div></div>'+
       '</div>'+
       '<div class="panel"><div class="panel-header"><h3>안전재고 기준 설정</h3></div><div class="panel-body pad">'+
@@ -4575,15 +5253,12 @@
           '<div class="stat-card"><div class="stat-label">소모품 자재</div><div class="stat-value">'+consumableMats().length+'</div></div>'+
         '</div>'+
         '<div class="backup-grid">'+
-          '<button class="btn btn-primary" style="height:44px" onclick="downloadBackup()"><svg class="ic"><use href="#i-download"/></svg>백업 파일 다운로드</button>'+ 
-          '<label class="btn btn-outline" style="height:44px;justify-content:center"><input type="file" accept=".json" style="display:none" onchange="restoreBackup(this)"><svg class="ic"><use href="#i-upload"/></svg>백업 파일 선택하여 복원</label>'+ 
-          '<button class="btn btn-outline" style="height:44px;justify-content:center" onclick="clearTransactionHistory()"><svg class="ic"><use href="#i-trash"/></svg>입출고 내역 삭제</button>'+
+          '<button class="btn btn-primary" style="height:44px" onclick="downloadBackup()"><svg class="ic"><use href="#i-download"/></svg>백업 파일 다운로드</button>'+
+          '<label class="btn btn-outline" style="height:44px;justify-content:center"><input type="file" accept=".json" style="display:none" onchange="restoreBackup(this)"><svg class="ic"><use href="#i-upload"/></svg>백업 파일 선택하여 복원</label>'+
+          '<button class="btn btn-outline" style="height:44px;justify-content:center;color:var(--low-text);border-color:var(--low-text)" onclick="openFullResetModal()"><svg class="ic"><use href="#i-trash"/></svg>전체 초기화</button>'+
         '</div>'+
       '</div></div>'+
-      '<div class="panel"><div class="panel-header"><h3>전체 초기화</h3></div><div class="panel-body pad">'+
-        '<div class="pos-hint" style="background:var(--low-bg);color:var(--low-text)">자재·창고·카테고리·자재구분·입출고내역·재고실사이력을 모두 삭제하고 완전히 빈 상태로 되돌립니다. 되돌릴 수 없으니, 실행 전 위의 "백업 파일 다운로드"로 미리 백업해두시길 권장합니다.</div>'+
-        '<button class="btn btn-outline" style="margin-top:12px;height:44px;color:var(--low-text);border-color:var(--low-text)" onclick="openFullResetModal()"><svg class="ic"><use href="#i-trash"/></svg>전체 초기화</button>'+
-      '</div></div>'+
+      '<div class="panel"><div class="panel-header"><h3>입출고 내역 삭제</h3><button class="btn btn-outline btn-sm" style="color:var(--low-text);border-color:var(--low-text)" onclick="clearTransactionHistory()"><svg class="ic" style="width:13px;height:13px"><use href="#i-trash"/></svg>입출고 내역 삭제</button></div></div>'+
     '</div>';
   }
   window.openFullResetModal = function(){
